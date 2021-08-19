@@ -1,4 +1,5 @@
-# bat
+# gurl
+
 Go implemented CLI cURL-like tool for humans. Bat can be used for testing, debugging, and generally interacting with HTTP servers.
 
 Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the author, Jakub.
@@ -23,10 +24,10 @@ Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the aut
 ## Docker
 
     # Build the docker image
-	$ docker build -t astaxie/bat .
+	$ docker build -t bingoohuang/gurl .
 	
 	# Run bat in a container
-	$ docker run --rm -it --net=host astaxie/bat example.org
+	$ docker run --rm -it --net=host bingoohuang/gurl example.org
 
 ## Main Features
 
@@ -43,11 +44,11 @@ Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the aut
 
 If you only want to install the `bat` tool:
 
-	go get -u github.com/astaxie/bat
+	go get -u github.com/bingoohuang/gurl
 
 If you want a mutable copy of source code:
 
-	git clone https://github.com/astaxie/bat ;# clone outside of GOPATH
+	git clone https://github.com/bingoohuang/gurl ;# clone outside of GOPATH
 	cd bat
 	go install
 
@@ -55,7 +56,7 @@ Make sure the `~/go/bin` is added into `$PATH`.
 
 ### Install without Modules - Before Go 1.11
 
-	go get -u github.com/astaxie/bat
+	go get -u github.com/bingoohuang/gurl
 
 Make sure the `$GOPATH/bin` is added into `$PATH`.
 
@@ -91,7 +92,7 @@ See the request that is being sent using one of the output options:
 
 Use Github API to post a comment on an issue with authentication:
 
-	$ bat -a USERNAME POST https://api.github.com/repos/astaxie/bat/issues/1/comments body='bat is awesome!'
+	$ bat -a USERNAME POST https://api.github.com/repos/bingoohuang/gurl/issues/1/comments body='bat is awesome!'
 
 Upload a file using redirected input:
 

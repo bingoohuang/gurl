@@ -68,12 +68,12 @@ func TestSimplePost(t *testing.T) {
 
 //func TestPostFile(t *testing.T) {
 //	v := "smallfish"
-//	req := Post("http://httpbin.org/post")
-//	req.Debug(true)
-//	req.Param("username", v)
-//	req.PostFile("uploadfile", "httplib_test.go")
+//	Req := Post("http://httpbin.org/post")
+//	Req.Debug(true)
+//	Req.Param("username", v)
+//	Req.PostFile("uploadfile", "httplib_test.go")
 
-//	str, err := req.String()
+//	str, err := Req.String()
 //	if err != nil {
 //		t.Fatal(err)
 //	}

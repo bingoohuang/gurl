@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/astaxie/bat/httplib"
+	"github.com/bingoohuang/gurl/httplib"
 )
 
 var defaultSetting = httplib.BeegoHttpSettings{
@@ -25,37 +25,20 @@ var defaultSetting = httplib.BeegoHttpSettings{
 }
 
 func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequest) {
-	r = httplib.NewBeegoRequest(url, method)
-	r.Setting(defaultSetting)
+	r = httplib.NewRequest(url, method)
+	r.Setting = defaultSetting
 	r.Header("Accept-Encoding", "gzip, deflate")
 	if *isjson {
 		r.Header("Accept", "application/json")
+		r.Header("Content-Type", "application/json")
 	} else if form || method == "GET" {
 		r.Header("Accept", "*/*")
 	} else {
 		r.Header("Accept", "application/json")
 	}
 	for i := range args {
-		// Headers
-		strs := strings.Split(args[i], ":")
-		if len(strs) >= 2 {
-			if strs[0] == "Host" {
-				r.SetHost(strings.Join(strs[1:], ":"))
-			}
-			r.Header(strs[0], strings.Join(strs[1:], ":"))
-			continue
-		}
-		// files
-		strs = strings.SplitN(args[i], "@", 2)
-		if !*isjson && len(strs) == 2 {
-			if !form {
-				log.Fatal("file upload only support in forms style: -f=true")
-			}
-			r.PostFile(strs[0], strs[1])
-			continue
-		}
 		// Json raws
-		strs = strings.SplitN(args[i], ":=", 2)
+		strs := strings.SplitN(args[i], ":=", 2)
 		if len(strs) == 2 {
 			if strings.HasPrefix(strs[1], "@") {
 				f, err := os.Open(strings.TrimLeft(strs[1], "@"))
@@ -74,7 +57,16 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 				jsonmap[strs[0]] = j
 				continue
 			}
-			jsonmap[strs[0]] = toRealType(strs[1])
+			jsonmap[strs[0]] = json.RawMessage(strs[1])
+			continue
+		}
+		// Headers
+		strs = strings.Split(args[i], ":")
+		if len(strs) >= 2 {
+			if strs[0] == "Host" {
+				r.SetHost(strings.Join(strs[1:], ":"))
+			}
+			r.Header(strs[0], strings.Join(strs[1:], ":"))
 			continue
 		}
 		// Params
@@ -98,9 +90,20 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 			}
 			continue
 		}
+		// files
+		strs = strings.SplitN(args[i], "@", 2)
+		if !*isjson && len(strs) == 2 {
+			if !form {
+				log.Fatal("file upload only support in forms style: -f=true")
+			}
+			r.PostFile(strs[0], strs[1])
+			continue
+		}
 	}
 	if !form && len(jsonmap) > 0 {
-		r.JsonBody(jsonmap)
+		if _, err := r.JsonBody(jsonmap); err != nil {
+			log.Fatal("fail to marshal JSON: ", err)
+		}
 	}
 	return
 }
@@ -119,7 +122,7 @@ func formatResponseBody(res *http.Response, httpreq *httplib.BeegoHttpRequest, p
 		var output bytes.Buffer
 		err := json.Indent(&output, body, "", "  ")
 		if err != nil {
-			log.Fatal("Response Json Indent: ", err)
+			log.Fatal("Response JSON Indent: ", err)
 		}
 
 		return output.String()

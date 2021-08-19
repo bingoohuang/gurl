@@ -1,3 +1,3 @@
-module github.com/astaxie/bat
+module github.com/bingoohuang/gurl
 
 go 1.12

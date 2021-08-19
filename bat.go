@@ -66,8 +66,8 @@ var (
 func init() {
 	flag.BoolVar(&ver, "v", false, "Print Version Number")
 	flag.BoolVar(&ver, "version", false, "Print Version Number")
-	flag.BoolVar(&pretty, "pretty", true, "Print Json Pretty Format")
-	flag.BoolVar(&pretty, "p", true, "Print Json Pretty Format")
+	flag.BoolVar(&pretty, "pretty", true, "Print JSON Pretty Format")
+	flag.BoolVar(&pretty, "p", true, "Print JSON Pretty Format")
 	flag.StringVar(&printV, "print", "A", "Print request and response")
 	flag.BoolVar(&form, "form", false, "Submitting as a form")
 	flag.BoolVar(&form, "f", false, "Submitting as a form")
@@ -166,14 +166,14 @@ func main() {
 		}
 	}
 	*URL = u.String()
-	httpreq := getHTTP(*method, *URL, args)
+	req := getHTTP(*method, *URL, args)
 	if u.User != nil {
 		password, _ := u.User.Password()
-		httpreq.GetRequest().SetBasicAuth(u.User.Username(), password)
+		req.SetBasicAuth(u.User.Username(), password)
 	}
 	// Insecure SSL Support
 	if insecureSSL {
-		httpreq.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+		req.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
 	}
 	// Proxy Support
 	if proxy != "" {
@@ -181,16 +181,16 @@ func main() {
 		if err != nil {
 			log.Fatal("Proxy Url parse err", err)
 		}
-		httpreq.SetProxy(http.ProxyURL(purl))
+		req.SetProxy(http.ProxyURL(purl))
 	} else {
-		eurl, err := http.ProxyFromEnvironment(httpreq.GetRequest())
+		eurl, err := http.ProxyFromEnvironment(req.Req)
 		if err != nil {
 			log.Fatal("Environment Proxy Url parse err", err)
 		}
-		httpreq.SetProxy(http.ProxyURL(eurl))
+		req.SetProxy(http.ProxyURL(eurl))
 	}
 	if body != "" {
-		httpreq.Body(body)
+		req.Body(body)
 	}
 	if len(stdin) > 0 {
 		var j interface{}
@@ -198,19 +198,19 @@ func main() {
 		d.UseNumber()
 		err = d.Decode(&j)
 		if err != nil {
-			httpreq.Body(stdin)
+			req.Body(stdin)
 		} else {
-			httpreq.JsonBody(j)
+			req.JsonBody(j)
 		}
 	}
 
 	// AB bench
 	if bench {
-		httpreq.Debug(false)
-		RunBench(httpreq)
+		req.Debug(false)
+		RunBench(req)
 		return
 	}
-	res, err := httpreq.Response()
+	res, err := req.Response()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
 	}
@@ -277,7 +277,7 @@ func main() {
 		}
 		if fi.Mode()&os.ModeDevice == os.ModeDevice {
 			var dumpHeader, dumpBody []byte
-			dump := httpreq.DumpRequest()
+			dump := req.DumpRequest()
 			dps := strings.Split(string(dump), "\n")
 			for i, line := range dps {
 				if len(strings.Trim(line, "\r\n ")) == 0 {
@@ -304,11 +304,11 @@ func main() {
 				fmt.Println("")
 			}
 			if printOption&printRespBody == printRespBody {
-				body := formatResponseBody(res, httpreq, pretty)
+				body := formatResponseBody(res, req, pretty)
 				fmt.Println(ColorfulResponse(body, res.Header.Get("Content-Type")))
 			}
 		} else {
-			body := formatResponseBody(res, httpreq, pretty)
+			body := formatResponseBody(res, req, pretty)
 			_, err = os.Stdout.WriteString(body)
 			if err != nil {
 				log.Fatal(err)
@@ -316,7 +316,7 @@ func main() {
 		}
 	} else {
 		var dumpHeader, dumpBody []byte
-		dump := httpreq.DumpRequest()
+		dump := req.DumpRequest()
 		dps := strings.Split(string(dump), "\n")
 		for i, line := range dps {
 			if len(strings.Trim(line, "\r\n ")) == 0 {
@@ -341,18 +341,16 @@ func main() {
 			fmt.Println("")
 		}
 		if printOption&printRespBody == printRespBody {
-			body := formatResponseBody(res, httpreq, pretty)
+			body := formatResponseBody(res, req, pretty)
 			fmt.Println(body)
 		}
 	}
 }
 
-var usageinfo string = `bat is a Go implemented CLI cURL-like tool for humans.
+const usageinfo = `bat is a Go implemented CLI cURL-like tool for humans.
 
 Usage:
-
 	bat [flags] [METHOD] URL [ITEM [ITEM]]
-
 flags:
   -a, -auth=USER[:PASS]       Pass a username:password pair as the argument
   -b, -bench=false            Sends bench requests to URL
@@ -360,8 +358,8 @@ flags:
   -b.C=100                    Number of requests to run concurrently
   -body=""                    Send RAW data as body
   -f, -form=false             Submitting the data as a form
-  -j, -json=true              Send the data in a JSON object
-  -p, -pretty=true            Print Json Pretty Format
+  -j, -json=true              Send the data in a JSON object as application/json
+  -p, -pretty=true            Print JSON Pretty Format
   -i, -insecure=false         Allow connections to SSL sites without certs
   -proxy=PROXY_URL            Proxy with host and port
   -print="A"                  String specifying what the output should contain, default will print all information
@@ -370,26 +368,22 @@ flags:
          "h" response headers
          "b" response body
   -v, -version=true           Show Version Number
-
 METHOD:
   bat defaults to either GET (if there is no request data) or POST (with request data).
-
 URL:
   The only information needed to perform a request is a URL. The default scheme is http://,
   which can be omitted from the argument; example.org works just fine.
-
 ITEM:
   Can be any of:
     Query string   key=value
     Header         key:value
     Post data      key=value
+	JSON data      key:=value
     File upload    key@/path/file
-
 Example:
-
 	bat beego.me
 
-more help information please refer to https://github.com/astaxie/bat
+more help information please refer to https://github.com/bingoohuang/gurl
 `
 
 func usage() {

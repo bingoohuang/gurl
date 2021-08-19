@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/astaxie/bat/httplib"
+	"github.com/bingoohuang/gurl/httplib"
 )
 
 type result struct {
@@ -42,7 +42,7 @@ func RunBench(b *httplib.BeegoHttpRequest) {
 }
 
 func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.BeegoHttpRequest) {
-	for _ = range ch {
+	for range ch {
 		s := time.Now()
 		code := 0
 		size := int64(0)
