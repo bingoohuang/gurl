@@ -40,24 +40,17 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 		// Json raws
 		strs := strings.SplitN(args[i], ":=", 2)
 		if len(strs) == 2 {
-			if strings.HasPrefix(strs[1], "@") {
-				f, err := os.Open(strings.TrimLeft(strs[1], "@"))
-				if err != nil {
-					log.Fatal("Read File", strings.TrimLeft(strs[1], "@"), err)
-				}
-				content, err := ioutil.ReadAll(f)
-				if err != nil {
-					log.Fatal("ReadAll from File", strings.TrimLeft(strs[1], "@"), err)
-				}
+			if v, fn, err := readFile(strs[1]); err != nil {
+				log.Fatal("Read File", fn, err)
+			} else if fn != "" {
 				var j interface{}
-				err = json.Unmarshal(content, &j)
-				if err != nil {
-					log.Fatal("Read from File", strings.TrimLeft(strs[1], "@"), "Unmarshal", err)
+				if err := json.Unmarshal(v, &j); err != nil {
+					log.Fatal("Read from File", fn, "Unmarshal", err)
 				}
 				jsonmap[strs[0]] = j
-				continue
+			} else {
+				jsonmap[strs[0]] = json.RawMessage(strs[1])
 			}
-			jsonmap[strs[0]] = json.RawMessage(strs[1])
 			continue
 		}
 		// Headers
@@ -72,17 +65,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 		// Params
 		strs = strings.SplitN(args[i], "=", 2)
 		if len(strs) == 2 {
-			if strings.HasPrefix(strs[1], "@") {
-				f, err := os.Open(strings.TrimLeft(strs[1], "@"))
-				if err != nil {
-					log.Fatal("Read File", strings.TrimLeft(strs[1], "@"), err)
-				}
-				content, err := ioutil.ReadAll(f)
-				if err != nil {
-					log.Fatal("ReadAll from File", strings.TrimLeft(strs[1], "@"), err)
-				}
-				strs[1] = string(content)
-			}
+			strs[1] = tryReadFile(strs[1])
 			if form || method == "GET" {
 				r.Param(strs[0], strs[1])
 			} else {
@@ -106,6 +89,32 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 		}
 	}
 	return
+}
+
+func tryReadFile(s string) string {
+	if v, _, err := readFile(s); err != nil {
+		log.Fatal("Read File", s, err)
+		return ""
+	} else {
+		return string(v)
+	}
+}
+
+func readFile(s string) (data []byte, fn string, e error) {
+	if !strings.HasPrefix(s, "@") {
+		return []byte(s), "", nil
+	}
+
+	s = strings.TrimLeft(s, "@")
+	f, err := os.Open(s)
+	if err != nil {
+		return nil, s, err
+	}
+	content, err := ioutil.ReadAll(f)
+	if err != nil {
+		return nil, s, err
+	}
+	return content, s, nil
 }
 
 func formatResponseBody(res *http.Response, httpreq *httplib.BeegoHttpRequest, pretty bool) string {
