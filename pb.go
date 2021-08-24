@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	DEFAULT_REFRESH_RATE = time.Millisecond * 200
-	FORMAT               = "[=>-]"
+	DefaultRefreshRate = 200 * time.Millisecond
+	FORMAT             = "[=>-]"
 )
 
 type ProgressBar struct {
@@ -35,7 +35,7 @@ type ProgressBar struct {
 func NewProgressBar(total int64) (pb *ProgressBar) {
 	pb = &ProgressBar{
 		Total:         total,
-		RefreshRate:   DEFAULT_REFRESH_RATE,
+		RefreshRate:   DefaultRefreshRate,
 		ShowPercent:   true,
 		ShowBar:       true,
 		ShowCounters:  true,

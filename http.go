@@ -17,7 +17,7 @@ import (
 
 var defaultSetting = httplib.BeegoHttpSettings{
 	ShowDebug:        true,
-	UserAgent:        "bat/" + version,
+	UserAgent:        "gurl/" + version,
 	ConnectTimeout:   60 * time.Second,
 	ReadWriteTimeout: 60 * time.Second,
 	Gzip:             true,
@@ -38,8 +38,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 	}
 	for i := range args {
 		// Json raws
-		strs := strings.SplitN(args[i], ":=", 2)
-		if len(strs) == 2 {
+		if strs := strings.SplitN(args[i], ":=", 2); len(strs) == 2 {
 			if v, fn, err := readFile(strs[1]); err != nil {
 				log.Fatal("Read File", fn, err)
 			} else if fn != "" {
@@ -54,8 +53,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 			continue
 		}
 		// Headers
-		strs = strings.Split(args[i], ":")
-		if len(strs) >= 2 {
+		if strs := strings.Split(args[i], ":"); len(strs) >= 2 {
 			if strs[0] == "Host" {
 				r.SetHost(strings.Join(strs[1:], ":"))
 			}
@@ -63,8 +61,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 			continue
 		}
 		// Params
-		strs = strings.SplitN(args[i], "=", 2)
-		if len(strs) == 2 {
+		if strs := strings.SplitN(args[i], "=", 2); len(strs) == 2 {
 			strs[1] = tryReadFile(strs[1])
 			if form || method == "GET" {
 				r.Param(strs[0], strs[1])
@@ -74,11 +71,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 			continue
 		}
 		// files
-		strs = strings.SplitN(args[i], "@", 2)
-		if !*isjson && len(strs) == 2 {
-			if !form {
-				log.Fatal("file upload only support in forms style: -f=true")
-			}
+		if strs := strings.SplitN(args[i], "@", 2); len(strs) == 2 {
 			r.PostFile(strs[0], strs[1])
 			continue
 		}

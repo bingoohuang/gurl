@@ -52,7 +52,13 @@ import (
 	"time"
 )
 
-var defaultSetting = BeegoHttpSettings{false, "beegoServer", 60 * time.Second, 60 * time.Second, nil, nil, nil, false, true, true}
+var defaultSetting = BeegoHttpSettings{
+	UserAgent:        "beegoServer",
+	ConnectTimeout:   60 * time.Second,
+	ReadWriteTimeout: 60 * time.Second,
+	Gzip:             true,
+	DumpBody:         true,
+}
 var defaultCookieJar http.CookieJar
 var settingMutex sync.Mutex
 
@@ -336,7 +342,9 @@ func (b *BeegoHttpRequest) buildUrl(paramBody string) {
 				bodyWriter.Close()
 				pw.Close()
 			}()
-			b.Header("Content-Type", bodyWriter.FormDataContentType())
+			contentType := bodyWriter.FormDataContentType()
+			b.Setting.DumpBody = false
+			b.Header("Content-Type", contentType)
 			b.Req.Body = ioutil.NopCloser(pr)
 			return
 		}

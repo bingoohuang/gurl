@@ -1,19 +1,5 @@
-// Copyright 2015 bat authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License"): you may
-// not use this file except in compliance with the License. You may obtain
-// a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-// WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-// License for the specific language governing permissions and limitations
-// under the License.
-
-// Bat is a Go implemented CLI cURL-like tool for humans
-// bat [flags] [METHOD] URL [ITEM [ITEM]]
+// Gurl is a Go implemented CLI cURL-like tool for humans
+// gurl [flags] [METHOD] URL [ITEM [ITEM]]
 package main
 
 import (
@@ -53,7 +39,6 @@ var (
 	printV           string
 	printOption      uint8
 	body             string
-	bench            bool
 	benchN           int
 	benchC           int
 	isjson           = flag.Bool("json", true, "Send the data as a JSON object")
@@ -65,23 +50,15 @@ var (
 
 func init() {
 	flag.BoolVar(&ver, "v", false, "Print Version Number")
-	flag.BoolVar(&ver, "version", false, "Print Version Number")
-	flag.BoolVar(&pretty, "pretty", true, "Print JSON Pretty Format")
 	flag.BoolVar(&pretty, "p", true, "Print JSON Pretty Format")
 	flag.StringVar(&printV, "print", "A", "Print request and response")
-	flag.BoolVar(&form, "form", false, "Submitting as a form")
 	flag.BoolVar(&form, "f", false, "Submitting as a form")
-	flag.BoolVar(&download, "download", false, "Download the url content as file")
 	flag.BoolVar(&download, "d", false, "Download the url content as file")
-	flag.BoolVar(&insecureSSL, "insecure", false, "Allow connections to SSL sites without certs")
 	flag.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
-	flag.StringVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
 	flag.StringVar(&auth, "a", "", "HTTP authentication username:password, USER[:PASS]")
 	flag.StringVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
-	flag.BoolVar(&bench, "bench", false, "Sends bench requests to URL")
-	flag.BoolVar(&bench, "b", false, "Sends bench requests to URL")
-	flag.IntVar(&benchN, "b.N", 1000, "Number of requests to run")
-	flag.IntVar(&benchC, "b.C", 100, "Number of requests to run concurrently.")
+	flag.IntVar(&benchN, "b.N", 0, "Number of bench requests to run")
+	flag.IntVar(&benchC, "b.C", 100, "Number of bench requests to run concurrently.")
 	flag.StringVar(&body, "body", "", "Raw data send as body")
 	jsonmap = make(map[string]interface{})
 }
@@ -104,16 +81,27 @@ func parsePrintOption(s string) {
 	if strings.ContainsRune(s, 'b') {
 		printOption |= printRespBody
 	}
-	return
 }
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	flag.Usage = usage
-	flag.Parse()
-	args := flag.Args()
-	if len(args) > 0 {
-		args = filter(args)
+
+	flagArgs := os.Args[1:]
+	var nonFlagArgs []string
+	for i, arg := range flagArgs {
+		if strings.HasPrefix(arg, "-") {
+			flagArgs = flagArgs[i:]
+			break
+		} else {
+			nonFlagArgs = append(nonFlagArgs, arg)
+		}
+	}
+
+	flag.CommandLine.Parse(flagArgs)
+	nonFlagArgs = append(nonFlagArgs, flag.Args()...)
+	if len(nonFlagArgs) > 0 {
+		nonFlagArgs = filter(nonFlagArgs)
 	}
 	if ver {
 		fmt.Println("Version:", version)
@@ -158,15 +146,14 @@ func main() {
 		log.Fatal(err)
 	}
 	if auth != "" {
-		userpass := strings.Split(auth, ":")
-		if len(userpass) == 2 {
+		if userpass := strings.Split(auth, ":"); len(userpass) == 2 {
 			u.User = url.UserPassword(userpass[0], userpass[1])
 		} else {
 			u.User = url.User(auth)
 		}
 	}
 	*URL = u.String()
-	req := getHTTP(*method, *URL, args)
+	req := getHTTP(*method, *URL, nonFlagArgs)
 	if u.User != nil {
 		password, _ := u.User.Password()
 		req.SetBasicAuth(u.User.Username(), password)
@@ -205,7 +192,7 @@ func main() {
 	}
 
 	// AB bench
-	if bench {
+	if benchN > 0 {
 		req.Debug(false)
 		RunBench(req)
 		return
@@ -347,29 +334,28 @@ func main() {
 	}
 }
 
-const usageinfo = `bat is a Go implemented CLI cURL-like tool for humans.
+const help = `gurl is a Go implemented CLI cURL-like tool for humans.
 
 Usage:
-	bat [flags] [METHOD] URL [ITEM [ITEM]]
+	gurl [flags] [METHOD] URL [ITEM [ITEM]]
 flags:
-  -a, -auth=USER[:PASS]       Pass a username:password pair as the argument
-  -b, -bench=false            Sends bench requests to URL
-  -b.N=1000                   Number of requests to run
-  -b.C=100                    Number of requests to run concurrently
-  -body=""                    Send RAW data as body
-  -f, -form=false             Submitting the data as a form
-  -j, -json=true              Send the data in a JSON object as application/json
-  -p, -pretty=true            Print JSON Pretty Format
-  -i, -insecure=false         Allow connections to SSL sites without certs
-  -proxy=PROXY_URL            Proxy with host and port
-  -print="A"                  String specifying what the output should contain, default will print all information
-         "H" request headers
-         "B" request body
-         "h" response headers
-         "b" response body
-  -v, -version=true           Show Version Number
+  -a=USER[:PASS]       Pass a username:password pair as the argument
+  -b.N=1000            Number of requests to run
+  -b.C=100             Number of requests to run concurrently
+  -body=""             Send RAW data as body
+  -f                   Submitting the data as a form
+  -j                   Send the data in a JSON object as application/json
+  -p                   Print JSON Pretty Format
+  -i                   Allow connections to SSL sites without certs
+  -proxy=PROXY_URL     Proxy with host and port
+  -print=A             String specifying what the output should contain, default will print all information
+         H request headers
+         B request body
+         h response headers
+         b response body
+  -v                   Show Version Number
 METHOD:
-  bat defaults to either GET (if there is no request data) or POST (with request data).
+  gurl defaults to either GET (if there is no request data) or POST (with request data).
 URL:
   The only information needed to perform a request is a URL. The default scheme is http://,
   which can be omitted from the argument; example.org works just fine.
@@ -381,12 +367,12 @@ ITEM:
 	JSON data      key:=value
     File upload    key@/path/file
 Example:
-	bat beego.me
+	gurl beego.me
 
 more help information please refer to https://github.com/bingoohuang/gurl
 `
 
 func usage() {
-	fmt.Println(usageinfo)
+	fmt.Println(help)
 	os.Exit(2)
 }
