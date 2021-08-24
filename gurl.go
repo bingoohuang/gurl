@@ -57,8 +57,8 @@ func init() {
 	flag.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
 	flag.StringVar(&auth, "a", "", "HTTP authentication username:password, USER[:PASS]")
 	flag.StringVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
-	flag.IntVar(&benchN, "b.N", 0, "Number of bench requests to run")
-	flag.IntVar(&benchC, "b.C", 100, "Number of bench requests to run concurrently.")
+	flag.IntVar(&benchN, "b.n", 0, "Number of bench requests to run")
+	flag.IntVar(&benchC, "b.c", 100, "Number of bench requests to run concurrently.")
 	flag.StringVar(&body, "body", "", "Raw data send as body")
 	jsonmap = make(map[string]interface{})
 }
@@ -87,11 +87,11 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	flag.Usage = usage
 
-	flagArgs := os.Args[1:]
+	var flagArgs []string
 	var nonFlagArgs []string
-	for i, arg := range flagArgs {
+	for i, arg := range os.Args[1:] {
 		if strings.HasPrefix(arg, "-") {
-			flagArgs = flagArgs[i:]
+			flagArgs = os.Args[i+1:]
 			break
 		} else {
 			nonFlagArgs = append(nonFlagArgs, arg)
@@ -340,8 +340,8 @@ Usage:
 	gurl [flags] [METHOD] URL [ITEM [ITEM]]
 flags:
   -a=USER[:PASS]       Pass a username:password pair as the argument
-  -b.N=1000            Number of requests to run
-  -b.C=100             Number of requests to run concurrently
+  -b.n=0               Number of requests to run
+  -b.c=100             Number of requests to run concurrently
   -body=""             Send RAW data as body
   -f                   Submitting the data as a form
   -j                   Send the data in a JSON object as application/json
