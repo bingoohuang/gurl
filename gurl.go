@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -32,6 +33,7 @@ var (
 	ver              bool
 	form             bool
 	pretty           bool
+	raw              bool
 	download         bool
 	insecureSSL      bool
 	auth             string
@@ -45,12 +47,12 @@ var (
 	method           = flag.String("method", "GET", "HTTP method")
 	URL              = flag.String("url", "", "HTTP request URL")
 	jsonmap          map[string]interface{}
-	contentJsonRegex = `application/(.*)json`
+	contentJsonRegex = regexp.MustCompile(`application/(.*)json`)
 )
 
 func init() {
 	flag.BoolVar(&ver, "v", false, "Print Version Number")
-	flag.BoolVar(&pretty, "p", true, "Print JSON Pretty Format")
+	flag.BoolVar(&raw, "raw", false, "Print JSON Raw Format")
 	flag.StringVar(&printV, "print", "A", "Print request and response")
 	flag.BoolVar(&form, "f", false, "Submitting as a form")
 	flag.BoolVar(&download, "d", false, "Download the url content as file")
@@ -99,6 +101,8 @@ func main() {
 	}
 
 	flag.CommandLine.Parse(flagArgs)
+	pretty = !raw
+
 	nonFlagArgs = append(nonFlagArgs, flag.Args()...)
 	if len(nonFlagArgs) > 0 {
 		nonFlagArgs = filter(nonFlagArgs)
@@ -345,7 +349,7 @@ flags:
   -body=""             Send RAW data as body
   -f                   Submitting the data as a form
   -j                   Send the data in a JSON object as application/json
-  -p                   Print JSON Pretty Format
+  -raw                 Print JSON Raw format other than pretty
   -i                   Allow connections to SSL sites without certs
   -proxy=PROXY_URL     Proxy with host and port
   -print=A             String specifying what the output should contain, default will print all information
@@ -373,6 +377,6 @@ more help information please refer to https://github.com/bingoohuang/gurl
 `
 
 func usage() {
-	fmt.Println(help)
+	fmt.Print(help)
 	os.Exit(2)
 }

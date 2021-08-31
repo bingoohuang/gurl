@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -116,10 +115,7 @@ func formatResponseBody(res *http.Response, httpreq *httplib.BeegoHttpRequest, p
 		log.Fatalln("can't get the url", err)
 	}
 	fmt.Println("")
-	match, err := regexp.MatchString(contentJsonRegex, res.Header.Get("Content-Type"))
-	if err != nil {
-		log.Fatalln("failed to compile regex", err)
-	}
+	match := contentJsonRegex.MatchString(res.Header.Get("Content-Type"))
 	if pretty && match {
 		var output bytes.Buffer
 		err := json.Indent(&output, body, "", "  ")
