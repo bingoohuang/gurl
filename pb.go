@@ -10,7 +10,6 @@ import (
 
 const (
 	DefaultRefreshRate = 200 * time.Millisecond
-	FORMAT             = "[=>-]"
 )
 
 type ProgressBar struct {

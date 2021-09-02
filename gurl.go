@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -57,7 +58,7 @@ func init() {
 	flag.BoolVar(&form, "f", false, "Submitting as a form")
 	flag.BoolVar(&download, "d", false, "Download the url content as file")
 	flag.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
-	flag.StringVar(&auth, "a", "", "HTTP authentication username:password, USER[:PASS]")
+	flag.StringVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
 	flag.StringVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
 	flag.IntVar(&benchN, "b.n", 0, "Number of bench requests to run")
 	flag.IntVar(&benchC, "b.c", 100, "Number of bench requests to run concurrently.")
@@ -206,58 +207,14 @@ func main() {
 		log.Fatalln("can't get the url", err)
 	}
 
-	// download file
-	if download {
-		var fl string
-		if disposition := res.Header.Get("Content-Disposition"); disposition != "" {
-			fls := strings.Split(disposition, ";")
-			for _, f := range fls {
-				f = strings.TrimSpace(f)
-				if strings.HasPrefix(f, "filename=") {
-					// Remove 'filename='
-					f = strings.TrimLeft(f, "filename=")
-
-					// Remove quotes and spaces from either end
-					f = strings.TrimLeft(f, "\"' ")
-					fl = strings.TrimRight(f, "\"' ")
-				}
-			}
+	filename := ""
+	if disposition := res.Header.Get("Content-Disposition"); disposition != "" {
+		if _, params, _ := mime.ParseMediaType(disposition); params != nil {
+			filename = params["filename"]
 		}
-		if fl == "" {
-			_, fl = filepath.Split(u.Path)
-		}
-		fd, err := os.OpenFile(fl, os.O_RDWR|os.O_CREATE, 0666)
-		if err != nil {
-			log.Fatal("can't create file", err)
-		}
-		if runtime.GOOS != "windows" {
-			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
-			for k, v := range res.Header {
-				fmt.Println(Color(k, Gray), ":", Color(strings.Join(v, " "), Cyan))
-			}
-		} else {
-			fmt.Println(res.Proto, res.Status)
-			for k, v := range res.Header {
-				fmt.Println(k, ":", strings.Join(v, " "))
-			}
-		}
-		fmt.Println("")
-		contentLength := res.Header.Get("Content-Length")
-		var total int64
-		if contentLength != "" {
-			total, _ = strconv.ParseInt(contentLength, 10, 64)
-		}
-		fmt.Printf("Downloading to \"%s\"\n", fl)
-		pb := NewProgressBar(total)
-		pb.Start()
-		multiWriter := io.MultiWriter(fd, pb)
-		_, err = io.Copy(multiWriter, res.Body)
-		if err != nil {
-			log.Fatal("Can't Write the body into file", err)
-		}
-		pb.Finish()
-		defer fd.Close()
-		defer res.Body.Close()
+	}
+	if download || filename != "" {
+		downloadFile(u, res, filename)
 		return
 	}
 
@@ -338,12 +295,48 @@ func main() {
 	}
 }
 
+func downloadFile(u *url.URL, res *http.Response, filename string) {
+	if filename == "" {
+		_, filename = filepath.Split(u.Path)
+	}
+	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatal("can't create file", err)
+	}
+	if runtime.GOOS != "windows" {
+		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
+		for k, v := range res.Header {
+			fmt.Println(Color(k, Gray), ":", Color(strings.Join(v, " "), Cyan))
+		}
+	} else {
+		fmt.Println(res.Proto, res.Status)
+		for k, v := range res.Header {
+			fmt.Println(k, ":", strings.Join(v, " "))
+		}
+	}
+	fmt.Println("")
+	var total int64
+	if contentLength := res.Header.Get("Content-Length"); contentLength != "" {
+		total, _ = strconv.ParseInt(contentLength, 10, 64)
+	}
+	fmt.Printf("Downloading to \"%s\"\n", filename)
+	pb := NewProgressBar(total)
+	pb.Start()
+	mw := io.MultiWriter(fd, pb)
+	if _, err := io.Copy(mw, res.Body); err != nil {
+		log.Fatal("Can't Write the body into file", err)
+	}
+	pb.Finish()
+	fd.Close()
+	res.Body.Close()
+}
+
 const help = `gurl is a Go implemented CLI cURL-like tool for humans.
 
 Usage:
 	gurl [flags] [METHOD] URL [ITEM [ITEM]]
 flags:
-  -a=USER[:PASS]       Pass a username:password pair as the argument
+  -auth=USER[:PASS]       Pass a username:password pair as the argument
   -b.n=0               Number of requests to run
   -b.c=100             Number of requests to run concurrently
   -body=""             Send RAW data as body
