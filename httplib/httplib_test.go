@@ -149,7 +149,7 @@ func TestWithUserAgent(t *testing.T) {
 
 func TestWithSetting(t *testing.T) {
 	v := "beego"
-	var setting BeegoHttpSettings
+	var setting Settings
 	setting.EnableCookie = true
 	setting.UserAgent = v
 	setting.Transport = nil

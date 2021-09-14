@@ -18,7 +18,7 @@ type result struct {
 	contentLength int64
 }
 
-func RunBench(b *httplib.BeegoHttpRequest) {
+func RunBench(b *httplib.Request) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	start := time.Now()
 	results := make(chan *result, benchN)
@@ -41,7 +41,7 @@ func RunBench(b *httplib.BeegoHttpRequest) {
 	close(results)
 }
 
-func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.BeegoHttpRequest) {
+func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.Request) {
 	for range ch {
 		s := time.Now()
 		code := 0

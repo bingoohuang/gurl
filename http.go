@@ -8,13 +8,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/bingoohuang/gurl/httplib"
 )
 
-var defaultSetting = httplib.BeegoHttpSettings{
+var defaultSetting = httplib.Settings{
 	ShowDebug:        true,
 	UserAgent:        "gurl/" + version,
 	ConnectTimeout:   60 * time.Second,
@@ -23,7 +24,9 @@ var defaultSetting = httplib.BeegoHttpSettings{
 	DumpBody:         true,
 }
 
-func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequest) {
+var keyReq = regexp.MustCompile(`^(\w+)(==|:=|=|:|@)(.*)`)
+
+func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 	r = httplib.NewRequest(url, method)
 	r.Setting = defaultSetting
 	r.Header("Accept-Encoding", "gzip, deflate")
@@ -35,44 +38,49 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 	} else {
 		r.Header("Accept", "application/json")
 	}
+	// https://httpie.io/docs#request-items
+	// Item Type	Description
+	// HTTP Headers Name:Value	Arbitrary HTTP header, e.g. X-API-Token:123
+	// URL parameters name==value	Appends the given name/value pair as a querystring parameter to the URL. The == separator is used.
+	// Data Fields field=value, field=@file.txt	Request data fields to be serialized as a JSON object (default), to be form-encoded (with --form, -f), or to be serialized as multipart/form-data (with --multipart)
+	// Raw JSON fields field:=json	Useful when sending JSON and one or more fields need to be a Boolean, Number, nested Object, or an Array, e.g., meals:='["ham","spam"]' or pies:=[1,2,3] (note the quotes)
+	// File upload fields field@/dir/file, field@file;type=mime	Only available with --form, -f and --multipart. For example screenshot@~/Pictures/img.png, or 'cv@cv.txt;type=text/markdown'. With --form, the presence of a file field results in a --multipart request
 	for i := range args {
 		// Json raws
-		if strs := strings.SplitN(args[i], ":=", 2); len(strs) == 2 {
-			if v, fn, err := readFile(strs[1]); err != nil {
+		submatch := keyReq.FindStringSubmatch(args[i])
+		if len(submatch) == 0 {
+			continue
+		}
+
+		switch k, op, v := submatch[1], submatch[2], submatch[3]; op {
+		case ":=":
+			if v, fn, err := readFile(v); err != nil {
 				log.Fatal("Read File", fn, err)
 			} else if fn != "" {
 				var j interface{}
 				if err := json.Unmarshal(v, &j); err != nil {
 					log.Fatal("Read from File", fn, "Unmarshal", err)
 				}
-				jsonmap[strs[0]] = j
+				jsonmap[k] = j
 			} else {
-				jsonmap[strs[0]] = json.RawMessage(strs[1])
+				jsonmap[k] = json.RawMessage(v)
 			}
-			continue
-		}
-		// Headers
-		if strs := strings.Split(args[i], ":"); len(strs) >= 2 {
-			if strs[0] == "Host" {
-				r.SetHost(strings.Join(strs[1:], ":"))
-			}
-			r.Header(strs[0], strings.Join(strs[1:], ":"))
-			continue
-		}
-		// Params
-		if strs := strings.SplitN(args[i], "=", 2); len(strs) == 2 {
-			strs[1] = tryReadFile(strs[1])
+		case "==": // Queries
+			r.Query(k, v)
+		case "=": // Params
+			v = tryReadFile(v)
 			if form || method == "GET" {
-				r.Param(strs[0], strs[1])
+				r.Param(k, v)
 			} else {
-				jsonmap[strs[0]] = strs[1]
+				jsonmap[k] = v
 			}
-			continue
-		}
-		// files
-		if strs := strings.SplitN(args[i], "@", 2); len(strs) == 2 {
-			r.PostFile(strs[0], strs[1])
-			continue
+		case ":": // Headers
+			if k == "Host" {
+				r.SetHost(v)
+			}
+			r.Header(k, v)
+		case "@": // files
+			r.PostFile(k, v)
 		}
 	}
 	if !form && len(jsonmap) > 0 {
@@ -109,7 +117,7 @@ func readFile(s string) (data []byte, fn string, e error) {
 	return content, s, nil
 }
 
-func formatResponseBody(res *http.Response, httpreq *httplib.BeegoHttpRequest, pretty bool) string {
+func formatResponseBody(res *http.Response, httpreq *httplib.Request, pretty bool) string {
 	body, err := httpreq.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
