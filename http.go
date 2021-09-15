@@ -24,7 +24,7 @@ var defaultSetting = httplib.Settings{
 	DumpBody:         true,
 }
 
-var keyReq = regexp.MustCompile(`^(\w+)(==|:=|=|:|@)(.*)`)
+var keyReq = regexp.MustCompile(`^([\d\w_.\-]+)(==|:=|=|:|@)(.*)`)
 
 func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 	r = httplib.NewRequest(url, method)
