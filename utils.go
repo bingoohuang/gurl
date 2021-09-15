@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -30,4 +32,20 @@ func FormatBytes(i int64) (result string) {
 	}
 	result = strings.Trim(result, " ")
 	return
+}
+
+const EnvPrefix = "GURL_"
+
+func flagEnv(name, value, usage string) *string {
+	if value == "" {
+		value = os.Getenv(EnvPrefix + strings.ToUpper(name))
+	}
+	return flag.String(name, value, usage)
+}
+
+func flagEnvVar(p *string, name, value, usage string) {
+	if value == "" {
+		value = os.Getenv(EnvPrefix + strings.ToUpper(name))
+	}
+	flag.StringVar(p, name, value, usage)
 }

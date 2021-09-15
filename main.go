@@ -43,20 +43,6 @@ var (
 	contentJsonRegex = regexp.MustCompile(`application/(.*)json`)
 )
 
-func flagEnv(name, value, usage string) *string {
-	if value == "" {
-		value = os.Getenv("GURL_" + strings.ToUpper(name))
-	}
-	return flag.String(name, value, usage)
-}
-
-func flagEnvVar(p *string, name, value, usage string) {
-	if value == "" {
-		value = os.Getenv("GURL_" + strings.ToUpper(name))
-	}
-	flag.StringVar(p, name, value, usage)
-}
-
 func init() {
 	flag.BoolVar(&ver, "v", false, "Print Version Number")
 	flag.BoolVar(&raw, "raw", false, "Print JSON Raw Format")
@@ -136,33 +122,7 @@ func main() {
 		}
 	}
 
-	if *URL == "" {
-		usage()
-	}
-	if strings.HasPrefix(*URL, ":") {
-		urlb := []byte(*URL)
-		if *URL == ":" {
-			*URL = "http://localhost/"
-		} else if len(*URL) > 1 && urlb[1] != '/' {
-			*URL = "http://localhost" + *URL
-		} else {
-			*URL = "http://localhost" + string(urlb[1:])
-		}
-	}
-	if !strings.HasPrefix(*URL, "http://") && !strings.HasPrefix(*URL, "https://") {
-		*URL = "http://" + *URL
-	}
-	u, err := url.Parse(*URL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if auth != "" {
-		if userpass := strings.Split(auth, ":"); len(userpass) == 2 {
-			u.User = url.UserPassword(userpass[0], userpass[1])
-		} else {
-			u.User = url.User(auth)
-		}
-	}
+	u := parseURL(*URL)
 	*URL = u.String()
 	req := getHTTP(*method, *URL, nonFlagArgs)
 	if u.User != nil {
@@ -194,8 +154,7 @@ func main() {
 		var j interface{}
 		d := json.NewDecoder(bytes.NewReader(stdin))
 		d.UseNumber()
-		err = d.Decode(&j)
-		if err != nil {
+		if err := d.Decode(&j); err != nil {
 			req.Body(stdin)
 		} else {
 			req.JsonBody(j)
@@ -299,6 +258,38 @@ func main() {
 			fmt.Println(body)
 		}
 	}
+}
+
+func parseURL(urls string) *url.URL {
+	if urls == "" {
+		usage()
+	}
+	if strings.HasPrefix(urls, ":") {
+		urlb := []byte(urls)
+		if urls == ":" {
+			urls = "http://localhost/"
+		} else if len(urls) > 1 && urlb[1] != '/' {
+			urls = "http://localhost" + urls
+		} else {
+			urls = "http://localhost" + string(urlb[1:])
+		}
+	}
+	if !strings.HasPrefix(urls, "http://") && !strings.HasPrefix(urls, "https://") {
+		urls = "http://" + urls
+	}
+	u, err := url.Parse(urls)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if auth != "" {
+		if userpass := strings.Split(auth, ":"); len(userpass) == 2 {
+			u.User = url.UserPassword(userpass[0], userpass[1])
+		} else {
+			u.User = url.User(auth)
+		}
+	}
+
+	return u
 }
 
 func downloadFile(u *url.URL, res *http.Response, filename string) {
