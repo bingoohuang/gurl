@@ -31,23 +31,15 @@ const (
 )
 
 var (
-	ver              bool
-	form             bool
-	pretty           bool
-	raw              bool
-	download         bool
-	insecureSSL      bool
-	auth             string
-	proxy            string
-	printV           string
-	printOption      uint8
-	body             string
-	benchN           int
-	benchC           int
+	ver, form, pretty, raw, download, insecureSSL bool
+	auth, proxy, printV, body                     string
+	printOption                                   uint8
+	benchN, benchC                                int
+
 	isjson           = flag.Bool("json", true, "Send the data as a JSON object")
 	method           = flag.String("method", "GET", "HTTP method")
 	URL              = flag.String("url", "", "HTTP request URL")
-	jsonmap          map[string]interface{}
+	jsonmap          = map[string]interface{}{}
 	contentJsonRegex = regexp.MustCompile(`application/(.*)json`)
 )
 
@@ -63,7 +55,6 @@ func init() {
 	flag.IntVar(&benchN, "b.n", 0, "Number of bench requests to run")
 	flag.IntVar(&benchC, "b.c", 100, "Number of bench requests to run concurrently.")
 	flag.StringVar(&body, "body", "", "Raw data send as body")
-	jsonmap = make(map[string]interface{})
 }
 
 func parsePrintOption(s string) {
@@ -332,40 +323,30 @@ func downloadFile(u *url.URL, res *http.Response, filename string) {
 }
 
 const help = `gurl is a Go implemented CLI cURL-like tool for humans.
-
 Usage:
 	gurl [flags] [METHOD] URL [ITEM [ITEM]]
 flags:
-  -auth=USER[:PASS]       Pass a username:password pair as the argument
-  -b.n=0               Number of requests to run
-  -b.c=100             Number of requests to run concurrently
-  -body=""             Send RAW data as body
-  -f                   Submitting the data as a form
-  -j                   Send the data in a JSON object as application/json
-  -raw                 Print JSON Raw format other than pretty
-  -i                   Allow connections to SSL sites without certs
-  -proxy=PROXY_URL     Proxy with host and port
-  -print=A             String specifying what the output should contain, default will print all information
-         H request headers
-         B request body
-         h response headers
-         b response body
-  -v                   Show Version Number
+  -auth=USER[:PASS] Pass a username:password pair as the argument
+  -b.n=0 -b.c=100   Number of requests and concurrency to run
+  -body=""          Send RAW data as body
+  -f                Submitting the data as a form
+  -j                Send the data in a JSON object as application/json
+  -raw              Print JSON Raw format other than pretty
+  -i                Allow connections to SSL sites without certs
+  -proxy=PROXY_URL  Proxy with host and port
+  -print=A          String specifying what the output should contain, default will print all information
+                       H: request headers  B: request body  h: response headers  b: response body
+  -v                Show Version Number
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).
 URL:
-  The only information needed to perform a request is a URL. The default scheme is http://,
+  The only one needed to perform a request is a URL. The default scheme is http://,
   which can be omitted from the argument; example.org works just fine.
 ITEM:
-  Can be any of:
-    Query string   key=value
-    Header         key:value
-    Post data      key=value
-	JSON data      key:=value
-    File upload    key@/path/file
+  Can be any of: Query    : key=value  Header: key:value       Post data: key=value 
+                 JSON data: key:=value Upload: key@/path/file
 Example:
 	gurl beego.me
-
 more help information please refer to https://github.com/bingoohuang/gurl
 `
 
