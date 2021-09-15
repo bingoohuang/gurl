@@ -82,21 +82,23 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	flag.Usage = usage
 
-	var flagArgs []string
+	flagArgs := os.Args[1:]
 	var nonFlagArgs []string
-	for i, arg := range os.Args[1:] {
-		if strings.HasPrefix(arg, "-") {
-			flagArgs = os.Args[i+1:]
-			break
+
+	for {
+		if err := flag.CommandLine.Parse(flagArgs); err != nil {
+			log.Fatalf("failed to parse args, %v", err)
+		}
+		if args := flag.Args(); len(args) > 0 {
+			nonFlagArgs = append(nonFlagArgs, args[0])
+			flagArgs = args[1:]
 		} else {
-			nonFlagArgs = append(nonFlagArgs, arg)
+			break
 		}
 	}
 
-	flag.CommandLine.Parse(flagArgs)
 	pretty = !raw
 
-	nonFlagArgs = append(nonFlagArgs, flag.Args()...)
 	if len(nonFlagArgs) > 0 {
 		nonFlagArgs = filter(nonFlagArgs)
 	}
