@@ -38,10 +38,24 @@ var (
 
 	isjson           = flag.Bool("json", true, "Send the data as a JSON object")
 	method           = flag.String("method", "GET", "HTTP method")
-	URL              = flag.String("url", "", "HTTP request URL")
+	URL              = flagEnv("url", "", "HTTP request URL")
 	jsonmap          = map[string]interface{}{}
 	contentJsonRegex = regexp.MustCompile(`application/(.*)json`)
 )
+
+func flagEnv(name, value, usage string) *string {
+	if value == "" {
+		value = os.Getenv("GURL_" + strings.ToUpper(name))
+	}
+	return flag.String(name, value, usage)
+}
+
+func flagEnvVar(p *string, name, value, usage string) {
+	if value == "" {
+		value = os.Getenv("GURL_" + strings.ToUpper(name))
+	}
+	flag.StringVar(p, name, value, usage)
+}
 
 func init() {
 	flag.BoolVar(&ver, "v", false, "Print Version Number")
@@ -50,8 +64,9 @@ func init() {
 	flag.BoolVar(&form, "f", false, "Submitting as a form")
 	flag.BoolVar(&download, "d", false, "Download the url content as file")
 	flag.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
-	flag.StringVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
-	flag.StringVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
+
+	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
+	flagEnvVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
 	flag.IntVar(&benchN, "b.n", 0, "Number of bench requests to run")
 	flag.IntVar(&benchC, "b.c", 100, "Number of bench requests to run concurrently.")
 	flag.StringVar(&body, "body", "", "Raw data send as body")
