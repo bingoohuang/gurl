@@ -117,22 +117,19 @@ func readFile(s string) (data []byte, fn string, e error) {
 	return content, s, nil
 }
 
-func formatResponseBody(res *http.Response, httpreq *httplib.Request, pretty bool) string {
-	body, err := httpreq.Bytes()
+func formatResponseBody(res *http.Response, r *httplib.Request, pretty bool) (rsp string, isJSON bool) {
+	body, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
 	}
-	fmt.Println("")
-	match := contentJsonRegex.MatchString(res.Header.Get("Content-Type"))
-	if pretty && match {
-		var output bytes.Buffer
-		err := json.Indent(&output, body, "", "  ")
-		if err != nil {
-			log.Fatal("Response JSON Indent: ", err)
-		}
 
-		return output.String()
+	fmt.Println("")
+	if pretty && contentJsonRegex.MatchString(res.Header.Get("Content-Type")) {
+		var output bytes.Buffer
+		if err := json.Indent(&output, body, "", "  "); err == nil {
+			return output.String(), true
+		}
 	}
 
-	return string(body)
+	return string(body), false
 }

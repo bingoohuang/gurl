@@ -47,8 +47,8 @@ func ColorfulRequest(str string) string {
 	return strings.Join(lines, "\n")
 }
 
-func ColorfulResponse(str, contenttype string) string {
-	if contentJsonRegex.MatchString(contenttype) {
+func ColorfulResponse(str string, isJSON bool) string {
+	if isJSON {
 		return ColorfulJson(str)
 	}
 

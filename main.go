@@ -258,11 +258,11 @@ func main() {
 				fmt.Println("")
 			}
 			if printOption&printRespBody == printRespBody {
-				body := formatResponseBody(res, req, pretty)
-				fmt.Println(ColorfulResponse(body, res.Header.Get("Content-Type")))
+				body, isJSON := formatResponseBody(res, req, pretty)
+				fmt.Println(ColorfulResponse(body, isJSON))
 			}
 		} else {
-			body := formatResponseBody(res, req, pretty)
+			body, _ := formatResponseBody(res, req, pretty)
 			_, err = os.Stdout.WriteString(body)
 			if err != nil {
 				log.Fatal(err)
@@ -295,7 +295,7 @@ func main() {
 			fmt.Println("")
 		}
 		if printOption&printRespBody == printRespBody {
-			body := formatResponseBody(res, req, pretty)
+			body, _ := formatResponseBody(res, req, pretty)
 			fmt.Println(body)
 		}
 	}
