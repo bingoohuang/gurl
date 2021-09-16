@@ -16,7 +16,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -36,11 +35,10 @@ var (
 	printOption                                   uint8
 	benchN, benchC                                int
 
-	isjson           = flag.Bool("json", true, "Send the data as a JSON object")
-	method           = flag.String("method", "GET", "HTTP method")
-	URL              = flagEnv("url", "", "HTTP request URL")
-	jsonmap          = map[string]interface{}{}
-	contentJsonRegex = regexp.MustCompile(`application/(.*)json`)
+	isjson  = flag.Bool("json", true, "Send the data as a JSON object")
+	method  = flag.String("method", "GET", "HTTP method")
+	URL     = flagEnv("url", "", "HTTP request URL")
+	jsonmap = map[string]interface{}{}
 )
 
 func init() {
@@ -219,13 +217,11 @@ func main() {
 				fmt.Println("")
 			}
 			if printOption&printRespBody == printRespBody {
-				body, isJSON := formatResponseBody(res, req, pretty)
-				fmt.Println(ColorfulResponse(body, isJSON))
+				fmt.Println(formatResponseBody(req, pretty, true))
 			}
 		} else {
-			body, _ := formatResponseBody(res, req, pretty)
-			_, err = os.Stdout.WriteString(body)
-			if err != nil {
+			body := formatResponseBody(req, pretty, false)
+			if _, err := os.Stdout.WriteString(body); err != nil {
 				log.Fatal(err)
 			}
 		}
@@ -256,8 +252,7 @@ func main() {
 			fmt.Println("")
 		}
 		if printOption&printRespBody == printRespBody {
-			body, _ := formatResponseBody(res, req, pretty)
-			fmt.Println(body)
+			fmt.Println(formatResponseBody(req, pretty, false))
 		}
 	}
 }

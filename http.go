@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -45,14 +44,13 @@ func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 	// Raw JSON fields field:=json	Useful when sending JSON and one or more fields need to be a Boolean, Number, nested Object, or an Array, e.g., meals:='["ham","spam"]' or pies:=[1,2,3] (note the quotes)
 	// File upload fields field@/dir/file, field@file;type=mime	Only available with --form, -f and --multipart. For example screenshot@~/Pictures/img.png, or 'cv@cv.txt;type=text/markdown'. With --form, the presence of a file field results in a --multipart request
 	for i := range args {
-		// Json raws
 		submatch := keyReq.FindStringSubmatch(args[i])
 		if len(submatch) == 0 {
 			continue
 		}
 
 		switch k, op, v := submatch[1], submatch[2], submatch[3]; op {
-		case ":=":
+		case ":=": // Json raws
 			if v, fn, err := readFile(v); err != nil {
 				log.Fatal("Read File", fn, err)
 			} else if fn != "" {
@@ -67,8 +65,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 		case "==": // Queries
 			r.Query(k, v)
 		case "=": // Params
-			v = tryReadFile(v)
-			if form || method == "GET" {
+			if v = tryReadFile(v); form || method == "GET" {
 				r.Param(k, v)
 			} else {
 				jsonmap[k] = v
@@ -76,8 +73,9 @@ func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 		case ":": // Headers
 			if k == "Host" {
 				r.SetHost(v)
+			} else {
+				r.Header(k, v)
 			}
-			r.Header(k, v)
 		case "@": // files
 			r.PostFile(k, v)
 		}
@@ -104,7 +102,7 @@ func readFile(s string) (data []byte, fn string, e error) {
 		return []byte(s), "", nil
 	}
 
-	s = strings.TrimLeft(s, "@")
+	s = strings.TrimPrefix(s, "@")
 	f, err := os.Open(s)
 	if err != nil {
 		return nil, s, err
@@ -116,18 +114,23 @@ func readFile(s string) (data []byte, fn string, e error) {
 	return content, s, nil
 }
 
-func formatResponseBody(res *http.Response, r *httplib.Request, pretty bool) (rsp string, isJSON bool) {
+func formatResponseBody(r *httplib.Request, pretty, hasDevice bool) (rsp string) {
 	body, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
 	}
 
-	if pretty && contentJsonRegex.MatchString(res.Header.Get("Content-Type")) {
+	isJSON := json.Valid(body)
+	if pretty && isJSON {
 		var output bytes.Buffer
 		if err := json.Indent(&output, body, "", "  "); err == nil {
-			return output.String(), true
+			body = output.Bytes()
 		}
 	}
 
-	return string(body), false
+	if hasDevice {
+		return ColorfulResponse(string(body), isJSON)
+	}
+
+	return string(body)
 }
