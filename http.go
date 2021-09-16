@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -123,7 +122,6 @@ func formatResponseBody(res *http.Response, r *httplib.Request, pretty bool) (rs
 		log.Fatalln("can't get the url", err)
 	}
 
-	fmt.Println("")
 	if pretty && contentJsonRegex.MatchString(res.Header.Get("Content-Type")) {
 		var output bytes.Buffer
 		if err := json.Indent(&output, body, "", "  "); err == nil {
