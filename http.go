@@ -114,12 +114,21 @@ func readFile(s string) (data []byte, fn string, e error) {
 	return content, s, nil
 }
 
-func formatResponseBody(r *httplib.Request, pretty, hasDevice bool) (rsp string) {
+func formatResponseBody(r *httplib.Request, pretty, hasDevice bool) string {
 	body, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
 	}
 
+	rsp := formatBytes(body, pretty, hasDevice)
+	if !bytes.HasSuffix(body, []byte("\n")) {
+		rsp += "\n"
+	}
+
+	return rsp
+}
+
+func formatBytes(body []byte, pretty, hasDevice bool) string {
 	isJSON := json.Valid(body)
 	if pretty && isJSON {
 		var output bytes.Buffer
