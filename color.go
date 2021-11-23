@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bingoohuang/jj"
 	"strings"
 )
 
@@ -49,97 +50,10 @@ func ColorfulRequest(str string) string {
 
 func ColorfulResponse(str string, isJSON bool) string {
 	if isJSON {
-		return ColorfulJson(str)
+		return string(jj.Color([]byte(str), nil))
 	}
 
 	return ColorfulHTML(str)
-}
-
-func ColorfulJson(str string) string {
-	var rsli []rune
-	var key, val, startcolor, endcolor, startsemicolon bool
-	var prev rune
-	for _, char := range []rune(str) {
-		switch char {
-		case ' ':
-			rsli = append(rsli, char)
-		case '{':
-			startcolor = true
-			key = true
-			val = false
-			rsli = append(rsli, char)
-		case '}':
-			startcolor = false
-			endcolor = false
-			key = false
-			val = false
-			rsli = append(rsli, char)
-		case '"':
-			if startsemicolon && prev == '\\' {
-				rsli = append(rsli, char)
-			} else {
-				if startcolor {
-					rsli = append(rsli, char)
-					if key {
-						rsli = append(rsli, []rune(ColorStart(Magenta))...)
-					} else if val {
-						rsli = append(rsli, []rune(ColorStart(Cyan))...)
-					}
-					startsemicolon = true
-					key = false
-					val = false
-					startcolor = false
-				} else {
-					rsli = append(rsli, []rune(EndColor)...)
-					rsli = append(rsli, char)
-					endcolor = true
-					startsemicolon = false
-				}
-			}
-		case ',':
-			if !startsemicolon {
-				startcolor = true
-				key = true
-				val = false
-				if !endcolor {
-					rsli = append(rsli, []rune(EndColor)...)
-					endcolor = true
-				}
-			}
-			rsli = append(rsli, char)
-		case ':':
-			if !startsemicolon {
-				key = false
-				val = true
-				startcolor = true
-				if !endcolor {
-					rsli = append(rsli, []rune(EndColor)...)
-					endcolor = true
-				}
-			}
-			rsli = append(rsli, char)
-		case '\n', '\r', '[', ']':
-			rsli = append(rsli, char)
-		default:
-			if !startsemicolon {
-				if key && startcolor {
-					rsli = append(rsli, []rune(ColorStart(Magenta))...)
-					key = false
-					startcolor = false
-					endcolor = false
-				}
-				if val && startcolor {
-					rsli = append(rsli, []rune(ColorStart(Cyan))...)
-					val = false
-					startcolor = false
-					endcolor = false
-				}
-			}
-			rsli = append(rsli, char)
-		}
-		prev = char
-	}
-	return string(rsli)
 }
 
 func ColorfulHTML(str string) string {
