@@ -63,7 +63,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 				jsonmap[k] = json.RawMessage(v)
 			}
 		case "==": // Queries
-			r.Query(k, v)
+			r.Query(k, tryReadFile(v))
 		case "=": // Params
 			if v = tryReadFile(v); form || method == "GET" {
 				r.Param(k, v)
@@ -120,12 +120,7 @@ func formatResponseBody(r *httplib.Request, pretty, hasDevice bool) string {
 		log.Fatalln("can't get the url", err)
 	}
 
-	rsp := formatBytes(body, pretty, hasDevice)
-	if !bytes.HasSuffix(body, []byte("\n")) {
-		rsp += "\n"
-	}
-
-	return rsp
+	return formatBytes(body, pretty, hasDevice)
 }
 
 func formatBytes(body []byte, pretty, hasDevice bool) string {

@@ -27,7 +27,7 @@ URL:
   which can be omitted from the argument; example.org works just fine.
 ITEM:
   Can be any of: Query      : key=value  Header: key:value       Post data: key=value 
-                 Force query: key==value
+                 Force query: key==value key==@/path/file
                  JSON data  : key:=value Upload: key@/path/file
 Example:
   gurl beego.me

@@ -14,17 +14,24 @@ func filter(args []string) []string {
 		i++
 	} else if len(args) > 0 && *method == "GET" {
 		for _, v := range args[1:] {
-			// defaults to either GET (with no request data) or POST (with request data).
-			// Params
-			strs := strings.Split(v, "=")
-			if len(strs) == 2 {
-				*method = "POST"
-				break
+			submatch := keyReq.FindStringSubmatch(v)
+			if len(submatch) == 0 {
+				continue
 			}
-			// files
-			strs = strings.Split(v, "@")
-			if len(strs) == 2 {
+
+			// defaults to either GET (with no request data) or POST (with request data).
+			switch _, op, _ := submatch[1], submatch[2], submatch[3]; op {
+			case ":=": // Json raws
 				*method = "POST"
+			case "==": // Queries
+			case "=": // Params
+				*method = "POST"
+			case ":": // Headers
+			case "@": // files
+				*method = "POST"
+			}
+
+			if *method == "POST" {
 				break
 			}
 		}

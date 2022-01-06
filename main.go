@@ -201,12 +201,10 @@ func main() {
 			}
 			if printOption&printReqHeader == printReqHeader {
 				fmt.Println(ColorfulRequest(string(dumpHeader)))
-				fmt.Println("")
 			}
 			if printOption&printReqBody == printReqBody {
 				if string(dumpBody) != "\r\n" {
 					fmt.Println(string(dumpBody))
-					fmt.Println("")
 				}
 			}
 			if printOption&printRespHeader == printRespHeader {
@@ -214,7 +212,7 @@ func main() {
 				for k, v := range res.Header {
 					fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(v, " "), Cyan))
 				}
-				fmt.Println("")
+				fmt.Println()
 			}
 			if printOption&printRespBody == printRespBody {
 				fmt.Println(formatResponseBody(req, pretty, true))

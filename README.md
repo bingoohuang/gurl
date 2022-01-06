@@ -1,13 +1,56 @@
+
 # gurl
 
 Go implemented CLI cURL-like tool for humans. Bat can be used for testing, debugging, and generally interacting with HTTP servers.
 
 Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the author, Jakub.
 
+Features:
 
-![](images/logo.png)
+1. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
 
-![](images/example.png)
+
+```sh
+$ gurl PUT httpbin.org/put hello=world                                                              
+PUT /put? HTTP/1.1
+Host: httpbin.org
+Accept: application/json
+Accept-Encoding: gzip, deflate
+Content-Type: application/json
+User-Agent: gurl/0.1.0
+
+{"hello":"world"}
+
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Date: Thu, 06 Jan 2022 03:38:08 GMT
+Content-Type: application/json
+Content-Length: 486
+Connection: keep-alive
+Server: gunicorn/19.9.0
+Access-Control-Allow-Origin: *
+
+{
+  "args": {},
+  "data": "{\"hello\":\"world\"}\n",
+  "files": {},
+  "form": {},
+  "headers": {
+    "Accept": "application/json",
+    "Accept-Encoding": "gzip, deflate",
+    "Content-Length": "18",
+    "Content-Type": "application/json",
+    "Host": "httpbin.org",
+    "User-Agent": "gurl/0.1.0",
+    "X-Amzn-Trace-Id": "Root=1-61d66420-230d9c070cfeffbc477fc755"
+  },
+  "json": {
+    "hello": "world"
+  },
+  "origin": "43.245.222.139",
+  "url": "http://httpbin.org/put"
+}
+```
 
 - [Main Features](#main-features)
 - [Installation](#installation)
@@ -260,12 +303,14 @@ If one or more file fields is present, the serialization and content type is `mu
 	
 The request above is the same as if the following HTML form were submitted:
 
-```
+---
+```markdown
 <form enctype="multipart/form-data" method="post" action="http://example.com/jobs">
     <input type="text" name="name" />
     <input type="file" name="cv" />
 </form>
 ```
+---
 
 Note that `@` is used to simulate a file upload form field.
 
