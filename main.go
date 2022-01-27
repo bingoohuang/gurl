@@ -199,14 +199,14 @@ func main() {
 					break
 				}
 			}
+
 			if printOption&printReqHeader == printReqHeader {
 				fmt.Println(ColorfulRequest(string(dumpHeader)))
 			}
 			if printOption&printReqBody == printReqBody {
-				if string(dumpBody) != "\r\n" {
-					fmt.Println(string(dumpBody))
-				}
+				fmt.Println(string(dumpBody))
 			}
+
 			if printOption&printRespHeader == printRespHeader {
 				fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 				for k, v := range res.Header {
