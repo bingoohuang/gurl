@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -36,6 +37,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 	} else {
 		r.Header("Accept", "application/json")
 	}
+	r.Header("Gurl-Date", time.Now().UTC().Format(http.TimeFormat))
 	// https://httpie.io/docs#request-items
 	// Item Type	Description
 	// HTTP Headers Name:Value	Arbitrary HTTP header, e.g. X-API-Token:123
