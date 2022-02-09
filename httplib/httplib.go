@@ -59,8 +59,11 @@ var defaultSetting = Settings{
 	Gzip:             true,
 	DumpBody:         true,
 }
-var defaultCookieJar http.CookieJar
-var settingMutex sync.Mutex
+
+var (
+	defaultCookieJar http.CookieJar
+	settingMutex     sync.Mutex
+)
 
 // createDefaultCookie creates a global cookiejar to store cookies.
 func createDefaultCookie() {
@@ -336,7 +339,7 @@ func (b *Request) buildUrl() {
 					if err != nil {
 						log.Fatal(err)
 					}
-					//iocopy
+					// iocopy
 					_, err = io.Copy(fileWriter, fh)
 					fh.Close()
 					if err != nil {

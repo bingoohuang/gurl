@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/bingoohuang/gg/pkg/v"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ import (
 
 var defaultSetting = httplib.Settings{
 	ShowDebug:        true,
-	UserAgent:        "gurl/" + version,
+	UserAgent:        "gurl/" + v.AppVersion,
 	ConnectTimeout:   60 * time.Second,
 	ReadWriteTimeout: 60 * time.Second,
 	Gzip:             true,
@@ -91,12 +92,12 @@ func getHTTP(method string, url string, args []string) (r *httplib.Request) {
 }
 
 func tryReadFile(s string) string {
-	if v, _, err := readFile(s); err != nil {
+	v, _, err := readFile(s)
+	if err != nil {
 		log.Fatal("Read File", s, err)
-		return ""
-	} else {
-		return string(v)
 	}
+
+	return string(v)
 }
 
 func readFile(s string) (data []byte, fn string, e error) {

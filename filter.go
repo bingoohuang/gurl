@@ -3,23 +3,27 @@ package main
 import (
 	"log"
 	"strings"
+
+	"github.com/bingoohuang/gg/pkg/rest"
 )
 
 var methodList = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 
 func filter(args []string) []string {
-	var fileredArgs []string
+	var filteredArgs []string
 	methodFoundInArgs := false
 
 	for _, arg := range args {
 		if inSlice(strings.ToUpper(arg), methodList) {
 			*method = strings.ToUpper(arg)
 			methodFoundInArgs = true
+		} else if urlAddr, err := rest.FixURI(arg); err == nil && strings.ContainsAny(arg, ":/") {
+			*Urls = append(*Urls, urlAddr)
 		} else {
-			fileredArgs = append(fileredArgs, arg)
+			filteredArgs = append(filteredArgs, arg)
 		}
 	}
-	args = fileredArgs
+	args = filteredArgs
 
 	if !methodFoundInArgs && *method == "GET" {
 		if len(args) > 0 {
@@ -40,7 +44,6 @@ func filter(args []string) []string {
 				case "@": // files
 					*method = "POST"
 				}
-
 				if *method == "POST" {
 					break
 				}
@@ -49,9 +52,8 @@ func filter(args []string) []string {
 			*method = "POST"
 		}
 	}
-	if len(args) == 0 {
+	if len(*Urls) == 0 {
 		log.Fatal("Miss the URL")
 	}
-	*URL = args[0]
-	return args[1:]
+	return args
 }

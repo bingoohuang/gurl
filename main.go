@@ -6,8 +6,8 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"flag"
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/v"
 	"io"
 	"io/ioutil"
 	"log"
@@ -19,11 +19,12 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/bingoohuang/gg/pkg/fla9"
 )
 
 const (
-	version              = "0.1.0"
-	printReqHeader uint8 = 1 << (iota - 1)
+	printReqHeader uint8 = 1 << iota
 	printReqBody
 	printRespHeader
 	printRespBody
@@ -35,25 +36,25 @@ var (
 	printOption                                   uint8
 	benchN, benchC                                int
 
-	isjson  = flag.Bool("json", true, "Send the data as a JSON object")
-	method  = flag.String("method", "GET", "HTTP method")
-	URL     = flagEnv("url", "", "HTTP request URL")
+	isjson  = fla9.Bool("json,j", true, "Send the data as a JSON object")
+	method  = fla9.String("method,m", "GET", "HTTP method")
+	Urls    = flagEnv("url,u", "", "HTTP request URL")
 	jsonmap = map[string]interface{}{}
 )
 
 func init() {
-	flag.BoolVar(&ver, "v", false, "Print Version Number")
-	flag.BoolVar(&raw, "raw", false, "Print JSON Raw Format")
-	flag.StringVar(&printV, "print", "A", "Print request and response")
-	flag.BoolVar(&form, "f", false, "Submitting as a form")
-	flag.BoolVar(&download, "d", false, "Download the url content as file")
-	flag.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
+	fla9.BoolVar(&ver, "v", false, "Print Version Number")
+	fla9.BoolVar(&raw, "raw,r", false, "Print JSON Raw Format")
+	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
+	fla9.BoolVar(&form, "f", false, "Submitting as a form")
+	fla9.BoolVar(&download, "d", false, "Download the url content as file")
+	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
 
 	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
 	flagEnvVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
-	flag.IntVar(&benchN, "b.n", 0, "Number of bench requests to run")
-	flag.IntVar(&benchC, "b.c", 100, "Number of bench requests to run concurrently.")
-	flag.StringVar(&body, "body", "", "Raw data send as body")
+	fla9.IntVar(&benchN, "b.n", 0, "Number of bench requests to run")
+	fla9.IntVar(&benchC, "b.c", 100, "Number of bench requests to run concurrently.")
+	fla9.StringVar(&body, "body,b", "", "Raw data send as body")
 }
 
 func parsePrintOption(s string) {
@@ -78,53 +79,55 @@ func parsePrintOption(s string) {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-	flag.Usage = usage
+	fla9.Usage = usage
 
-	flagArgs := os.Args[1:]
-	var nonFlagArgs []string
-
-	for {
-		if err := flag.CommandLine.Parse(flagArgs); err != nil {
-			log.Fatalf("failed to parse args, %v", err)
-		}
-		if args := flag.Args(); len(args) > 0 {
-			nonFlagArgs = append(nonFlagArgs, args[0])
-			flagArgs = args[1:]
-		} else {
-			break
-		}
+	if err := fla9.CommandLine.Parse(os.Args[1:]); err != nil {
+		log.Fatalf("failed to parse args, %v", err)
+	}
+	if ver {
+		fmt.Println(v.Version())
+		os.Exit(2)
 	}
 
 	pretty = !raw
+	nonFlagArgs := filter(fla9.Args())
 
-	if len(nonFlagArgs) > 0 {
-		nonFlagArgs = filter(nonFlagArgs)
-	}
-	if ver {
-		fmt.Println("Version:", version)
-		os.Exit(2)
-	}
 	parsePrintOption(printV)
 	if printOption&printReqBody != printReqBody {
 		defaultSetting.DumpBody = false
 	}
+
+	stdin := parseStdin()
+
+	for _, urlAddr := range *Urls {
+		run(urlAddr, nonFlagArgs, stdin)
+	}
+}
+
+func parseStdin() []byte {
+	if runtime.GOOS == "windows" {
+		return nil
+	}
+
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		panic(err)
+	}
+
 	var stdin []byte
-	if runtime.GOOS != "windows" {
-		fi, err := os.Stdin.Stat()
-		if err != nil {
-			panic(err)
-		}
-		if fi.Size() != 0 {
-			stdin, err = ioutil.ReadAll(os.Stdin)
-			if err != nil {
-				log.Fatal("Read from Stdin", err)
-			}
+	if fi.Size() != 0 {
+		if stdin, err = ioutil.ReadAll(os.Stdin); err != nil {
+			log.Fatal("Read from Stdin", err)
 		}
 	}
 
-	u := parseURL(*URL)
-	*URL = u.String()
-	req := getHTTP(*method, *URL, nonFlagArgs)
+	return stdin
+}
+
+func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
+	u := parseURL(urlAddr)
+	urlAddr = u.String()
+	req := getHTTP(*method, urlAddr, nonFlagArgs)
 	if u.User != nil {
 		password, _ := u.User.Password()
 		req.SetBasicAuth(u.User.Username(), password)
@@ -291,7 +294,7 @@ func downloadFile(u *url.URL, res *http.Response, filename string) {
 	if filename == "" {
 		_, filename = filepath.Split(u.Path)
 	}
-	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
+	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatal("can't create file", err)
 	}

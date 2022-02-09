@@ -7,8 +7,8 @@ Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the aut
 
 Features:
 
-1. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
-
+1. 2022年02月09日 支持多 URL. `gurl 192.168.126.{16,18,182}:15002/kv -pb` `gurl 192.168.126.{16,18,182}:15002/kv -pb POST v==12345`
+2. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
 
 ```sh
 $ gurl PUT httpbin.org/put hello=world                                                              

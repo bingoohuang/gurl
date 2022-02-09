@@ -1,10 +1,11 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/bingoohuang/gg/pkg/fla9"
 )
 
 func inSlice(str string, l []string) bool {
@@ -36,16 +37,21 @@ func FormatBytes(i int64) (result string) {
 
 const EnvPrefix = "GURL_"
 
-func flagEnv(name, value, usage string) *string {
+func flagEnv(name, value, usage string) *[]string {
 	if value == "" {
 		value = os.Getenv(EnvPrefix + strings.ToUpper(name))
 	}
-	return flag.String(name, value, usage)
+	var defaultValue []string
+	if value != "" {
+		defaultValue = []string{value}
+	}
+
+	return fla9.Strings(name, defaultValue, usage)
 }
 
 func flagEnvVar(p *string, name, value, usage string) {
 	if value == "" {
 		value = os.Getenv(EnvPrefix + strings.ToUpper(name))
 	}
-	flag.StringVar(p, name, value, usage)
+	fla9.StringVar(p, name, value, usage)
 }

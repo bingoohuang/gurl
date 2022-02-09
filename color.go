@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/bingoohuang/jj"
 	"strings"
+
+	"github.com/bingoohuang/jj"
 )
 
 const (

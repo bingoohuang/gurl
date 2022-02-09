@@ -66,7 +66,7 @@ func TestSimplePost(t *testing.T) {
 	}
 }
 
-//func TestPostFile(t *testing.T) {
+// func TestPostFile(t *testing.T) {
 //	v := "smallfish"
 //	Req := Post("http://httpbin.org/post")
 //	Req.Debug(true)
