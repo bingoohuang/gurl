@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/v"
 	"io"
 	"io/ioutil"
@@ -58,23 +59,22 @@ func init() {
 }
 
 func parsePrintOption(s string) {
-	if strings.ContainsRune(s, 'A') {
-		printOption = printReqHeader | printReqBody | printRespHeader | printRespBody
-		return
-	}
+	AdjustPrintOption(s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody)
+	AdjustPrintOption(s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody)
+	AdjustPrintOption(s, 'H', printReqHeader)
+	AdjustPrintOption(s, 'B', printReqBody)
+	AdjustPrintOption(s, 'h', printRespHeader)
+	AdjustPrintOption(s, 'b', printRespBody)
+}
 
-	if strings.ContainsRune(s, 'H') {
-		printOption |= printReqHeader
+func AdjustPrintOption(s string, r rune, flags uint8) {
+	if strings.ContainsRune(s, r) {
+		printOption |= flags
 	}
-	if strings.ContainsRune(s, 'B') {
-		printOption |= printReqBody
-	}
-	if strings.ContainsRune(s, 'h') {
-		printOption |= printRespHeader
-	}
-	if strings.ContainsRune(s, 'b') {
-		printOption |= printRespBody
-	}
+}
+
+func HasPrintOption(flags uint8) bool {
+	return printOption&flags == flags
 }
 
 func main() {
@@ -93,7 +93,7 @@ func main() {
 	nonFlagArgs := filter(fla9.Args())
 
 	parsePrintOption(printV)
-	if printOption&printReqBody != printReqBody {
+	if !HasPrintOption(printReqBody) {
 		defaultSetting.DumpBody = false
 	}
 
@@ -175,14 +175,15 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		log.Fatalln("can't get the url", err)
 	}
 
-	filename := ""
-	if disposition := res.Header.Get("Content-Disposition"); disposition != "" {
-		if _, params, _ := mime.ParseMediaType(disposition); params != nil {
-			filename = params["filename"]
+	fn := ""
+	if d := res.Header.Get("Content-Disposition"); d != "" {
+		if _, params, _ := mime.ParseMediaType(d); params != nil {
+			fn = params["filename"]
 		}
 	}
-	if download || filename != "" {
-		downloadFile(u, res, filename)
+	ct := res.Header.Get("Content-Type")
+	if download || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml") {
+		downloadFile(u, res, fn)
 		return
 	}
 
@@ -203,21 +204,21 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 				}
 			}
 
-			if printOption&printReqHeader == printReqHeader {
+			if HasPrintOption(printReqHeader) {
 				fmt.Println(ColorfulRequest(string(dumpHeader)))
 			}
-			if printOption&printReqBody == printReqBody {
+			if HasPrintOption(printReqBody) {
 				fmt.Println(string(dumpBody))
 			}
 
-			if printOption&printRespHeader == printRespHeader {
+			if HasPrintOption(printRespHeader) {
 				fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 				for k, v := range res.Header {
 					fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(v, " "), Cyan))
 				}
 				fmt.Println()
 			}
-			if printOption&printRespBody == printRespBody {
+			if HasPrintOption(printRespBody) {
 				fmt.Println(formatResponseBody(req, pretty, true))
 			}
 		} else {
@@ -237,22 +238,22 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 				break
 			}
 		}
-		if printOption&printReqHeader == printReqHeader {
+		if HasPrintOption(printReqHeader) {
 			fmt.Println(string(dumpHeader))
 			fmt.Println("")
 		}
-		if printOption&printReqBody == printReqBody {
+		if HasPrintOption(printReqBody) {
 			fmt.Println(string(dumpBody))
 			fmt.Println("")
 		}
-		if printOption&printRespHeader == printRespHeader {
+		if HasPrintOption(printRespHeader) {
 			fmt.Println(res.Proto, res.Status)
 			for k, v := range res.Header {
 				fmt.Println(k, ":", strings.Join(v, " "))
 			}
 			fmt.Println("")
 		}
-		if printOption&printRespBody == printRespBody {
+		if HasPrintOption(printRespBody) {
 			fmt.Println(formatResponseBody(req, pretty, false))
 		}
 	}
