@@ -26,9 +26,10 @@ var defaultSetting = httplib.Settings{
 
 var keyReq = regexp.MustCompile(`^([\d\w_.\-]+)(==|:=|=|:|@)(.*)`)
 
-func getHTTP(method string, url string, args []string) (r *httplib.Request) {
+func getHTTP(method string, url string, args []string, timeout time.Duration) (r *httplib.Request) {
 	r = httplib.NewRequest(url, method)
 	r.Setting = defaultSetting
+	r.Setting.ReadWriteTimeout = timeout
 	r.Header("Accept-Encoding", "gzip, deflate")
 	if *isjson {
 		r.Header("Accept", "application/json")

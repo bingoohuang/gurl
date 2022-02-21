@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bingoohuang/gg/pkg/fla9"
 )
@@ -36,6 +37,7 @@ var (
 	auth, proxy, printV, body                     string
 	printOption                                   uint8
 	benchN, benchC                                int
+	timeout                                       time.Duration
 
 	isjson  = fla9.Bool("json,j", true, "Send the data as a JSON object")
 	method  = fla9.String("method,m", "GET", "HTTP method")
@@ -50,6 +52,7 @@ func init() {
 	fla9.BoolVar(&form, "f", false, "Submitting as a form")
 	fla9.BoolVar(&download, "d", false, "Download the url content as file")
 	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
+	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")
 
 	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
 	flagEnvVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
@@ -127,7 +130,7 @@ func parseStdin() []byte {
 func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	u := parseURL(urlAddr)
 	urlAddr = u.String()
-	req := getHTTP(*method, urlAddr, nonFlagArgs)
+	req := getHTTP(*method, urlAddr, nonFlagArgs, timeout)
 	if u.User != nil {
 		password, _ := u.User.Password()
 		req.SetBasicAuth(u.User.Username(), password)
