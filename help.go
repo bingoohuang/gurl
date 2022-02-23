@@ -19,6 +19,7 @@ flags:
   -proxy=PROXY_URL  Proxy with host and port
   -print=A          String specifying what the output should contain, default will print all information
                        H: request headers  B: request body  h: response headers  b: response body
+  -t                Set timeout for read and write, default 1m
   -v                Show Version Number
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).
