@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"runtime"
 	"sort"
 	"strings"
@@ -18,7 +20,7 @@ type result struct {
 	contentLength int64
 }
 
-func RunBench(b *httplib.Request) {
+func RunBench(b *httplib.Request, thinkerFn func()) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	start := time.Now()
 	results := make(chan *result, benchN)
@@ -28,7 +30,7 @@ func RunBench(b *httplib.Request) {
 	jobs := make(chan int, benchN)
 	for i := 0; i < benchC; i++ {
 		go func() {
-			worker(&wg, jobs, results, b)
+			worker(&wg, jobs, results, b, thinkerFn)
 		}()
 	}
 	for i := 0; i < benchN; i++ {
@@ -37,11 +39,11 @@ func RunBench(b *httplib.Request) {
 	close(jobs)
 
 	wg.Wait()
-	printReport(benchN, results, "", time.Now().Sub(start))
+	printReport(results, "", time.Now().Sub(start))
 	close(results)
 }
 
-func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.Request) {
+func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.Request, thinkerFn func()) {
 	for range ch {
 		s := time.Now()
 		code := 0
@@ -50,6 +52,7 @@ func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.Re
 		if err == nil {
 			size = resp.ContentLength
 			code = resp.StatusCode
+			io.Copy(ioutil.Discard, resp.Body)
 			resp.Body.Close()
 		}
 		wg.Done()
@@ -60,6 +63,7 @@ func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.Re
 			err:           err,
 			contentLength: size,
 		}
+		thinkerFn()
 	}
 }
 
@@ -85,7 +89,7 @@ type report struct {
 	output string
 }
 
-func printReport(size int, results chan *result, output string, total time.Duration) {
+func printReport(results chan *result, output string, total time.Duration) {
 	r := &report{
 		output:         output,
 		results:        results,

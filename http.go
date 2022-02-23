@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/bingoohuang/gg/pkg/v"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,6 +10,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/v"
 
 	"github.com/bingoohuang/gurl/httplib"
 )
@@ -28,6 +29,7 @@ var keyReq = regexp.MustCompile(`^([\d\w_.\-]+)(==|:=|=|:|@)(.*)`)
 
 func getHTTP(method string, url string, args []string, timeout time.Duration) (r *httplib.Request) {
 	r = httplib.NewRequest(url, method)
+	r.DisableKeepAlives = disableKeepAlive
 	r.Setting = defaultSetting
 	r.Setting.ReadWriteTimeout = timeout
 	r.Header("Accept-Encoding", "gzip, deflate")

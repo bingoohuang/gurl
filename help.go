@@ -10,7 +10,7 @@ Usage:
 	gurl [flags] [METHOD] URL [ITEM [ITEM]]
 flags:
   -auth=USER[:PASS] Pass a username:password pair as the argument
-  -b.n=0 -b.c=100   Number of requests and concurrency to run
+  -n=0 -c=100       Number of requests and concurrency to run
   -body=""          Send RAW data as body
   -f                Submitting the data as a form
   -j                Send the data in a JSON object as application/json
@@ -18,8 +18,10 @@ flags:
   -i                Allow connections to SSL sites without certs
   -proxy=PROXY_URL  Proxy with host and port
   -print=A          String specifying what the output should contain, default will print all information
-                       H: request headers  B: request body  h: response headers  b: response body
+                       H: request headers  B: request body  h: response headers  b: response body s: http conn session
   -t                Set timeout for read and write, default 1m
+  -k                Disable keepalive
+  -think            Think time, like 5s, 100ms, 100ms-5s, 100-200ms and etc.
   -v                Show Version Number
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).

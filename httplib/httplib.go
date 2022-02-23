@@ -111,6 +111,39 @@ func NewRequest(rawurl, method string) *Request {
 	}
 }
 
+func (b *Request) SetupTransport() {
+	trans := b.Setting.Transport
+
+	if trans == nil {
+		// create default transport
+		trans = &http.Transport{
+			TLSClientConfig: b.Setting.TlsClientConfig,
+			Proxy:           b.Setting.Proxy,
+			Dial:            TimeoutDialer(b.Setting.ConnectTimeout, b.Setting.ReadWriteTimeout),
+		}
+	} else {
+		// if b.transport is *http.Transport then set the settings.
+		if t, ok := trans.(*http.Transport); ok {
+			if t.TLSClientConfig == nil {
+				t.TLSClientConfig = b.Setting.TlsClientConfig
+			}
+			if t.Proxy == nil {
+				t.Proxy = b.Setting.Proxy
+			}
+			if t.Dial == nil {
+				t.Dial = TimeoutDialer(b.Setting.ConnectTimeout, b.Setting.ReadWriteTimeout)
+			}
+		}
+	}
+
+	// https://blog.witd.in/2019/02/25/golang-http-client-关闭重用连接两种方法/
+	if t, ok := trans.(*http.Transport); ok {
+		t.DisableKeepAlives = b.DisableKeepAlives
+	}
+	b.Req.Close = b.DisableKeepAlives
+	b.Transport = trans
+}
+
 // Get returns *Request with GET method.
 func Get(url string) *Request { return NewRequest(url, "GET") }
 
@@ -151,6 +184,9 @@ type Request struct {
 	resp    *http.Response
 	body    []byte
 	dump    []byte
+
+	DisableKeepAlives bool
+	Transport         http.RoundTripper
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -367,7 +403,12 @@ func (b *Request) buildUrl() {
 	}
 }
 
-func (b *Request) getResponse() (*http.Response, error) {
+func (b *Request) Reset() {
+	b.resp.StatusCode = 0
+	b.body = nil
+}
+
+func (b *Request) Response() (*http.Response, error) {
 	if b.resp.StatusCode != 0 {
 		return b.resp, nil
 	}
@@ -405,30 +446,6 @@ func (b *Request) SendOut() (*http.Response, error) {
 
 	b.Req.URL = url
 
-	trans := b.Setting.Transport
-
-	if trans == nil {
-		// create default transport
-		trans = &http.Transport{
-			TLSClientConfig: b.Setting.TlsClientConfig,
-			Proxy:           b.Setting.Proxy,
-			Dial:            TimeoutDialer(b.Setting.ConnectTimeout, b.Setting.ReadWriteTimeout),
-		}
-	} else {
-		// if b.transport is *http.Transport then set the settings.
-		if t, ok := trans.(*http.Transport); ok {
-			if t.TLSClientConfig == nil {
-				t.TLSClientConfig = b.Setting.TlsClientConfig
-			}
-			if t.Proxy == nil {
-				t.Proxy = b.Setting.Proxy
-			}
-			if t.Dial == nil {
-				t.Dial = TimeoutDialer(b.Setting.ConnectTimeout, b.Setting.ReadWriteTimeout)
-			}
-		}
-	}
-
 	var jar http.CookieJar = nil
 	if b.Setting.EnableCookie {
 		if defaultCookieJar == nil {
@@ -438,7 +455,7 @@ func (b *Request) SendOut() (*http.Response, error) {
 	}
 
 	client := &http.Client{
-		Transport: trans,
+		Transport: b.Transport,
 		Jar:       jar,
 	}
 
@@ -453,6 +470,7 @@ func (b *Request) SendOut() (*http.Response, error) {
 		}
 		b.dump = dump
 	}
+
 	return client.Do(b.Req)
 }
 
@@ -473,7 +491,7 @@ func (b *Request) Bytes() ([]byte, error) {
 	if b.body != nil {
 		return b.body, nil
 	}
-	resp, err := b.getResponse()
+	resp, err := b.Response()
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +523,7 @@ func (b *Request) ToFile(filename string) error {
 	}
 	defer f.Close()
 
-	resp, err := b.getResponse()
+	resp, err := b.Response()
 	if err != nil {
 		return err
 	}
@@ -535,11 +553,6 @@ func (b *Request) ToXml(v interface{}) error {
 		return err
 	}
 	return xml.Unmarshal(data, v)
-}
-
-// Response executes request client gets response mannually.
-func (b *Request) Response() (*http.Response, error) {
-	return b.getResponse()
 }
 
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
