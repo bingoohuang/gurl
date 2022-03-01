@@ -17,12 +17,11 @@ import (
 )
 
 var defaultSetting = httplib.Settings{
-	ShowDebug:        true,
-	UserAgent:        "gurl/" + v.AppVersion,
-	ConnectTimeout:   60 * time.Second,
-	ReadWriteTimeout: 60 * time.Second,
-	Gzip:             true,
-	DumpBody:         true,
+	ShowDebug:      true,
+	UserAgent:      "gurl/" + v.AppVersion,
+	ConnectTimeout: 60 * time.Second,
+	Gzip:           true,
+	DumpBody:       true,
 }
 
 var keyReq = regexp.MustCompile(`^([\d\w_.\-]+)(==|:=|=|:|@)(.*)`)
@@ -31,7 +30,7 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 	r = httplib.NewRequest(url, method)
 	r.DisableKeepAlives = disableKeepAlive
 	r.Setting = defaultSetting
-	r.Setting.ReadWriteTimeout = timeout
+	r.Setting.ConnectTimeout = timeout
 	r.Header("Accept-Encoding", "gzip, deflate")
 	if *isjson {
 		r.Header("Accept", "application/json")

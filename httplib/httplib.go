@@ -34,6 +34,7 @@ package httplib
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
@@ -54,11 +55,10 @@ import (
 )
 
 var defaultSetting = Settings{
-	UserAgent:        "beegoServer",
-	ConnectTimeout:   60 * time.Second,
-	ReadWriteTimeout: 60 * time.Second,
-	Gzip:             true,
-	DumpBody:         true,
+	UserAgent:      "beegoServer",
+	ConnectTimeout: 60 * time.Second,
+	Gzip:           true,
+	DumpBody:       true,
 }
 
 var (
@@ -78,12 +78,6 @@ func SetDefaultSetting(setting Settings) {
 	settingMutex.Lock()
 	defer settingMutex.Unlock()
 	defaultSetting = setting
-	if defaultSetting.ConnectTimeout == 0 {
-		defaultSetting.ConnectTimeout = 60 * time.Second
-	}
-	if defaultSetting.ReadWriteTimeout == 0 {
-		defaultSetting.ReadWriteTimeout = 60 * time.Second
-	}
 }
 
 // NewRequest return *Request with specific method
@@ -120,7 +114,7 @@ func (b *Request) SetupTransport() {
 		trans = &http.Transport{
 			TLSClientConfig: b.Setting.TlsClientConfig,
 			Proxy:           b.Setting.Proxy,
-			Dial:            TimeoutDialer(b.Setting.ConnectTimeout, b.Setting.ReadWriteTimeout),
+			DialContext:     TimeoutDialer(b.Setting.ConnectTimeout),
 		}
 	} else {
 		// if b.transport is *http.Transport then set the settings.
@@ -131,8 +125,8 @@ func (b *Request) SetupTransport() {
 			if t.Proxy == nil {
 				t.Proxy = b.Setting.Proxy
 			}
-			if t.Dial == nil {
-				t.Dial = TimeoutDialer(b.Setting.ConnectTimeout, b.Setting.ReadWriteTimeout)
+			if t.DialContext == nil {
+				t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout)
 			}
 		}
 	}
@@ -162,16 +156,15 @@ func Head(url string) *Request { return NewRequest(url, "HEAD") }
 
 // Settings .
 type Settings struct {
-	ShowDebug        bool
-	UserAgent        string
-	ConnectTimeout   time.Duration
-	ReadWriteTimeout time.Duration
-	TlsClientConfig  *tls.Config
-	Proxy            func(*http.Request) (*url.URL, error)
-	Transport        http.RoundTripper
-	EnableCookie     bool
-	Gzip             bool
-	DumpBody         bool
+	ShowDebug       bool
+	UserAgent       string
+	ConnectTimeout  time.Duration
+	TlsClientConfig *tls.Config
+	Proxy           func(*http.Request) (*url.URL, error)
+	Transport       http.RoundTripper
+	EnableCookie    bool
+	Gzip            bool
+	DumpBody        bool
 }
 
 // Request provides more useful methods for requesting one url than http.Request.
@@ -228,9 +221,8 @@ func (b *Request) DumpRequest() []byte {
 }
 
 // SetTimeout sets connect time out and read-write time out for BeegoRequest.
-func (b *Request) SetTimeout(connectTimeout, readWriteTimeout time.Duration) *Request {
+func (b *Request) SetTimeout(connectTimeout time.Duration) *Request {
 	b.Setting.ConnectTimeout = connectTimeout
-	b.Setting.ReadWriteTimeout = readWriteTimeout
 	return b
 }
 
@@ -559,18 +551,8 @@ func (b *Request) ToXml(v interface{}) error {
 }
 
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
-func TimeoutDialer(cTimeout, rwTimeout time.Duration) func(net, addr string) (c net.Conn, err error) {
-	return func(netw, addr string) (net.Conn, error) {
-		conn, err := net.DialTimeout(netw, addr, cTimeout)
-		if err != nil {
-			return nil, err
-		}
-		if rwTimeout > 0 {
-			t := time.Now().Add(rwTimeout)
-			if err := conn.SetDeadline(t); err != nil {
-				log.Printf("failed to set deadline: %v", err)
-			}
-		}
-		return conn, nil
+func TimeoutDialer(cTimeout time.Duration) func(context.Context, string, string) (net.Conn, error) {
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		return net.DialTimeout(network, addr, cTimeout)
 	}
 }

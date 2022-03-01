@@ -392,8 +392,6 @@ type bodyReader struct {
 }
 
 func (b bodyReader) Read(p []byte) (n int, err error) {
-	n, err = b.r.Read(p)
-
 	if timeout > 0 {
 		t := time.Now().Add(timeout)
 		if err := b.conn.SetDeadline(t); err != nil {
@@ -401,5 +399,5 @@ func (b bodyReader) Read(p []byte) (n int, err error) {
 		}
 	}
 
-	return
+	return b.r.Read(p)
 }
