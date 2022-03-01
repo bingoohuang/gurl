@@ -219,9 +219,6 @@ func doRequest(req *httplib.Request, u *url.URL, connSession *string) {
 		log.Fatalln("execute error:", err)
 	}
 
-	// 保证 response body 被 读取并且关闭
-	_, _ = req.Bytes()
-
 	fn := ""
 	if d := res.Header.Get("Content-Disposition"); d != "" {
 		if _, params, _ := mime.ParseMediaType(d); params != nil {
@@ -233,6 +230,9 @@ func doRequest(req *httplib.Request, u *url.URL, connSession *string) {
 		downloadFile(u, res, fn)
 		return
 	}
+
+	// 保证 response body 被 读取并且关闭
+	_, _ = req.Bytes()
 
 	if runtime.GOOS == "windows" {
 		printResponseForWindows(req, res, connSession)
