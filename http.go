@@ -55,35 +55,35 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 			continue
 		}
 
-		switch k, op, v := submatch[1], submatch[2], submatch[3]; op {
+		switch k, op, val := submatch[1], submatch[2], submatch[3]; op {
 		case ":=": // Json raws
-			if v, fn, err := readFile(v); err != nil {
+			if dat, fn, err := readFile(val); err != nil {
 				log.Fatal("Read File", fn, err)
 			} else if fn != "" {
 				var j interface{}
-				if err := json.Unmarshal(v, &j); err != nil {
+				if err := json.Unmarshal(dat, &j); err != nil {
 					log.Fatal("Read from File", fn, "Unmarshal", err)
 				}
 				jsonmap[k] = j
 			} else {
-				jsonmap[k] = json.RawMessage(v)
+				jsonmap[k] = json.RawMessage(dat)
 			}
 		case "==": // Queries
-			r.Query(k, tryReadFile(v))
+			r.Query(k, tryReadFile(val))
 		case "=": // Params
-			if v = tryReadFile(v); form || method == "GET" {
-				r.Param(k, v)
+			if val = tryReadFile(val); form || method == "GET" {
+				r.Param(k, val)
 			} else {
-				jsonmap[k] = v
+				jsonmap[k] = val
 			}
 		case ":": // Headers
 			if k == "Host" {
-				r.SetHost(v)
+				r.SetHost(val)
 			} else {
-				r.Header(k, v)
+				r.Header(k, val)
 			}
 		case "@": // files
-			r.PostFile(k, v)
+			r.PostFile(k, val)
 		}
 	}
 	if !form && len(jsonmap) > 0 {
@@ -95,12 +95,12 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 }
 
 func tryReadFile(s string) string {
-	v, _, err := readFile(s)
+	dat, _, err := readFile(s)
 	if err != nil {
 		log.Fatal("Read File", s, err)
 	}
 
-	return string(v)
+	return string(dat)
 }
 
 func readFile(s string) (data []byte, fn string, e error) {
@@ -121,12 +121,12 @@ func readFile(s string) (data []byte, fn string, e error) {
 }
 
 func formatResponseBody(r *httplib.Request, pretty, hasDevice bool) string {
-	body, err := r.Bytes()
+	dat, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
 	}
 
-	return formatBytes(body, pretty, hasDevice)
+	return formatBytes(dat, pretty, hasDevice)
 }
 
 func formatBytes(body []byte, pretty, hasDevice bool) string {

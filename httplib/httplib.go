@@ -44,6 +44,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
+	"net/http/httptrace"
 	"net/http/httputil"
 	"net/url"
 	"os"
@@ -187,6 +188,8 @@ type Request struct {
 
 	DisableKeepAlives bool
 	Transport         http.RoundTripper
+
+	ConnInfo httptrace.GotConnInfo
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -563,7 +566,10 @@ func TimeoutDialer(cTimeout, rwTimeout time.Duration) func(net, addr string) (c 
 			return nil, err
 		}
 		if rwTimeout > 0 {
-			conn.SetDeadline(time.Now().Add(rwTimeout))
+			t := time.Now().Add(rwTimeout)
+			if err := conn.SetDeadline(t); err != nil {
+				log.Printf("failed to set deadline: %v", err)
+			}
 		}
 		return conn, nil
 	}

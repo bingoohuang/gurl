@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
@@ -192,20 +193,16 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		return
 	}
 
-	connSession := ""
-	if HasPrintOption(printReqSession) {
-		trace := &httptrace.ClientTrace{
-			GotConn: func(info httptrace.GotConnInfo) {
-				connSession = fmt.Sprintf("%s->%s (reused: %t, wasIdle: %t, idle: %s)",
-					info.Conn.LocalAddr(), info.Conn.RemoteAddr(), info.Reused, info.WasIdle, info.IdleTime)
-			},
-		}
-
-		req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), trace))
+	trace := &httptrace.ClientTrace{
+		GotConn: func(info httptrace.GotConnInfo) {
+			req.ConnInfo = info
+		},
 	}
 
+	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), trace))
+
 	for i := 0; i < benchN; i++ {
-		doRequest(req, u, &connSession)
+		doRequest(req, u)
 		req.Reset()
 		if i < benchN-1 {
 			thinkerFn()
@@ -213,7 +210,7 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	}
 }
 
-func doRequest(req *httplib.Request, u *url.URL, connSession *string) {
+func doRequest(req *httplib.Request, u *url.URL) {
 	res, err := req.Response()
 	if err != nil {
 		log.Fatalln("execute error:", err)
@@ -227,7 +224,7 @@ func doRequest(req *httplib.Request, u *url.URL, connSession *string) {
 	}
 	ct := res.Header.Get("Content-Type")
 	if download || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml") {
-		downloadFile(u, res, fn)
+		downloadFile(u, req, res, fn)
 		return
 	}
 
@@ -235,13 +232,13 @@ func doRequest(req *httplib.Request, u *url.URL, connSession *string) {
 	_, _ = req.Bytes()
 
 	if runtime.GOOS == "windows" {
-		printResponseForWindows(req, res, connSession)
+		printResponseForWindows(req, res)
 	} else {
-		printResponseForNonWindows(req, res, connSession)
+		printResponseForNonWindows(req, res)
 	}
 }
 
-func printResponseForNonWindows(req *httplib.Request, res *http.Response, connSession *string) {
+func printResponseForNonWindows(req *httplib.Request, res *http.Response) {
 	fi, err := os.Stdout.Stat()
 	if err != nil {
 		panic(err)
@@ -258,9 +255,12 @@ func printResponseForNonWindows(req *httplib.Request, res *http.Response, connSe
 			}
 		}
 
-		if *connSession != "" {
-			fmt.Println(Color("Conn-Session:", Magenta), Color(*connSession, Yellow))
-			*connSession = ""
+		if HasPrintOption(printReqSession) {
+			info := req.ConnInfo
+			c := info.Conn
+			connSession := fmt.Sprintf("%s->%s (reused: %t, wasIdle: %t, idle: %s)",
+				c.LocalAddr(), c.RemoteAddr(), info.Reused, info.WasIdle, info.IdleTime)
+			fmt.Println(Color("Conn-Session:", Magenta), Color(connSession, Yellow))
 		}
 		if HasPrintOption(printReqHeader) {
 			fmt.Println(ColorfulRequest(string(dumpHeader)))
@@ -270,8 +270,8 @@ func printResponseForNonWindows(req *httplib.Request, res *http.Response, connSe
 		}
 		if HasPrintOption(printRespHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
-			for k, v := range res.Header {
-				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(v, " "), Cyan))
+			for k, val := range res.Header {
+				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
 			}
 			fmt.Println()
 		}
@@ -286,7 +286,7 @@ func printResponseForNonWindows(req *httplib.Request, res *http.Response, connSe
 	}
 }
 
-func printResponseForWindows(req *httplib.Request, res *http.Response, connSession *string) {
+func printResponseForWindows(req *httplib.Request, res *http.Response) {
 	var dumpHeader, dumpBody []byte
 	dump := req.DumpRequest()
 	dps := strings.Split(string(dump), "\n")
@@ -307,8 +307,8 @@ func printResponseForWindows(req *httplib.Request, res *http.Response, connSessi
 	}
 	if HasPrintOption(printRespHeader) {
 		fmt.Println(res.Proto, res.Status)
-		for k, v := range res.Header {
-			fmt.Println(k, ":", strings.Join(v, " "))
+		for k, val := range res.Header {
+			fmt.Println(k, ":", strings.Join(val, " "))
 		}
 		fmt.Println("")
 	}
@@ -349,7 +349,7 @@ func parseURL(urls string) *url.URL {
 	return u
 }
 
-func downloadFile(u *url.URL, res *http.Response, filename string) {
+func downloadFile(u *url.URL, req *httplib.Request, res *http.Response, filename string) {
 	if filename == "" {
 		_, filename = filepath.Split(u.Path)
 	}
@@ -359,13 +359,13 @@ func downloadFile(u *url.URL, res *http.Response, filename string) {
 	}
 	if runtime.GOOS != "windows" {
 		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
-		for k, v := range res.Header {
-			fmt.Println(Color(k, Gray), ":", Color(strings.Join(v, " "), Cyan))
+		for k, val := range res.Header {
+			fmt.Println(Color(k, Gray), ":", Color(strings.Join(val, " "), Cyan))
 		}
 	} else {
 		fmt.Println(res.Proto, res.Status)
-		for k, v := range res.Header {
-			fmt.Println(k, ":", strings.Join(v, " "))
+		for k, val := range res.Header {
+			fmt.Println(k, ":", strings.Join(val, " "))
 		}
 	}
 	fmt.Println("")
@@ -377,10 +377,29 @@ func downloadFile(u *url.URL, res *http.Response, filename string) {
 	pb := NewProgressBar(total)
 	pb.Start()
 	mw := io.MultiWriter(fd, pb)
-	if _, err := io.Copy(mw, res.Body); err != nil {
+
+	if _, err := io.Copy(mw, &bodyReader{r: res.Body, conn: req.ConnInfo.Conn}); err != nil {
 		log.Fatal("Can't Write the body into file", err)
 	}
 	pb.Finish()
 	fd.Close()
 	res.Body.Close()
+}
+
+type bodyReader struct {
+	r    io.Reader
+	conn net.Conn
+}
+
+func (b bodyReader) Read(p []byte) (n int, err error) {
+	n, err = b.r.Read(p)
+
+	if timeout > 0 {
+		t := time.Now().Add(timeout)
+		if err := b.conn.SetDeadline(t); err != nil {
+			log.Printf("failed to set deadline: %v", err)
+		}
+	}
+
+	return
 }

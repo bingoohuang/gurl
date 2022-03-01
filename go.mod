@@ -1,6 +1,6 @@
 module github.com/bingoohuang/gurl
 
-go 1.18
+go 1.17
 
 require (
 	github.com/bingoohuang/gg v0.0.0-20220209061112-9cea4c89abc5
