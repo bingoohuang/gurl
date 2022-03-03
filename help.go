@@ -13,7 +13,7 @@ flags:
   -n=0 -c=100       Number of requests and concurrency to run
   -body=""          Send RAW data as body
   -f                Submitting the data as a form
-  -F filename       Upload a file
+  -F filename       Upload a file, e.g. gurl :2110 -F 1.png -F 2.png
   -j                Send the data in a JSON object as application/json
   -raw              Print JSON Raw format other than pretty
   -i                Allow connections to SSL sites without certs
