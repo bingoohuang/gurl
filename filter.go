@@ -26,7 +26,9 @@ func filter(args []string) []string {
 	args = filteredArgs
 
 	if !methodFoundInArgs && *method == "GET" {
-		if len(args) > 0 {
+		if len(uploadFiles) > 0 {
+			*method = "POST"
+		} else if len(args) > 0 {
 			for _, v := range args[1:] {
 				submatch := keyReq.FindStringSubmatch(v)
 				if len(submatch) == 0 {

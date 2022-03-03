@@ -50,6 +50,10 @@ func NewProgressBar(total int64) (pb *ProgressBar) {
 	return
 }
 
+func (pb *ProgressBar) SetTotal(total int64) {
+	pb.Total = total
+}
+
 func (pb *ProgressBar) Start() {
 	pb.startTime = time.Now()
 	if pb.Total == 0 {

@@ -304,18 +304,23 @@ func (b *Request) PostFile(formname, filename string) *Request {
 	return b
 }
 
+func (b *Request) BodyAndSize(body io.Reader, size int64) *Request {
+	b.Req.Body = ioutil.NopCloser(body)
+	b.Req.ContentLength = size
+
+	return b
+}
+
 // Body adds request raw body.
 // it supports string and []byte.
 func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
 		bf := bytes.NewBufferString(t)
-		b.Req.Body = ioutil.NopCloser(bf)
-		b.Req.ContentLength = int64(len(t))
+		b.BodyAndSize(bf, int64(len(t)))
 	case []byte:
 		bf := bytes.NewBuffer(t)
-		b.Req.Body = ioutil.NopCloser(bf)
-		b.Req.ContentLength = int64(len(t))
+		b.BodyAndSize(bf, int64(len(t)))
 	}
 	return b
 }

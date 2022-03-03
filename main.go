@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/goup"
+
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/gg/pkg/v"
@@ -41,9 +43,11 @@ const (
 var (
 	disableKeepAlive, ver, form, pretty, raw, download, insecureSSL bool
 	auth, proxy, printV, body, think                                string
-	printOption                                                     uint8
-	benchN, benchC                                                  int
-	timeout                                                         time.Duration
+
+	uploadFiles    []string
+	printOption    uint8
+	benchN, benchC int
+	timeout        time.Duration
 
 	isjson  = fla9.Bool("json,j", true, "Send the data as a JSON object")
 	method  = fla9.String("method,m", "GET", "HTTP method")
@@ -60,7 +64,8 @@ func init() {
 	fla9.BoolVar(&download, "d", false, "Download the url content as file")
 	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
 	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")
-	fla9.StringVar(&think, "think", "0", "Thinktime")
+	fla9.StringsVar(&uploadFiles, "F", nil, "Upload files")
+	fla9.StringVar(&think, "think", "0", "Think time")
 
 	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
 	flagEnvVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
@@ -136,6 +141,8 @@ func parseStdin() []byte {
 	return stdin
 }
 
+var uploadFilePb *ProgressBar
+
 func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	u := parseURL(urlAddr)
 	urlAddr = u.String()
@@ -162,7 +169,41 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		}
 		req.SetProxy(http.ProxyURL(eurl))
 	}
-	if body != "" {
+
+	if len(uploadFiles) > 0 {
+		var fileReaders []io.ReadCloser
+		for _, uploadFile := range uploadFiles {
+			fileReader, err := goup.CreateChunkReader(uploadFile, 0, 0)
+			if err != nil {
+				log.Fatal(err)
+			}
+			fileReaders = append(fileReaders, fileReader)
+		}
+
+		uploadFilePb = NewProgressBar(0)
+		adder := goup.AdderFn(func(value uint64) {
+			uploadFilePb.Add64(int64(value))
+		})
+
+		fields := map[string]interface{}{}
+		if len(fileReaders) == 1 {
+			fields["file"] = &goup.PbReader{Reader: fileReaders[0], Adder: adder}
+		} else {
+			for i, r := range fileReaders {
+				name := fmt.Sprintf("file-%d", i+1)
+				fields[name] = &goup.PbReader{Reader: r, Adder: adder}
+			}
+		}
+
+		up := goup.PrepareMultipartPayload(fields)
+		uploadFilePb.SetTotal(up.Size)
+		req.BodyAndSize(up.Body, up.Size)
+		req.Setting.DumpBody = false
+
+		for hk, hv := range up.Headers {
+			req.Header(hk, hv)
+		}
+	} else if body != "" {
 		req.Body(body)
 	}
 	if len(stdin) > 0 {
@@ -172,7 +213,7 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		if err := d.Decode(&j); err != nil {
 			req.Body(stdin)
 		} else {
-			req.JsonBody(j)
+			_, _ = req.JsonBody(j)
 		}
 	}
 
@@ -211,7 +252,17 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 }
 
 func doRequest(req *httplib.Request, u *url.URL) {
+	if uploadFilePb != nil {
+		fmt.Printf("Uploading \"%s\"\n", strings.Join(uploadFiles, "; "))
+		uploadFilePb.Set(0)
+		uploadFilePb.Start()
+	}
+
 	res, err := req.Response()
+	if uploadFilePb != nil {
+		uploadFilePb.Finish()
+		fmt.Println()
+	}
 	if err != nil {
 		log.Fatalln("execute error:", err)
 	}
