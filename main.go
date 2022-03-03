@@ -75,18 +75,23 @@ func init() {
 }
 
 func parsePrintOption(s string) {
-	AdjustPrintOption(s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
-	AdjustPrintOption(s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
-	AdjustPrintOption(s, 'H', printReqHeader)
-	AdjustPrintOption(s, 'B', printReqBody)
-	AdjustPrintOption(s, 'h', printRespHeader)
-	AdjustPrintOption(s, 'b', printRespBody)
-	AdjustPrintOption(s, 's', printReqSession)
+	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
+	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
+	AdjustPrintOption(&s, 'H', printReqHeader)
+	AdjustPrintOption(&s, 'B', printReqBody)
+	AdjustPrintOption(&s, 'h', printRespHeader)
+	AdjustPrintOption(&s, 'b', printRespBody)
+	AdjustPrintOption(&s, 's', printReqSession)
+
+	if s != "" {
+		log.Fatalf("unknown print option: %s", s)
+	}
 }
 
-func AdjustPrintOption(s string, r rune, flags uint8) {
-	if strings.ContainsRune(s, r) {
+func AdjustPrintOption(s *string, r rune, flags uint8) {
+	if strings.ContainsRune(*s, r) {
 		printOption |= flags
+		*s = strings.ReplaceAll(*s, string(r), "")
 	}
 }
 
