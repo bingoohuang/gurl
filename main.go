@@ -188,39 +188,30 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 			fileReaders = append(fileReaders, fileReader)
 		}
 
-		req.Rewinder = func() {
-			for _, r := range fileReaders {
-				if rw, ok := r.(goup.Rewindable); ok {
-					if err := rw.Rewind(); err != nil {
-						log.Printf("rewind error: %v", err)
-					}
-				}
-			}
-		}
-
 		uploadFilePb = NewProgressBar(0)
-		adder := goup.AdderFn(func(value uint64) {
-			uploadFilePb.Add64(int64(value))
-		})
-
 		fields := map[string]interface{}{}
 		if len(fileReaders) == 1 {
-			fields["file"] = &goup.PbReader{Reader: fileReaders[0], Adder: adder}
+			fields["file"] = fileReaders[0]
 		} else {
 			for i, r := range fileReaders {
 				name := fmt.Sprintf("file-%d", i+1)
-				fields[name] = &goup.PbReader{Reader: r, Adder: adder}
+				fields[name] = r
 			}
 		}
 
 		up := goup.PrepareMultipartPayload(fields)
+
 		uploadFilePb.SetTotal(up.Size)
 
 		if limitRate > 0 {
 			up.Body = shapeio.NewReader(up.Body, shapeio.WithRateLimit(float64(limitRate)))
 		}
 
-		req.BodyAndSize(up.Body, up.Size)
+		pb := &goup.PbReader{Reader: up.Body, Adder: goup.AdderFn(func(value uint64) {
+			uploadFilePb.Add64(int64(value))
+		})}
+
+		req.BodyAndSize(pb, up.Size)
 		req.Setting.DumpBody = false
 
 		for hk, hv := range up.Headers {

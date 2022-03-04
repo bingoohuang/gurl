@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/bingoohuang/gg v0.0.0-20220304025917-fe2e359145cd
-	github.com/bingoohuang/goup v0.0.0-20220304043055-288bb8b5313a
+	github.com/bingoohuang/goup v0.0.0-20220304032603-e6add0c03a07
 	github.com/bingoohuang/jj v0.0.0-20211209023116-c83e26365b20
 )
 

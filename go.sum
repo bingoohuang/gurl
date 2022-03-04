@@ -47,8 +47,8 @@ github.com/bingoohuang/gg v0.0.0-20220221021130-31b6af753959/go.mod h1:IU0arWvF/
 github.com/bingoohuang/gg v0.0.0-20220304025917-fe2e359145cd h1:7vbpzSo82NGHVoGWHDM3Ml6Rg86xA23RMEff/iYizwk=
 github.com/bingoohuang/gg v0.0.0-20220304025917-fe2e359145cd/go.mod h1:IU0arWvF/TX8DAmFjhlYtEXDlgBh2FsvyPMq34E0wB4=
 github.com/bingoohuang/golog v0.0.0-20211112131923-101b7e1b3d4c/go.mod h1:atiVUeYe0Rsi80P0eDEF8lpf9qvt/w/qpil8PpNGYvw=
-github.com/bingoohuang/goup v0.0.0-20220304043055-288bb8b5313a h1:tB2356BPhH1dLKs4XKIcR2oNfzzaOc5Ygg6CV0TUADU=
-github.com/bingoohuang/goup v0.0.0-20220304043055-288bb8b5313a/go.mod h1:rS7f3FoUpSnfEHHVL312vMD9mkwZbcsWcGvfxQ/gOg8=
+github.com/bingoohuang/goup v0.0.0-20220304032603-e6add0c03a07 h1:QU8cESA74rzpdjUpCEOEDH33lb803h3AgdKFr1Ks7CA=
+github.com/bingoohuang/goup v0.0.0-20220304032603-e6add0c03a07/go.mod h1:rS7f3FoUpSnfEHHVL312vMD9mkwZbcsWcGvfxQ/gOg8=
 github.com/bingoohuang/jj v0.0.0-20211209023116-c83e26365b20 h1:D+hsMUchwBe0iM9d4hn6c85BttEYf0SO85Ph+ezxsoY=
 github.com/bingoohuang/jj v0.0.0-20211209023116-c83e26365b20/go.mod h1:EyzfstRweHguUY6QqVAggZZifwEaGLv8/S/XI9Tv0Kc=
 github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
