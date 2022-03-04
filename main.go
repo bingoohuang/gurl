@@ -438,7 +438,7 @@ func downloadFile(u *url.URL, req *httplib.Request, res *http.Response, filename
 	if contentLength := res.Header.Get("Content-Length"); contentLength != "" {
 		total, _ = strconv.ParseInt(contentLength, 10, 64)
 	}
-	fmt.Printf("Downloading to \"%s\"\n", filename)
+	fmt.Printf("Downloading to %q\n", filename)
 	pb := NewProgressBar(total)
 	pb.Start()
 	mw := io.MultiWriter(fd, pb)
