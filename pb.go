@@ -56,6 +56,7 @@ func (pb *ProgressBar) SetTotal(total int64) {
 
 func (pb *ProgressBar) Start() {
 	pb.startTime = time.Now()
+	atomic.StoreInt32(&pb.isFinish, 0)
 	if pb.Total == 0 {
 		pb.ShowBar = false
 		pb.ShowTimeLeft = false
