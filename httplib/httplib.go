@@ -183,6 +183,7 @@ type Request struct {
 	Transport         http.RoundTripper
 
 	ConnInfo httptrace.GotConnInfo
+	Rewinder func()
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -406,6 +407,9 @@ func (b *Request) buildUrl() {
 func (b *Request) Reset() {
 	b.resp.StatusCode = 0
 	b.body = nil
+	if b.Rewinder != nil {
+		b.Rewinder()
+	}
 }
 
 func (b *Request) Response() (*http.Response, error) {

@@ -188,6 +188,16 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 			fileReaders = append(fileReaders, fileReader)
 		}
 
+		req.Rewinder = func() {
+			for _, r := range fileReaders {
+				if rw, ok := r.(goup.Rewindable); ok {
+					if err := rw.Rewind(); err != nil {
+						log.Printf("rewind error: %v", err)
+					}
+				}
+			}
+		}
+
 		uploadFilePb = NewProgressBar(0)
 		adder := goup.AdderFn(func(value uint64) {
 			uploadFilePb.Add64(int64(value))
