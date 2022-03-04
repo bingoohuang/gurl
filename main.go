@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/bingoohuang/goup"
+	"github.com/bingoohuang/goup/shapeio"
 
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
@@ -48,6 +49,7 @@ var (
 	printOption    uint8
 	benchN, benchC int
 	timeout        time.Duration
+	limitRate      uint64
 
 	isjson  = fla9.Bool("json,j", true, "Send the data as a JSON object")
 	method  = fla9.String("method,m", "GET", "HTTP method")
@@ -65,6 +67,7 @@ func init() {
 	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
 	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")
 	fla9.StringsVar(&uploadFiles, "F", nil, "Upload files")
+	fla9.SizeVar(&limitRate, "L", "0", "Limit rate /s")
 	fla9.StringVar(&think, "think", "0", "Think time")
 
 	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
@@ -178,7 +181,7 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	if len(uploadFiles) > 0 {
 		var fileReaders []io.ReadCloser
 		for _, uploadFile := range uploadFiles {
-			fileReader, err := goup.CreateChunkReader(uploadFile, 0, 0)
+			fileReader, err := goup.CreateChunkReader(uploadFile, 0, 0, 0)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -202,6 +205,11 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 
 		up := goup.PrepareMultipartPayload(fields)
 		uploadFilePb.SetTotal(up.Size)
+
+		if limitRate > 0 {
+			up.Body = shapeio.NewReader(up.Body, shapeio.WithRateLimit(float64(limitRate)))
+		}
+
 		req.BodyAndSize(up.Body, up.Size)
 		req.Setting.DumpBody = false
 
@@ -433,6 +441,10 @@ func downloadFile(u *url.URL, req *httplib.Request, res *http.Response, filename
 	pb := NewProgressBar(total)
 	pb.Start()
 	mw := io.MultiWriter(fd, pb)
+
+	if limitRate > 0 {
+		res.Body = shapeio.NewReader(res.Body, shapeio.WithRateLimit(float64(limitRate)))
+	}
 
 	if _, err := io.Copy(mw, &bodyReader{r: res.Body, conn: req.ConnInfo.Conn}); err != nil {
 		log.Fatal("Can't Write the body into file", err)

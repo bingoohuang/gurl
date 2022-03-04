@@ -14,6 +14,7 @@ flags:
   -body=""          Send RAW data as body
   -f                Submitting the data as a form
   -F filename       Upload a file, e.g. gurl :2110 -F 1.png -F 2.png
+  -L limit          Limit rate for upload or download /s, like 10K
   -j                Send the data in a JSON object as application/json
   -raw              Print JSON Raw format other than pretty
   -i                Allow connections to SSL sites without certs

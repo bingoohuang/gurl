@@ -3,8 +3,8 @@ module github.com/bingoohuang/gurl
 go 1.17
 
 require (
-	github.com/bingoohuang/gg v0.0.0-20220221021130-31b6af753959
-	github.com/bingoohuang/goup v0.0.0-20220303100516-b3eb70723648
+	github.com/bingoohuang/gg v0.0.0-20220304025917-fe2e359145cd
+	github.com/bingoohuang/goup v0.0.0-20220304023520-36c86446d3ca
 	github.com/bingoohuang/jj v0.0.0-20211209023116-c83e26365b20
 )
 
@@ -25,4 +25,5 @@ require (
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 )
