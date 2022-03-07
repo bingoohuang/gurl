@@ -16,7 +16,7 @@ import (
 	"net/http/httptrace"
 	"net/url"
 	"os"
-	"path/filepath"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -289,8 +289,13 @@ func doRequest(req *httplib.Request, u *url.URL) {
 	}
 	ct := res.Header.Get("Content-Type")
 	if download || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml") {
-		downloadFile(u, req, res, fn)
-		return
+		if *method != "HEAD" {
+			if fn == "" {
+				_, fn = path.Split(u.Path)
+			}
+			downloadFile(req, res, fn)
+			return
+		}
 	}
 
 	// 保证 response body 被 读取并且关闭
@@ -414,10 +419,7 @@ func parseURL(urls string) *url.URL {
 	return u
 }
 
-func downloadFile(u *url.URL, req *httplib.Request, res *http.Response, filename string) {
-	if filename == "" {
-		_, filename = filepath.Split(u.Path)
-	}
+func downloadFile(req *httplib.Request, res *http.Response, filename string) {
 	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatal("can't create file", err)
