@@ -1,17 +1,3 @@
-// Copyright 2014 beego Author. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package httplib
 
 import (
@@ -23,11 +9,11 @@ import (
 
 func TestResponse(t *testing.T) {
 	req := Get("http://httpbin.org/get")
-	resp, err := req.Response()
+	_, err := req.Response()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(resp)
+	//t.Log(resp)
 }
 
 func TestGet(t *testing.T) {
@@ -36,13 +22,13 @@ func TestGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(b)
+	//t.Log(b)
 
 	s, err := req.String()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(s)
+	//t.Log(s)
 
 	if string(b) != s {
 		t.Fatal("request data not match")
@@ -58,7 +44,7 @@ func TestSimplePost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 
 	n := strings.Index(str, v)
 	if n == -1 {
@@ -86,19 +72,19 @@ func TestSimplePost(t *testing.T) {
 //}
 
 func TestSimplePut(t *testing.T) {
-	str, err := Put("http://httpbin.org/put").String()
+	_, err := Put("http://httpbin.org/put").String()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 }
 
 func TestSimpleDelete(t *testing.T) {
-	str, err := Delete("http://httpbin.org/delete").String()
+	_, err := Delete("http://httpbin.org/delete").String()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 }
 
 func TestWithCookie(t *testing.T) {
@@ -107,13 +93,13 @@ func TestWithCookie(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 
 	str, err = Get("http://httpbin.org/cookies").SetEnableCookie(true).String()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 
 	n := strings.Index(str, v)
 	if n == -1 {
@@ -126,7 +112,7 @@ func TestWithBasicAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 	n := strings.Index(str, "authenticated")
 	if n == -1 {
 		t.Fatal("authenticated not found in response")
@@ -139,7 +125,7 @@ func TestWithUserAgent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 
 	n := strings.Index(str, v)
 	if n == -1 {
@@ -159,7 +145,7 @@ func TestWithSetting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 
 	n := strings.Index(str, v)
 	if n == -1 {
@@ -169,11 +155,11 @@ func TestWithSetting(t *testing.T) {
 
 func TestToJson(t *testing.T) {
 	req := Get("http://httpbin.org/ip")
-	resp, err := req.Response()
+	_, err := req.Response()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(resp)
+	//t.Log(resp)
 
 	// httpbin will return http remote addr
 	type Ip struct {
@@ -184,7 +170,7 @@ func TestToJson(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(ip.Origin)
+	//t.Log(ip.Origin)
 
 	if n := strings.Count(ip.Origin, "."); n != 3 {
 		t.Fatal("response is not valid ip")
@@ -208,9 +194,9 @@ func TestToFile(t *testing.T) {
 func TestHeader(t *testing.T) {
 	req := Get("http://httpbin.org/headers")
 	req.Header("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.57 Safari/537.36")
-	str, err := req.String()
+	_, err := req.String()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Log(str)
+	//t.Log(str)
 }

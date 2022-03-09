@@ -1,34 +1,3 @@
-// Copyright 2014 beego Author. All Rights Reserved.
-// Copyright 2015 bat authors
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-// Usage:
-//
-// import "github.com/astaxie/beego/httplib"
-//
-//	b := httplib.Post("http://beego.me/")
-//	b.Param("username","astaxie")
-//	b.Param("password","123456")
-//	b.PostFile("uploadfile1", "httplib.pdf")
-//	b.PostFile("uploadfile2", "httplib.txt")
-//	str, err := b.String()
-//	if err != nil {
-//		t.Fatal(err)
-//	}
-//	fmt.Println(str)
-//
-//  more docs http://beego.me/docs/module/httplib.md
 package httplib
 
 import (
@@ -108,7 +77,6 @@ func NewRequest(rawurl, method string) *Request {
 
 func (b *Request) SetupTransport() {
 	trans := b.Setting.Transport
-
 	if trans == nil {
 		// create default transport
 		trans = &http.Transport{
@@ -116,18 +84,18 @@ func (b *Request) SetupTransport() {
 			Proxy:           b.Setting.Proxy,
 			DialContext:     TimeoutDialer(b.Setting.ConnectTimeout),
 		}
-	} else {
-		// if b.transport is *http.Transport then set the settings.
-		if t, ok := trans.(*http.Transport); ok {
-			if t.TLSClientConfig == nil {
-				t.TLSClientConfig = b.Setting.TlsClientConfig
-			}
-			if t.Proxy == nil {
-				t.Proxy = b.Setting.Proxy
-			}
-			if t.DialContext == nil {
-				t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout)
-			}
+	}
+
+	// if b.transport is *http.Transport then set the settings.
+	if t, ok := trans.(*http.Transport); ok {
+		if t.TLSClientConfig == nil {
+			t.TLSClientConfig = b.Setting.TlsClientConfig
+		}
+		if t.Proxy == nil {
+			t.Proxy = b.Setting.Proxy
+		}
+		if t.DialContext == nil {
+			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout)
 		}
 	}
 

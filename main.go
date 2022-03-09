@@ -1,10 +1,9 @@
-// Gurl is a Go implemented CLI cURL-like tool for humans
-// gurl [flags] [METHOD] URL [ITEM [ITEM]]
 package main
 
 import (
 	"bytes"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,7 +42,7 @@ const (
 
 var (
 	disableKeepAlive, ver, form, pretty, raw, download, insecureSSL bool
-	auth, proxy, printV, body, think                                string
+	auth, proxy, printV, body, think, caFile                        string
 
 	uploadFiles    []string
 	printOption    uint8
@@ -62,6 +61,7 @@ func init() {
 	fla9.BoolVar(&ver, "v", false, "Print Version Number")
 	fla9.BoolVar(&raw, "raw,r", false, "Print JSON Raw Format")
 	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
+	fla9.StringVar(&caFile, "ca", "", "ca certificate file")
 	fla9.BoolVar(&form, "f", false, "Submitting as a form")
 	fla9.BoolVar(&download, "d", false, "Download the url content as file")
 	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
@@ -159,10 +159,33 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		password, _ := u.User.Password()
 		req.SetBasicAuth(u.User.Username(), password)
 	}
+
+	var tlsConfig *tls.Config
+
+	if caFile != "" {
+		caCert, err := ioutil.ReadFile(caFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		tlsConfig = &tls.Config{
+			RootCAs: caCertPool,
+		}
+
+	}
 	// Insecure SSL Support
 	if insecureSSL {
-		req.SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true})
+		if tlsConfig == nil {
+			tlsConfig = &tls.Config{}
+		}
+		tlsConfig.InsecureSkipVerify = true
 	}
+
+	// Setup HTTPS client
+	req.SetTLSClientConfig(tlsConfig)
+
 	// Proxy Support
 	if proxy != "" {
 		purl, err := url.Parse(proxy)
