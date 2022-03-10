@@ -18,6 +18,7 @@ flags:
   -j                Send the data in a JSON object as application/json
   -raw              Print JSON Raw format other than pretty
   -i                Allow connections to SSL sites without certs
+  -ca               Ca certificate file
   -proxy=PROXY_URL  Proxy with host and port
   -print=A          String specifying what the output should contain, default will print all information
                        H: request headers  B: request body  h: response headers  b: response body s: http conn session
