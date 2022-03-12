@@ -405,6 +405,27 @@ func createParamBody(params map[string]string) string {
 	return paramBody
 }
 
+// Go HTTP Redirect的知识点总结 https://colobu.com/2017/04/19/go-http-redirect/
+type LogRedirects struct {
+	http.RoundTripper
+}
+
+func (l LogRedirects) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	t := l.RoundTripper
+	if t == nil {
+		t = http.DefaultTransport
+	}
+	resp, err = t.RoundTrip(req)
+	if err != nil {
+		return
+	}
+	switch resp.StatusCode {
+	case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther, http.StatusTemporaryRedirect:
+		log.Printf("%s redirect(%d) to %s", req.URL, resp.StatusCode, resp.Header.Get("Location"))
+	}
+	return
+}
+
 func (b *Request) SendOut() (*http.Response, error) {
 	b.buildUrl()
 	url, err := url.Parse(b.url)
@@ -423,7 +444,7 @@ func (b *Request) SendOut() (*http.Response, error) {
 	}
 
 	client := &http.Client{
-		Transport: b.Transport,
+		Transport: LogRedirects{RoundTripper: b.Transport},
 		Jar:       jar,
 	}
 
