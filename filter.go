@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
+	"net/url"
+	"regexp"
 	"strings"
-
-	"github.com/bingoohuang/gg/pkg/rest"
 )
 
 var methodList = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
@@ -17,7 +17,7 @@ func filter(args []string) []string {
 		if inSlice(strings.ToUpper(arg), methodList) {
 			*method = strings.ToUpper(arg)
 			methodFoundInArgs = true
-		} else if urlAddr, err := rest.FixURI(arg); err == nil && strings.ContainsAny(arg, ":/") {
+		} else if urlAddr, err := FixURI(arg); err == nil && strings.ContainsAny(arg, ":/") {
 			*Urls = append(*Urls, urlAddr)
 		} else {
 			filteredArgs = append(filteredArgs, arg)
@@ -58,4 +58,38 @@ func filter(args []string) []string {
 		log.Fatal("Miss the URL")
 	}
 	return args
+}
+
+var reScheme = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+-.]*://`)
+
+func FixURI(uri string) (string, error) {
+	if uri == ":" {
+		uri = ":80"
+	}
+
+	defaultScheme, defaultHost := "http", "localhost"
+	// ex) :8080/hello or /hello or :
+	if strings.HasPrefix(uri, ":") || strings.HasPrefix(uri, "/") {
+		uri = defaultHost + uri
+	}
+
+	if caFile != "" {
+		defaultScheme = "https"
+	}
+	// ex) example.com/hello
+	if !reScheme.MatchString(uri) {
+		uri = defaultScheme + "://" + uri
+	}
+
+	u, err := url.Parse(uri)
+	if err != nil {
+		return "", err
+	}
+
+	u.Host = strings.TrimSuffix(u.Host, ":")
+	if u.Path == "" {
+		u.Path = "/"
+	}
+
+	return u.String(), nil
 }

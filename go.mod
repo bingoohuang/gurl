@@ -1,11 +1,11 @@
 module github.com/bingoohuang/gurl
 
-go 1.17
+go 1.18
 
 require (
-	github.com/bingoohuang/gg v0.0.0-20220304025917-fe2e359145cd
+	github.com/bingoohuang/gg v0.0.0-20220322082631-b38fc76c73d4
 	github.com/bingoohuang/goup v0.0.0-20220304052555-4928cc294d0a
-	github.com/bingoohuang/jj v0.0.0-20211209023116-c83e26365b20
+	github.com/bingoohuang/jj v0.0.0-20220223101833-5e5b441b6f72
 )
 
 require (

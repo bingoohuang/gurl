@@ -35,6 +35,7 @@ ITEM:
   Can be any of: Query      : key=value  Header: key:value       Post data: key=value 
                  Force query: key==value key==@/path/file
                  JSON data  : key:=value Upload: key@/path/file
+                 File content as body: @/path/file
 Example:
   gurl beego.me
 more help information please refer to https://github.com/bingoohuang/gurl

@@ -12,11 +12,9 @@ import (
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/v"
-
-	"github.com/bingoohuang/gurl/httplib"
 )
 
-var defaultSetting = httplib.Settings{
+var defaultSetting = Settings{
 	ShowDebug:      true,
 	UserAgent:      "gurl/" + v.AppVersion,
 	ConnectTimeout: 60 * time.Second,
@@ -24,10 +22,10 @@ var defaultSetting = httplib.Settings{
 	DumpBody:       true,
 }
 
-var keyReq = regexp.MustCompile(`^([\d\w_.\-]+)(==|:=|=|:|@)(.*)`)
+var keyReq = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
 
-func getHTTP(method string, url string, args []string, timeout time.Duration) (r *httplib.Request) {
-	r = httplib.NewRequest(url, method)
+func getHTTP(method string, url string, args []string, timeout time.Duration) (r *Request) {
+	r = NewRequest(url, method)
 	r.DisableKeepAlives = disableKeepAlive
 	r.Setting = defaultSetting
 	r.Setting.ConnectTimeout = timeout
@@ -49,12 +47,18 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 	// Raw JSON fields field:=json	Useful when sending JSON and one or more fields need to be a Boolean, Number, nested Object, or an Array, e.g., meals:='["ham","spam"]' or pies:=[1,2,3] (note the quotes)
 	// File upload fields field@/dir/file, field@file;type=mime	Only available with --form, -f and --multipart. For example screenshot@~/Pictures/img.png, or 'cv@cv.txt;type=text/markdown'. With --form, the presence of a file field results in a --multipart request
 	for i := range args {
-		submatch := keyReq.FindStringSubmatch(args[i])
-		if len(submatch) == 0 {
+		arg := args[i]
+		subs := keyReq.FindStringSubmatch(arg)
+		if len(subs) == 0 {
 			continue
 		}
 
-		switch k, op, val := submatch[1], submatch[2], submatch[3]; op {
+		k, op, val := subs[1], subs[2], subs[3]
+		if k == "" && op != "@" {
+			log.Fatalf("Unsupported argument %s", arg)
+		}
+
+		switch op {
 		case ":=": // Json raws
 			if dat, fn, err := readFile(val); err != nil {
 				log.Fatal("Read File", fn, err)
@@ -82,7 +86,11 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 				r.Header(k, val)
 			}
 		case "@": // files
-			r.PostFile(k, val)
+			if k != "" {
+				r.PostFile(k, val)
+			} else {
+				r.Body(arg)
+			}
 		}
 	}
 	if !form && len(jsonmap) > 0 {
@@ -119,7 +127,7 @@ func readFile(s string) (data []byte, fn string, e error) {
 	return content, s, nil
 }
 
-func formatResponseBody(r *httplib.Request, pretty, hasDevice bool) string {
+func formatResponseBody(r *Request, pretty, hasDevice bool) string {
 	dat, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)

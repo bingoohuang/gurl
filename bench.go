@@ -9,8 +9,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/bingoohuang/gurl/httplib"
 )
 
 type result struct {
@@ -20,7 +18,7 @@ type result struct {
 	contentLength int64
 }
 
-func RunBench(b *httplib.Request, thinkerFn func()) {
+func RunBench(b *Request, thinkerFn func()) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	start := time.Now()
 	results := make(chan *result, benchN)
@@ -43,7 +41,7 @@ func RunBench(b *httplib.Request, thinkerFn func()) {
 	close(results)
 }
 
-func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.Request, thinkerFn func()) {
+func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *Request, thinkerFn func()) {
 	for range ch {
 		s := time.Now()
 		code := 0

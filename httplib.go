@@ -1,4 +1,4 @@
-package httplib
+package main
 
 import (
 	"bytes"
@@ -22,13 +22,6 @@ import (
 	"sync"
 	"time"
 )
-
-var defaultSetting = Settings{
-	UserAgent:      "beegoServer",
-	ConnectTimeout: 60 * time.Second,
-	Gzip:           true,
-	DumpBody:       true,
-}
 
 var (
 	defaultCookieJar http.CookieJar
@@ -106,21 +99,6 @@ func (b *Request) SetupTransport() {
 	b.Req.Close = b.DisableKeepAlives
 	b.Transport = trans
 }
-
-// Get returns *Request with GET method.
-func Get(url string) *Request { return NewRequest(url, "GET") }
-
-// Post returns *Request with POST method.
-func Post(url string) *Request { return NewRequest(url, "POST") }
-
-// Put returns *Request with PUT method.
-func Put(url string) *Request { return NewRequest(url, "PUT") }
-
-// Delete returns *Request DELETE method.
-func Delete(url string) *Request { return NewRequest(url, "DELETE") }
-
-// Head returns *Request with HEAD method.
-func Head(url string) *Request { return NewRequest(url, "HEAD") }
 
 // Settings .
 type Settings struct {

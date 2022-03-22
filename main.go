@@ -21,13 +21,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/iox"
+
 	"github.com/bingoohuang/goup"
 	"github.com/bingoohuang/goup/shapeio"
 
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/gg/pkg/v"
-	"github.com/bingoohuang/gurl/httplib"
 
 	"github.com/bingoohuang/gg/pkg/fla9"
 )
@@ -152,7 +153,7 @@ func parseStdin() []byte {
 var uploadFilePb *ProgressBar
 
 func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
-	u := parseURL(urlAddr)
+	u := parseURL(caFile != "", urlAddr)
 	urlAddr = u.String()
 	req := getHTTP(*method, urlAddr, nonFlagArgs, timeout)
 	if u.User != nil {
@@ -160,31 +161,8 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		req.SetBasicAuth(u.User.Username(), password)
 	}
 
-	var tlsConfig *tls.Config
-
-	if caFile != "" {
-		caCert, err := ioutil.ReadFile(caFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-
-		tlsConfig = &tls.Config{
-			RootCAs: caCertPool,
-		}
-
-	}
-	// Insecure SSL Support
-	if insecureSSL {
-		if tlsConfig == nil {
-			tlsConfig = &tls.Config{}
-		}
-		tlsConfig.InsecureSkipVerify = true
-	}
-
 	// Setup HTTPS client
-	req.SetTLSClientConfig(tlsConfig)
+	req.SetTLSClientConfig(createTlsConfig())
 
 	// Proxy Support
 	if proxy != "" {
@@ -288,7 +266,28 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	}
 }
 
-func doRequest(req *httplib.Request, u *url.URL) {
+func createTlsConfig() (tlsConfig *tls.Config) {
+	if caFile != "" {
+		caCert, err := ioutil.ReadFile(caFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+		tlsConfig = &tls.Config{RootCAs: caCertPool}
+	}
+
+	// Insecure SSL Support
+	if insecureSSL {
+		if tlsConfig == nil {
+			tlsConfig = &tls.Config{}
+		}
+		tlsConfig.InsecureSkipVerify = true
+	}
+	return
+}
+
+func doRequest(req *Request, u *url.URL) {
 	if uploadFilePb != nil {
 		fmt.Printf("Uploading \"%s\"\n", strings.Join(uploadFiles, "; "))
 		uploadFilePb.Set(0)
@@ -333,7 +332,7 @@ func doRequest(req *httplib.Request, u *url.URL) {
 	}
 }
 
-func printResponseForNonWindows(req *httplib.Request, res *http.Response) {
+func printResponseForNonWindows(req *Request, res *http.Response) {
 	fi, err := os.Stdout.Stat()
 	if err != nil {
 		panic(err)
@@ -381,7 +380,7 @@ func printResponseForNonWindows(req *httplib.Request, res *http.Response) {
 	}
 }
 
-func printResponseForWindows(req *httplib.Request, res *http.Response) {
+func printResponseForWindows(req *Request, res *http.Response) {
 	var dumpHeader, dumpBody []byte
 	dump := req.DumpRequest()
 	dps := strings.Split(string(dump), "\n")
@@ -412,22 +411,28 @@ func printResponseForWindows(req *httplib.Request, res *http.Response) {
 	}
 }
 
-func parseURL(urls string) *url.URL {
+func parseURL(hasCaFile bool, urls string) *url.URL {
 	if urls == "" {
 		usage()
 	}
+
+	schema := "http"
+	if hasCaFile {
+		schema = "https"
+	}
+
 	if strings.HasPrefix(urls, ":") {
 		urlb := []byte(urls)
 		if urls == ":" {
-			urls = "http://localhost/"
+			urls = schema + "://localhost/"
 		} else if len(urls) > 1 && urlb[1] != '/' {
-			urls = "http://localhost" + urls
+			urls = schema + "://localhost" + urls
 		} else {
-			urls = "http://localhost" + string(urlb[1:])
+			urls = schema + "://localhost" + string(urlb[1:])
 		}
 	}
 	if !strings.HasPrefix(urls, "http://") && !strings.HasPrefix(urls, "https://") {
-		urls = "http://" + urls
+		urls = schema + "://" + urls
 	}
 	u, err := url.Parse(urls)
 	if err != nil {
@@ -444,7 +449,7 @@ func parseURL(urls string) *url.URL {
 	return u
 }
 
-func downloadFile(req *httplib.Request, res *http.Response, filename string) {
+func downloadFile(req *Request, res *http.Response, filename string) {
 	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatalf("create download file %q failed: %v", filename, err)
@@ -479,8 +484,8 @@ func downloadFile(req *httplib.Request, res *http.Response, filename string) {
 		log.Fatal("Can't Write the body into file", err)
 	}
 	pb.Finish()
-	fd.Close()
-	res.Body.Close()
+	iox.Close(fd)
+	iox.Close(res.Body)
 	fmt.Println()
 }
 
