@@ -11,7 +11,7 @@ Usage:
 flags:
   -auth=USER[:PASS] Pass a username:password pair as the argument
   -n=0 -c=100       Number of requests and concurrency to run
-  -body=""          Send RAW data as body
+  -body=""          Send RAW data as body, or @filename to load body from the file's content
   -f                Submitting the data as a form
   -F filename       Upload a file, e.g. gurl :2110 -F 1.png -F 2.png
   -L limit          Limit rate for upload or download /s, like 10K

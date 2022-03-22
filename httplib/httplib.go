@@ -280,12 +280,21 @@ func (b *Request) BodyAndSize(body io.Reader, size int64) *Request {
 }
 
 // Body adds request raw body.
-// it supports string and []byte.
+// it supports @filename, string or []byte.
 func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
-		bf := bytes.NewBufferString(t)
-		b.BodyAndSize(bf, int64(len(t)))
+		if strings.HasPrefix(t, "@") {
+			fileData, err := os.ReadFile(t[1:])
+			if err != nil {
+				log.Fatalf("read file %q failed: %v", t[1:], err)
+			}
+			bf := bytes.NewBuffer(fileData)
+			b.BodyAndSize(bf, int64(len(fileData)))
+		} else {
+			bf := bytes.NewBufferString(t)
+			b.BodyAndSize(bf, int64(len(t)))
+		}
 	case []byte:
 		bf := bytes.NewBuffer(t)
 		b.BodyAndSize(bf, int64(len(t)))
