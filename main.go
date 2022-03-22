@@ -316,8 +316,10 @@ func doRequest(req *httplib.Request, u *url.URL) {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
 			}
-			downloadFile(req, res, fn)
-			return
+			if fn != "" {
+				downloadFile(req, res, fn)
+				return
+			}
 		}
 	}
 
@@ -445,8 +447,9 @@ func parseURL(urls string) *url.URL {
 func downloadFile(req *httplib.Request, res *http.Response, filename string) {
 	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
-		log.Fatal("can't create file", err)
+		log.Fatalf("create download file %q failed: %v", filename, err)
 	}
+
 	if runtime.GOOS != "windows" {
 		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 		for k, val := range res.Header {
@@ -478,6 +481,7 @@ func downloadFile(req *httplib.Request, res *http.Response, filename string) {
 	pb.Finish()
 	fd.Close()
 	res.Body.Close()
+	fmt.Println()
 }
 
 type bodyReader struct {
