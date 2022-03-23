@@ -1,5 +1,5 @@
 .PHONY: test install git.commit git.branch default
-all: test install
+all: install
 
 app=$(notdir $(shell pwd))
 appVersion := 1.0.0
@@ -56,13 +56,16 @@ fmt:
 
 install: init
 	${goinstall1}
-	upx ${gobin}/${app}
+	upx --best --lzma ${gobin}/${app}
+	ls -lh ${gobin}/${app}
 linux: init
 	GOOS=linux GOARCH=amd64 ${goinstall1}
-	upx ${gobin}/linux_amd64/${app}*
+	upx --best --lzma ${gobin}/linux_amd64/${app}*
+	ls -lh ${gobin}/${app}
 arm: init
 	GOOS=linux GOARCH=arm64 ${goinstall1}
-	upx ${gobin}/linux_arm64/${app}*
+	upx --best --lzma ${gobin}/linux_arm64/${app}*
+	ls -lh ${gobin}/${app}
 
 upx:
 	ls -lh ${gobin}/${app}
