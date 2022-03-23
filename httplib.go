@@ -296,6 +296,10 @@ func (b *Request) JsonBody(obj interface{}) (*Request, error) {
 }
 
 func appendUrl(url, append string) string {
+	if append == "" {
+		return url
+	}
+
 	if strings.Index(url, "?") != -1 {
 		return url + "&" + append
 	}
