@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/url"
 	"regexp"
 	"strings"
@@ -14,6 +13,11 @@ func filter(args []string) []string {
 	methodFoundInArgs := false
 
 	for _, arg := range args {
+		if arg == "version" {
+			ver = true
+			continue
+		}
+
 		if inSlice(strings.ToUpper(arg), methodList) {
 			*method = strings.ToUpper(arg)
 			methodFoundInArgs = true
@@ -54,9 +58,7 @@ func filter(args []string) []string {
 			*method = "POST"
 		}
 	}
-	if len(*Urls) == 0 {
-		log.Fatal("Miss the URL")
-	}
+
 	return args
 }
 

@@ -59,7 +59,7 @@ var (
 
 func init() {
 	fla9.BoolVar(&disableKeepAlive, "k", false, "Disable Keepalive enabled")
-	fla9.BoolVar(&ver, "v", false, "Print Version Number")
+	fla9.BoolVar(&ver, "version,v", false, "Print Version Number")
 	fla9.BoolVar(&raw, "raw,r", false, "Print JSON Raw Format")
 	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
 	fla9.StringVar(&caFile, "ca", "", "ca certificate file")
@@ -110,13 +110,14 @@ func main() {
 	if err := fla9.CommandLine.Parse(os.Args[1:]); err != nil {
 		log.Fatalf("failed to parse args, %v", err)
 	}
+
+	pretty = !raw
+	nonFlagArgs := filter(fla9.Args())
+
 	if ver {
 		fmt.Println(v.Version())
 		os.Exit(2)
 	}
-
-	pretty = !raw
-	nonFlagArgs := filter(fla9.Args())
 
 	parsePrintOption(printV)
 	if !HasPrintOption(printReqBody) {
@@ -124,6 +125,10 @@ func main() {
 	}
 
 	stdin := parseStdin()
+
+	if len(*Urls) == 0 {
+		log.Fatal("Miss the URL")
+	}
 
 	for _, urlAddr := range *Urls {
 		run(urlAddr, nonFlagArgs, stdin)
