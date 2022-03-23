@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/iox"
 
 	"github.com/bingoohuang/goup"
@@ -29,79 +30,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/gg/pkg/v"
-
-	"github.com/bingoohuang/gg/pkg/fla9"
 )
-
-const (
-	printReqHeader uint8 = 1 << iota
-	printReqBody
-	printRespHeader
-	printRespBody
-	printReqSession
-)
-
-var (
-	disableKeepAlive, ver, form, pretty, raw, download, insecureSSL bool
-	auth, proxy, printV, body, think, caFile                        string
-
-	uploadFiles    []string
-	printOption    uint8
-	benchN, benchC int
-	timeout        time.Duration
-	limitRate      uint64
-
-	isjson  = fla9.Bool("json,j", true, "Send the data as a JSON object")
-	method  = fla9.String("method,m", "GET", "HTTP method")
-	Urls    = flagEnv("url,u", "", "HTTP request URL")
-	jsonmap = map[string]interface{}{}
-)
-
-func init() {
-	fla9.BoolVar(&disableKeepAlive, "k", false, "Disable Keepalive enabled")
-	fla9.BoolVar(&ver, "version,v", false, "Print Version Number")
-	fla9.BoolVar(&raw, "raw,r", false, "Print JSON Raw Format")
-	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
-	fla9.StringVar(&caFile, "ca", "", "ca certificate file")
-	fla9.BoolVar(&form, "f", false, "Submitting as a form")
-	fla9.BoolVar(&download, "d", false, "Download the url content as file")
-	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
-	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")
-	fla9.StringsVar(&uploadFiles, "F", nil, "Upload files")
-	fla9.SizeVar(&limitRate, "L", "0", "Limit rate /s")
-	fla9.StringVar(&think, "think", "0", "Think time")
-
-	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
-	flagEnvVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
-	fla9.IntVar(&benchN, "n", 1, "Number of bench requests to run")
-	fla9.IntVar(&benchC, "c", 1, "Number of bench requests to run concurrently.")
-	fla9.StringVar(&body, "body,b", "", "Raw data send as body")
-}
-
-func parsePrintOption(s string) {
-	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
-	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
-	AdjustPrintOption(&s, 'H', printReqHeader)
-	AdjustPrintOption(&s, 'B', printReqBody)
-	AdjustPrintOption(&s, 'h', printRespHeader)
-	AdjustPrintOption(&s, 'b', printRespBody)
-	AdjustPrintOption(&s, 's', printReqSession)
-
-	if s != "" {
-		log.Fatalf("unknown print option: %s", s)
-	}
-}
-
-func AdjustPrintOption(s *string, r rune, flags uint8) {
-	if strings.ContainsRune(*s, r) {
-		printOption |= flags
-		*s = strings.ReplaceAll(*s, string(r), "")
-	}
-}
-
-func HasPrintOption(flags uint8) bool {
-	return printOption&flags == flags
-}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
