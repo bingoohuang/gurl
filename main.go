@@ -100,9 +100,13 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 
 	// Proxy Support
 	if proxy != "" {
-		purl, err := url.Parse(proxy)
+		proxyURI, err := FixURI(proxy, "")
 		if err != nil {
-			log.Fatal("Proxy Url parse err", err)
+			log.Fatalf("Fix Proxy Url failed: %v", err)
+		}
+		purl, err := url.Parse(proxyURI)
+		if err != nil {
+			log.Fatalf("Proxy Url parse failed: %v", err)
 		}
 		req.SetProxy(http.ProxyURL(purl))
 	} else {

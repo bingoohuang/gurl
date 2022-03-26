@@ -21,8 +21,8 @@ func filter(args []string) []string {
 		if inSlice(strings.ToUpper(arg), methodList) {
 			*method = strings.ToUpper(arg)
 			methodFoundInArgs = true
-		} else if urlAddr, err := FixURI(arg); err == nil && strings.ContainsAny(arg, ":/") {
-			*Urls = append(*Urls, urlAddr)
+		} else if addr, err := FixURI(arg, caFile); err == nil && strings.ContainsAny(arg, ":/") {
+			*Urls = append(*Urls, addr)
 		} else {
 			filteredArgs = append(filteredArgs, arg)
 		}
@@ -64,7 +64,7 @@ func filter(args []string) []string {
 
 var reScheme = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+-.]*://`)
 
-func FixURI(uri string) (string, error) {
+func FixURI(uri string, caFile string) (string, error) {
 	if uri == ":" {
 		uri = ":80"
 	}
