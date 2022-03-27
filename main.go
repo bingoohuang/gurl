@@ -65,7 +65,7 @@ func main() {
 }
 
 func parseStdin() []byte {
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		return nil
 	}
 
@@ -95,27 +95,8 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		req.SetBasicAuth(u.User.Username(), password)
 	}
 
-	// Setup HTTPS client
 	req.SetTLSClientConfig(createTlsConfig())
-
-	// Proxy Support
-	if proxy != "" {
-		proxyURI, err := FixURI(proxy, "")
-		if err != nil {
-			log.Fatalf("Fix Proxy Url failed: %v", err)
-		}
-		purl, err := url.Parse(proxyURI)
-		if err != nil {
-			log.Fatalf("Proxy Url parse failed: %v", err)
-		}
-		req.SetProxy(http.ProxyURL(purl))
-	} else {
-		eurl, err := http.ProxyFromEnvironment(req.Req)
-		if err != nil {
-			log.Fatal("Environment Proxy Url parse err", err)
-		}
-		req.SetProxy(http.ProxyURL(eurl))
-	}
+	req.SetProxy(http.ProxyURL(parseProxyURL(req.Req)))
 
 	if len(uploadFiles) > 0 {
 		var fileReaders []io.ReadCloser
@@ -170,9 +151,8 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		}
 	}
 
-	thinker, _ := thinktime.ParseThinkTime(think)
 	thinkerFn := func() {}
-	if thinker != nil {
+	if thinker, _ := thinktime.ParseThinkTime(think); thinker != nil {
 		thinkerFn = func() {
 			thinker.Think(true)
 		}
@@ -202,6 +182,27 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 			thinkerFn()
 		}
 	}
+}
+
+// Proxy Support
+func parseProxyURL(req *http.Request) *url.URL {
+	if proxy != "" {
+		proxyURI, err := FixURI(proxy, "")
+		if err != nil {
+			log.Fatalf("Fix Proxy Url failed: %v", err)
+		}
+		purl, err := url.Parse(proxyURI)
+		if err != nil {
+			log.Fatalf("Proxy Url parse failed: %v", err)
+		}
+		return purl
+	}
+
+	eurl, err := http.ProxyFromEnvironment(req)
+	if err != nil {
+		log.Fatal("Environment Proxy Url parse err", err)
+	}
+	return eurl
 }
 
 func createTlsConfig() (tlsConfig *tls.Config) {
@@ -263,7 +264,7 @@ func doRequest(req *Request, u *url.URL) {
 	// 保证 response body 被 读取并且关闭
 	_, _ = req.Bytes()
 
-	if runtime.GOOS == "windows" {
+	if isWindows() {
 		printResponseForWindows(req, res)
 	} else {
 		printResponseForNonWindows(req, res)
@@ -277,8 +278,7 @@ func printResponseForNonWindows(req *Request, res *http.Response) {
 	}
 	if fi.Mode()&os.ModeDevice == os.ModeDevice {
 		var dumpHeader, dumpBody []byte
-		dump := req.DumpRequest()
-		dps := strings.Split(string(dump), "\n")
+		dps := strings.Split(string(req.Dump), "\n")
 		for i, line := range dps {
 			if len(strings.Trim(line, "\r\n ")) == 0 {
 				dumpHeader = []byte(strings.Join(dps[:i], "\n"))
@@ -320,8 +320,7 @@ func printResponseForNonWindows(req *Request, res *http.Response) {
 
 func printResponseForWindows(req *Request, res *http.Response) {
 	var dumpHeader, dumpBody []byte
-	dump := req.DumpRequest()
-	dps := strings.Split(string(dump), "\n")
+	dps := strings.Split(string(req.Dump), "\n")
 	for i, line := range dps {
 		if len(strings.Trim(line, "\r\n ")) == 0 {
 			dumpHeader = []byte(strings.Join(dps[:i], "\n"))
@@ -360,13 +359,12 @@ func parseURL(hasCaFile bool, urls string) *url.URL {
 	}
 
 	if strings.HasPrefix(urls, ":") {
-		urlb := []byte(urls)
 		if urls == ":" {
 			urls = schema + "://localhost/"
-		} else if len(urls) > 1 && urlb[1] != '/' {
+		} else if len(urls) > 1 && urls[1] != '/' {
 			urls = schema + "://localhost" + urls
 		} else {
-			urls = schema + "://localhost" + string(urlb[1:])
+			urls = schema + "://localhost" + urls[1:]
 		}
 	}
 	if !strings.HasPrefix(urls, "http://") && !strings.HasPrefix(urls, "https://") {
@@ -387,13 +385,17 @@ func parseURL(hasCaFile bool, urls string) *url.URL {
 	return u
 }
 
+func isWindows() bool {
+	return runtime.GOOS == "windows"
+}
+
 func downloadFile(req *Request, res *http.Response, filename string) {
 	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatalf("create download file %q failed: %v", filename, err)
 	}
 
-	if runtime.GOOS != "windows" {
+	if !isWindows() {
 		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 		for k, val := range res.Header {
 			fmt.Println(Color(k, Gray), ":", Color(strings.Join(val, " "), Cyan))

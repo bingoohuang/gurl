@@ -19,28 +19,10 @@ import (
 	"net/url"
 	"os"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/iox"
 )
-
-var (
-	defaultCookieJar http.CookieJar
-	settingMutex     sync.Mutex
-)
-
-// createDefaultCookie creates a global cookiejar to store cookies.
-func createDefaultCookie() {
-	settingMutex.Lock()
-	defer settingMutex.Unlock()
-	defaultCookieJar, _ = cookiejar.New(nil)
-}
-
-// SetDefaultSetting Overwrite default settings
-func SetDefaultSetting(setting Settings) {
-	settingMutex.Lock()
-	defer settingMutex.Unlock()
-	defaultSetting = setting
-}
 
 // NewRequest return *Request with specific method
 func NewRequest(rawurl, method string) *Request {
@@ -115,20 +97,20 @@ type Settings struct {
 
 // Request provides more useful methods for requesting one url than http.Request.
 type Request struct {
-	url     string
-	Req     *http.Request
-	queries map[string]string
-	params  map[string]string
-	files   map[string]string
-	Setting Settings
-	resp    *http.Response
-	body    []byte
-	dump    []byte
+	url string
+
+	Req  *http.Request
+	resp *http.Response
+
+	queries, params, files map[string]string
+
+	Setting    Settings
+	body, Dump []byte
 
 	DisableKeepAlives bool
-	Transport         http.RoundTripper
 
-	ConnInfo httptrace.GotConnInfo
+	Transport http.RoundTripper
+	ConnInfo  httptrace.GotConnInfo
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -159,11 +141,6 @@ func (b *Request) Debug(isdebug bool) *Request {
 func (b *Request) DumpBody(isdump bool) *Request {
 	b.Setting.DumpBody = isdump
 	return b
-}
-
-// DumpRequest return the DumpRequest
-func (b *Request) DumpRequest() []byte {
-	return b.dump
 }
 
 // SetTimeout sets connect time out and read-write time out for BeegoRequest.
@@ -336,16 +313,16 @@ func (b *Request) buildUrl() {
 					}
 					// iocopy
 					_, err = io.Copy(fileWriter, fh)
-					fh.Close()
+					iox.Close(fh)
 					if err != nil {
 						log.Fatal(err)
 					}
 				}
 				for k, v := range b.params {
-					bodyWriter.WriteField(k, v)
+					_ = bodyWriter.WriteField(k, v)
 				}
-				bodyWriter.Close()
-				pw.Close()
+				iox.Close(bodyWriter)
+				iox.Close(pw)
 			}()
 			contentType := bodyWriter.FormDataContentType()
 			b.Setting.DumpBody = false
@@ -396,7 +373,8 @@ func createParamBody(params map[string]string) string {
 	return paramBody
 }
 
-// Go HTTP Redirect的知识点总结 https://colobu.com/2017/04/19/go-http-redirect/
+// LogRedirects log redirect
+// refer: Go HTTP Redirect的知识点总结 https://colobu.com/2017/04/19/go-http-redirect/
 type LogRedirects struct {
 	http.RoundTripper
 }
@@ -419,19 +397,16 @@ func (l LogRedirects) RoundTrip(req *http.Request) (resp *http.Response, err err
 
 func (b *Request) SendOut() (*http.Response, error) {
 	b.buildUrl()
-	url, err := url.Parse(b.url)
+	u, err := url.Parse(b.url)
 	if err != nil {
 		return nil, err
 	}
 
-	b.Req.URL = url
+	b.Req.URL = u
 
 	var jar http.CookieJar = nil
 	if b.Setting.EnableCookie {
-		if defaultCookieJar == nil {
-			createDefaultCookie()
-		}
-		jar = defaultCookieJar
+		jar, _ = cookiejar.New(nil)
 	}
 
 	client := &http.Client{
@@ -448,7 +423,7 @@ func (b *Request) SendOut() (*http.Response, error) {
 		if err != nil {
 			println(err.Error())
 		}
-		b.dump = dump
+		b.Dump = dump
 	}
 
 	return client.Do(b.Req)
@@ -478,7 +453,7 @@ func (b *Request) Bytes() ([]byte, error) {
 	if resp.Body == nil {
 		return nil, nil
 	}
-	defer resp.Body.Close()
+	defer iox.Close(resp.Body)
 	if b.Setting.Gzip && resp.Header.Get("Content-Encoding") == "gzip" {
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
@@ -501,7 +476,7 @@ func (b *Request) ToFile(filename string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer iox.Close(f)
 
 	resp, err := b.Response()
 	if err != nil {
@@ -510,14 +485,14 @@ func (b *Request) ToFile(filename string) error {
 	if resp.Body == nil {
 		return nil
 	}
-	defer resp.Body.Close()
+	defer iox.Close(resp.Body)
 	_, err = io.Copy(f, resp.Body)
 	return err
 }
 
-// ToJson returns the map that marshals from the body bytes as json in response .
+// ToJSON returns the map that marshals from the body bytes as json in response .
 // it calls Response inner.
-func (b *Request) ToJson(v interface{}) error {
+func (b *Request) ToJSON(v interface{}) error {
 	data, err := b.Bytes()
 	if err != nil {
 		return err
@@ -525,9 +500,9 @@ func (b *Request) ToJson(v interface{}) error {
 	return json.Unmarshal(data, v)
 }
 
-// ToXml returns the map that marshals from the body bytes as xml in response .
+// ToXML returns the map that marshals from the body bytes as xml in response .
 // it calls Response inner.
-func (b *Request) ToXml(v interface{}) error {
+func (b *Request) ToXML(v interface{}) error {
 	data, err := b.Bytes()
 	if err != nil {
 		return err
