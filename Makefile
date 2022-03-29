@@ -61,11 +61,11 @@ install: init
 linux: init
 	GOOS=linux GOARCH=amd64 ${goinstall1}
 	upx --best --lzma ${gobin}/linux_amd64/${app}*
-	ls -lh ${gobin}/${app}
+	ls -lh ${gobin}/linux_amd64/${app}
 arm: init
 	GOOS=linux GOARCH=arm64 ${goinstall1}
 	upx --best --lzma ${gobin}/linux_arm64/${app}*
-	ls -lh ${gobin}/${app}
+	ls -lh ${gobin}/linux_arm64/${app}
 
 upx:
 	ls -lh ${gobin}/${app}
