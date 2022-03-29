@@ -18,7 +18,6 @@ var defaultSetting = Settings{
 	ShowDebug:      true,
 	UserAgent:      "gurl/" + v.AppVersion,
 	ConnectTimeout: 60 * time.Second,
-	Gzip:           true,
 	DumpBody:       true,
 }
 

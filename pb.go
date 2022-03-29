@@ -30,7 +30,6 @@ type ProgressBar struct {
 	Current  string
 	CurrentN string
 
-	lastPrintNum  int
 	printMaxWidth int
 }
 
@@ -186,16 +185,15 @@ func (pb *ProgressBar) write(current int64) {
 	// check len
 	out = countersBox + barBox + percentBox + speedBox + timeLeftBox
 
-	if pb.lastPrintNum > 0 {
-		fmt.Print(fmt.Sprintf("\033[%dD", pb.lastPrintNum))
+	if pb.printMaxWidth > 0 {
+		fmt.Print(fmt.Sprintf("\033[%dD", pb.printMaxWidth))
 	}
 
 	// and print!
-	pb.lastPrintNum, _ = fmt.Print(out)
-	if pb.lastPrintNum > pb.printMaxWidth {
-		pb.printMaxWidth = pb.lastPrintNum
-	} else if pb.lastPrintNum < pb.printMaxWidth {
-		n, _ := fmt.Print(strings.Repeat(" ", pb.printMaxWidth-pb.lastPrintNum))
-		pb.lastPrintNum += n
+	n, _ := fmt.Print(out)
+	if n > pb.printMaxWidth {
+		pb.printMaxWidth = n
+	} else if n < pb.printMaxWidth {
+		fmt.Print(strings.Repeat(" ", pb.printMaxWidth-n))
 	}
 }

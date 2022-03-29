@@ -91,7 +91,6 @@ type Settings struct {
 	Proxy           func(*http.Request) (*url.URL, error)
 	Transport       http.RoundTripper
 	EnableCookie    bool
-	Gzip            bool
 	DumpBody        bool
 }
 
@@ -454,7 +453,7 @@ func (b *Request) Bytes() ([]byte, error) {
 		return nil, nil
 	}
 	defer iox.Close(resp.Body)
-	if b.Setting.Gzip && resp.Header.Get("Content-Encoding") == "gzip" {
+	if resp.Header.Get("Content-Encoding") == "gzip" {
 		reader, err := gzip.NewReader(resp.Body)
 		if err != nil {
 			return nil, err
