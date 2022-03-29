@@ -41,7 +41,7 @@ func init() {
 	fla9.StringVar(&think, "think", "0", "Think time")
 
 	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
-	flagEnvVar(&proxy, "proxy", "", "Proxy host and port, PROXY_URL")
+	flagEnvVar(&proxy, "proxy,P", "", "Proxy host and port, PROXY_URL")
 	fla9.IntVar(&benchN, "n", 1, "Number of bench requests to run")
 	fla9.IntVar(&benchC, "c", 1, "Number of bench requests to run concurrently.")
 	fla9.StringVar(&body, "body,b", "", "Raw data send as body")
