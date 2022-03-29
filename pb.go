@@ -29,6 +29,9 @@ type ProgressBar struct {
 	Empty    string
 	Current  string
 	CurrentN string
+
+	lastPrintNum  int
+	printMaxWidth int
 }
 
 func NewProgressBar(total int64) (pb *ProgressBar) {
@@ -118,9 +121,8 @@ func (pb *ProgressBar) Write(p []byte) (n int, err error) {
 }
 
 func (pb *ProgressBar) write(current int64) {
-	width := 123
 
-	var percentBox, countersBox, timeLeftBox, speedBox, barBox, end, out string
+	var percentBox, countersBox, timeLeftBox, speedBox, barBox, out string
 
 	// percents
 	if pb.ShowPercent {
@@ -159,6 +161,7 @@ func (pb *ProgressBar) write(current int64) {
 
 	// bar
 	if pb.ShowBar {
+		width := 123
 		size := width - len(countersBox+pb.BarStart+pb.BarEnd+percentBox+timeLeftBox+speedBox)
 		if size > 0 {
 			curCount := int(math.Ceil((float64(current) / float64(pb.Total)) * float64(size)))
@@ -182,10 +185,17 @@ func (pb *ProgressBar) write(current int64) {
 
 	// check len
 	out = countersBox + barBox + percentBox + speedBox + timeLeftBox
-	if len(out) < width {
-		end = strings.Repeat(" ", width-len(out))
+
+	if pb.lastPrintNum > 0 {
+		fmt.Print(fmt.Sprintf("\033[%dD", pb.lastPrintNum))
 	}
 
 	// and print!
-	fmt.Print("\r" + out + end)
+	pb.lastPrintNum, _ = fmt.Print(out)
+	if pb.lastPrintNum > pb.printMaxWidth {
+		pb.printMaxWidth = pb.lastPrintNum
+	} else if pb.lastPrintNum < pb.printMaxWidth {
+		n, _ := fmt.Print(strings.Repeat(" ", pb.printMaxWidth-pb.lastPrintNum))
+		pb.lastPrintNum += n
+	}
 }
