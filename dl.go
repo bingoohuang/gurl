@@ -58,7 +58,8 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 		log.Printf("failed to set deadline: %v", err)
 	}
 	if _, err := io.Copy(mw, br); err != nil {
-		log.Fatal("Can't Write the body into file", err)
+		// A successful Copy returns err == nil, not err == EOF.
+		log.Fatalf("download file %q failed: %v", filename, err)
 	}
 	pb.Finish()
 	iox.Close(fd, br)
