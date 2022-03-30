@@ -6,26 +6,20 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/fla9"
+	"github.com/bingoohuang/goup"
+	"github.com/bingoohuang/goup/shapeio"
 	"io"
 	"io/ioutil"
 	"log"
 	"mime"
-	"net"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
 	"os"
 	"path"
 	"runtime"
-	"strconv"
 	"strings"
-	"time"
-
-	"github.com/bingoohuang/gg/pkg/fla9"
-	"github.com/bingoohuang/gg/pkg/iox"
-
-	"github.com/bingoohuang/goup"
-	"github.com/bingoohuang/goup/shapeio"
 
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
@@ -120,7 +114,6 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 		}
 
 		up := goup.PrepareMultipartPayload(fields)
-
 		uploadFilePb.SetTotal(up.Size)
 
 		if limitRate > 0 {
@@ -160,8 +153,7 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 
 	req.SetupTransport()
 
-	// AB bench
-	if benchC > 1 {
+	if benchC > 1 { // AB bench
 		req.Debug(false)
 		RunBench(req, thinkerFn)
 		return
@@ -172,7 +164,6 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 			req.ConnInfo = info
 		},
 	}
-
 	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), trace))
 
 	for i := 0; i < benchN; i++ {
@@ -387,60 +378,4 @@ func parseURL(hasCaFile bool, urls string) *url.URL {
 
 func isWindows() bool {
 	return runtime.GOOS == "windows"
-}
-
-func downloadFile(req *Request, res *http.Response, filename string) {
-	fd, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o666)
-	if err != nil {
-		log.Fatalf("create download file %q failed: %v", filename, err)
-	}
-
-	if !isWindows() {
-		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
-		for k, val := range res.Header {
-			fmt.Println(Color(k, Gray), ":", Color(strings.Join(val, " "), Cyan))
-		}
-	} else {
-		fmt.Println(res.Proto, res.Status)
-		for k, val := range res.Header {
-			fmt.Println(k, ":", strings.Join(val, " "))
-		}
-	}
-	fmt.Println("")
-	var total int64
-	if contentLength := res.Header.Get("Content-Length"); contentLength != "" {
-		total, _ = strconv.ParseInt(contentLength, 10, 64)
-	}
-	fmt.Printf("Downloading to %q\n", filename)
-	pb := NewProgressBar(total)
-	pb.Start()
-	mw := io.MultiWriter(fd, pb)
-
-	if limitRate > 0 {
-		res.Body = shapeio.NewReader(res.Body, shapeio.WithRateLimit(float64(limitRate)))
-	}
-
-	if _, err := io.Copy(mw, &bodyReader{r: res.Body, conn: req.ConnInfo.Conn}); err != nil {
-		log.Fatal("Can't Write the body into file", err)
-	}
-	pb.Finish()
-	iox.Close(fd)
-	iox.Close(res.Body)
-	fmt.Println()
-}
-
-type bodyReader struct {
-	r    io.Reader
-	conn net.Conn
-}
-
-func (b bodyReader) Read(p []byte) (n int, err error) {
-	if timeout > 0 {
-		t := time.Now().Add(timeout)
-		if err := b.conn.SetDeadline(t); err != nil {
-			log.Printf("failed to set deadline: %v", err)
-		}
-	}
-
-	return b.r.Read(p)
 }

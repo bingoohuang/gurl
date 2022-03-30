@@ -56,7 +56,7 @@ func (pb *ProgressBar) SetTotal(total int64) {
 	pb.Total = total
 }
 
-func (pb *ProgressBar) Start() {
+func (pb *ProgressBar) Start() *ProgressBar {
 	pb.startTime = time.Now()
 	atomic.StoreInt32(&pb.isFinish, 0)
 	if pb.Total == 0 {
@@ -65,6 +65,7 @@ func (pb *ProgressBar) Start() {
 		pb.ShowPercent = false
 	}
 	go pb.writer()
+	return pb
 }
 
 // Update the current state of the progressbar
