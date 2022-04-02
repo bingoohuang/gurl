@@ -18,6 +18,11 @@ func filter(args []string) []string {
 			continue
 		}
 
+		if subs := keyReq.FindStringSubmatch(arg); len(subs) > 0 && subs[1] != "" {
+			filteredArgs = append(filteredArgs, arg)
+			continue
+		}
+
 		if inSlice(strings.ToUpper(arg), methodList) {
 			*method = strings.ToUpper(arg)
 			methodFoundInArgs = true
@@ -34,13 +39,13 @@ func filter(args []string) []string {
 			*method = "POST"
 		} else if len(args) > 0 {
 			for _, v := range args[1:] {
-				submatch := keyReq.FindStringSubmatch(v)
-				if len(submatch) == 0 {
+				subs := keyReq.FindStringSubmatch(v)
+				if len(subs) == 0 {
 					continue
 				}
 
 				// defaults to either GET (with no request data) or POST (with request data).
-				switch _, op, _ := submatch[1], submatch[2], submatch[3]; op {
+				switch _, op, _ := subs[1], subs[2], subs[3]; op {
 				case ":=": // Json raws
 					*method = "POST"
 				case "==": // Queries
