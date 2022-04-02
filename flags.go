@@ -88,6 +88,7 @@ flags:
   -n=0 -c=100       Number of requests and concurrency to run
   -body,b           Send RAW data as body, or @filename to load body from the file's content
   -f                Submitting the data as a form
+  -d                Download the url content as file
   -F filename       Upload a file, e.g. gurl :2110 -F 1.png -F 2.png
   -L limit          Limit rate for upload or download /s, like 10K
   -raw,r            Print JSON Raw format other than pretty

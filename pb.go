@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"math"
 	"strings"
 	"sync/atomic"
@@ -31,6 +32,22 @@ type ProgressBar struct {
 	CurrentN string
 
 	printMaxWidth int
+}
+
+type ProgressBarReader struct {
+	io.ReadCloser
+	pb *ProgressBar
+}
+
+func (pr *ProgressBarReader) Read(p []byte) (n int, err error) {
+	if n, err = pr.ReadCloser.Read(p); n > 0 {
+		pr.pb.Add(n)
+	}
+	return
+}
+
+func newProgressBarReader(r io.ReadCloser, pb *ProgressBar) io.ReadCloser {
+	return &ProgressBarReader{ReadCloser: r, pb: pb}
 }
 
 func NewProgressBar(total int64) (pb *ProgressBar) {
@@ -121,7 +138,6 @@ func (pb *ProgressBar) Write(p []byte) (n int, err error) {
 }
 
 func (pb *ProgressBar) write(current int64) {
-
 	var percentBox, countersBox, timeLeftBox, speedBox, barBox, out string
 
 	// percents

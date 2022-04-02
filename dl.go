@@ -31,16 +31,12 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 			fmt.Println(k, ":", strings.Join(val, " "))
 		}
 	}
-	fmt.Println("")
-	var total int64
-	if contentLength := res.Header.Get("Content-Length"); contentLength != "" {
-		total, _ = strconv.ParseInt(contentLength, 10, 64)
-	}
-	fmt.Printf("Downloading to %q\n", filename)
-	pb := NewProgressBar(total).Start()
-	mw := io.MultiWriter(fd, pb)
+	fmt.Printf("\nDownloading to %q\n", filename)
 
-	br := res.Body
+	total, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
+	pb := NewProgressBar(total).Start()
+	br := newProgressBarReader(res.Body, pb)
+
 	if limitRate > 0 {
 		br = shapeio.NewReader(br, shapeio.WithRateLimit(float64(limitRate)))
 	}
@@ -57,7 +53,7 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 	if err := req.ConnInfo.Conn.SetDeadline(time.Time{}); err != nil {
 		log.Printf("failed to set deadline: %v", err)
 	}
-	if _, err := io.Copy(mw, br); err != nil {
+	if _, err := io.Copy(fd, br); err != nil {
 		// A successful Copy returns err == nil, not err == EOF.
 		log.Fatalf("download file %q failed: %v", filename, err)
 	}
