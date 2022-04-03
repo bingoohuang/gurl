@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/bingoohuang/gg/pkg/ss"
 	"net/url"
 	"regexp"
 	"strings"
@@ -15,6 +16,11 @@ func filter(args []string) []string {
 	for _, arg := range args {
 		if arg == "version" {
 			ver = true
+			continue
+		}
+
+		if ss.HasPrefix(arg, "http:", "https:") {
+			*Urls = append(*Urls, arg)
 			continue
 		}
 
