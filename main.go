@@ -19,6 +19,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/ss"
@@ -239,8 +240,9 @@ func doRequest(req *Request, u *url.URL) {
 			fn = params["filename"]
 		}
 	}
+	cl, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
 	ct := res.Header.Get("Content-Type")
-	if download || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml") {
+	if download || cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml") {
 		if *method != "HEAD" {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
