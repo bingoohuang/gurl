@@ -1,10 +1,9 @@
 package main
 
 import (
-	"net/url"
-	"regexp"
 	"strings"
 
+	"github.com/bingoohuang/gg/pkg/rest"
 	"github.com/bingoohuang/gg/pkg/ss"
 )
 
@@ -13,6 +12,7 @@ var methodList = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTI
 func filter(args []string) []string {
 	var filteredArgs []string
 	methodFoundInArgs := false
+	defaultSchema := rest.WithDefaultScheme(ss.If(caFile != "", "https", "http"))
 
 	for _, arg := range args {
 		if arg == "version" {
@@ -33,8 +33,8 @@ func filter(args []string) []string {
 		if inSlice(strings.ToUpper(arg), methodList) {
 			*method = strings.ToUpper(arg)
 			methodFoundInArgs = true
-		} else if addr, err := FixURI(arg, caFile); err == nil && strings.ContainsAny(arg, ":/") {
-			*Urls = append(*Urls, addr)
+		} else if addr := rest.FixURI(arg, defaultSchema); addr.OK() && strings.ContainsAny(arg, ":/") {
+			*Urls = append(*Urls, addr.Data.String())
 		} else {
 			filteredArgs = append(filteredArgs, arg)
 		}
@@ -72,38 +72,4 @@ func filter(args []string) []string {
 	}
 
 	return args
-}
-
-var reScheme = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+-.]*://`)
-
-func FixURI(uri string, caFile string) (string, error) {
-	if uri == ":" {
-		uri = ":80"
-	}
-
-	defaultScheme, defaultHost := "http", "localhost"
-	// ex) :8080/hello or /hello or :
-	if strings.HasPrefix(uri, ":") || strings.HasPrefix(uri, "/") {
-		uri = defaultHost + uri
-	}
-
-	if caFile != "" {
-		defaultScheme = "https"
-	}
-	// ex) example.com/hello
-	if !reScheme.MatchString(uri) {
-		uri = defaultScheme + "://" + uri
-	}
-
-	u, err := url.Parse(uri)
-	if err != nil {
-		return "", err
-	}
-
-	u.Host = strings.TrimSuffix(u.Host, ":")
-	if u.Path == "" {
-		u.Path = "/"
-	}
-
-	return u.String(), nil
 }
