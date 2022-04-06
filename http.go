@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/iox"
 	"github.com/bingoohuang/gg/pkg/v"
 )
 
@@ -119,6 +120,8 @@ func readFile(s string) (data []byte, fn string, e error) {
 	if err != nil {
 		return nil, s, err
 	}
+	defer iox.Close(f)
+
 	content, err := ioutil.ReadAll(f)
 	if err != nil {
 		return nil, s, err

@@ -6,9 +6,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/bingoohuang/gg/pkg/fla9"
-	"github.com/bingoohuang/goup"
-	"github.com/bingoohuang/goup/shapeio"
 	"io"
 	"io/ioutil"
 	"log"
@@ -21,6 +18,11 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/bingoohuang/gg/pkg/fla9"
+	"github.com/bingoohuang/gg/pkg/osx"
+	"github.com/bingoohuang/goup"
+	"github.com/bingoohuang/goup/shapeio"
 
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
@@ -199,13 +201,9 @@ func parseProxyURL(req *http.Request) *url.URL {
 
 func createTlsConfig() (tlsConfig *tls.Config) {
 	if caFile != "" {
-		caCert, err := ioutil.ReadFile(caFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-		tlsConfig = &tls.Config{RootCAs: caCertPool}
+		pool := x509.NewCertPool()
+		pool.AppendCertsFromPEM(osx.ReadFile(caFile, osx.WithFatalOnError(true)).Data)
+		tlsConfig = &tls.Config{RootCAs: pool}
 	}
 
 	// Insecure SSL Support

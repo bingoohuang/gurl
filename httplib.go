@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/gg/pkg/osx"
 )
 
 // NewRequest return *Request with specific method
@@ -239,10 +240,7 @@ func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
 		if strings.HasPrefix(t, "@") {
-			fileData, err := os.ReadFile(t[1:])
-			if err != nil {
-				log.Fatalf("read file %q failed: %v", t[1:], err)
-			}
+			fileData := osx.ReadFile(t[1:], osx.WithFatalOnError(true)).Data
 			bf := bytes.NewBuffer(fileData)
 			b.BodyAndSize(bf, int64(len(fileData)))
 		} else {

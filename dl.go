@@ -3,8 +3,6 @@ package main
 import (
 	"compress/gzip"
 	"fmt"
-	"github.com/bingoohuang/gg/pkg/iox"
-	"github.com/bingoohuang/goup/shapeio"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +10,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/goup/shapeio"
 )
 
 func downloadFile(req *Request, res *http.Response, filename string) {

@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/bingoohuang/gg/pkg/ss"
 	"net/url"
 	"regexp"
 	"strings"
+
+	"github.com/bingoohuang/gg/pkg/ss"
 )
 
 var methodList = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
