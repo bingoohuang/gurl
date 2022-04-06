@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/atomic"
+
 	"github.com/bingoohuang/gg/pkg/fla9"
 )
 
@@ -17,6 +19,7 @@ var (
 	uploadFiles    []string
 	printOption    uint8
 	benchN, benchC int
+	currentN       atomic.Int64
 	timeout        time.Duration
 	limitRate      uint64
 

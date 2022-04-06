@@ -1,13 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
@@ -51,45 +50,46 @@ func main() {
 		defaultSetting.DumpBody = false
 	}
 
-	stdin := parseStdin()
-
 	if len(*Urls) == 0 {
 		log.Fatal("Miss the URL")
 	}
 
+	stdin := parseStdin()
 	for _, urlAddr := range *Urls {
 		run(urlAddr, nonFlagArgs, stdin)
 	}
 }
 
-func parseStdin() []byte {
+func parseStdin() io.Reader {
 	if isWindows() {
 		return nil
 	}
 
-	fi, err := os.Stdin.Stat()
+	stat, err := os.Stdin.Stat()
 	if err != nil {
 		panic(err)
 	}
 
-	var stdin []byte
-	if fi.Size() != 0 {
-		if stdin, err = ioutil.ReadAll(os.Stdin); err != nil {
-			log.Fatal("Read from Stdin", err)
-		}
+	if stat.Size() > 0 {
+		log.Printf("Read from stdin")
+		return os.Stdin
 	}
 
-	return stdin
+	return nil
 }
 
 var uploadFilePb *ProgressBar
 
-func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
+func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 	u := rest.FixURI(urlAddr,
 		rest.WithAuth(auth),
 		rest.WithFatalErr(true),
 		rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
 	).Data
+
+	if stdin != nil && *method == http.MethodGet {
+		*method = http.MethodPost
+	}
 
 	req := getHTTP(*method, u.String(), nonFlagArgs, timeout)
 	if u.User != nil {
@@ -98,7 +98,10 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	}
 
 	req.SetTLSClientConfig(createTlsConfig())
-	req.SetProxy(http.ProxyURL(parseProxyURL(req.Req)))
+	if proxyURL := parseProxyURL(req.Req); proxyURL != nil {
+		log.Printf("Proxy URL: %s", proxyURL)
+		req.SetProxy(http.ProxyURL(proxyURL))
+	}
 
 	if len(uploadFiles) > 0 {
 		var fileReaders []io.ReadCloser
@@ -141,15 +144,11 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	} else if body != "" {
 		req.Body(body)
 	}
-	if len(stdin) > 0 {
-		var j interface{}
-		d := json.NewDecoder(bytes.NewReader(stdin))
-		d.UseNumber()
-		if err := d.Decode(&j); err != nil {
-			req.Body(stdin)
-		} else {
-			_, _ = req.JsonBody(j)
-		}
+
+	if stdin != nil {
+		stdinCh := make(chan interface{})
+		go readStdin(stdin, stdinCh)
+		req.BodyCh(stdinCh)
 	}
 
 	thinkerFn := func() {}
@@ -174,27 +173,42 @@ func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
 	}
 	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), trace))
 
-	for i := 0; i < benchN; i++ {
-		doRequest(req, u)
+	for i := 0; benchN == 0 || i < benchN; i++ {
+		if err := doRequest(req, u); err != nil {
+			if !errors.Is(err, io.EOF) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
 		req.Reset()
-		if i < benchN-1 {
+		if benchN == 0 || i < benchN-1 {
 			thinkerFn()
 		}
+	}
+}
+
+func readStdin(stdin io.Reader, stdinCh chan interface{}) {
+	d := json.NewDecoder(stdin)
+	d.UseNumber()
+
+	for {
+		var j interface{}
+		if err := d.Decode(&j); err != nil {
+			if errors.Is(err, io.EOF) {
+				close(stdinCh)
+			} else {
+				log.Println(err)
+			}
+			return
+		}
+		stdinCh <- j
 	}
 }
 
 // Proxy Support
 func parseProxyURL(req *http.Request) *url.URL {
 	if proxy != "" {
-		proxyURI, err := FixURI(proxy, "")
-		if err != nil {
-			log.Fatalf("Fix Proxy Url failed: %v", err)
-		}
-		purl, err := url.Parse(proxyURI)
-		if err != nil {
-			log.Fatalf("Proxy Url parse failed: %v", err)
-		}
-		return purl
+		return rest.FixURI(proxy, rest.WithFatalErr(true)).Data
 	}
 
 	eurl, err := http.ProxyFromEnvironment(req)
@@ -221,7 +235,21 @@ func createTlsConfig() (tlsConfig *tls.Config) {
 	return
 }
 
-func doRequest(req *Request, u *url.URL) {
+func doRequest(req *Request, u *url.URL) error {
+	if req.bodyCh != nil {
+		if err := req.NextBody(); err != nil {
+			return err
+		}
+	}
+
+	doRequestInternal(req, u)
+	return nil
+}
+
+func doRequestInternal(req *Request, u *url.URL) {
+	if benchN == 0 || benchN > 1 {
+		req.Header("Gurl-N", fmt.Sprintf("%d", currentN.Inc()))
+	}
 	if uploadFilePb != nil {
 		fmt.Printf("Uploading \"%s\"\n", strings.Join(uploadFiles, "; "))
 		uploadFilePb.Set(0)
@@ -307,10 +335,8 @@ func printResponseForNonWindows(req *Request, res *http.Response) {
 			fmt.Println(formatResponseBody(req, pretty, true))
 		}
 	} else {
-		body := formatResponseBody(req, pretty, false)
-		if _, err := os.Stdout.WriteString(body); err != nil {
-			log.Fatal(err)
-		}
+		b := formatResponseBody(req, pretty, false)
+		_, _ = os.Stdout.WriteString(b)
 	}
 }
 

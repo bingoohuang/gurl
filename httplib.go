@@ -111,6 +111,8 @@ type Request struct {
 
 	Transport http.RoundTripper
 	ConnInfo  httptrace.GotConnInfo
+
+	bodyCh chan interface{}
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -234,8 +236,12 @@ func (b *Request) BodyAndSize(body io.Reader, size int64) *Request {
 	return b
 }
 
-// Body adds request raw body.
-// it supports @filename, string or []byte.
+// BodyCh set body channel..
+func (b *Request) BodyCh(data chan interface{}) *Request {
+	b.bodyCh = data
+	return b
+}
+
 func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
@@ -252,6 +258,20 @@ func (b *Request) Body(data interface{}) *Request {
 		b.BodyAndSize(bf, int64(len(t)))
 	}
 	return b
+}
+
+func (b *Request) NextBody() (err error) {
+	if b.bodyCh != nil {
+		d, ok := <-b.bodyCh
+		if !ok {
+			b.bodyCh = nil
+			return io.EOF
+		}
+		_, err = b.JsonBody(d)
+		return
+	}
+
+	return io.EOF
 }
 
 // JsonBody adds request raw body encoding by JSON.
@@ -337,6 +357,7 @@ func (b *Request) buildUrl() {
 }
 
 func (b *Request) Reset() {
+	b.Req.Body = nil
 	b.resp.StatusCode = 0
 	b.body = nil
 }
