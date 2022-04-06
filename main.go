@@ -21,6 +21,7 @@ import (
 
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/osx"
+	"github.com/bingoohuang/gg/pkg/rest"
 	"github.com/bingoohuang/goup"
 	"github.com/bingoohuang/goup/shapeio"
 
@@ -84,9 +85,13 @@ func parseStdin() []byte {
 var uploadFilePb *ProgressBar
 
 func run(urlAddr string, nonFlagArgs []string, stdin []byte) {
-	u := parseURL(caFile != "", urlAddr)
-	urlAddr = u.String()
-	req := getHTTP(*method, urlAddr, nonFlagArgs, timeout)
+	u := rest.FixURI(urlAddr,
+		rest.WithAuth(auth),
+		rest.WithFatalErr(true),
+		rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
+	).Data
+
+	req := getHTTP(*method, u.String(), nonFlagArgs, timeout)
 	if u.User != nil {
 		password, _ := u.User.Password()
 		req.SetBasicAuth(u.User.Username(), password)
@@ -337,43 +342,6 @@ func printResponseForWindows(req *Request, res *http.Response) {
 	if HasPrintOption(printRespBody) {
 		fmt.Println(formatResponseBody(req, pretty, false))
 	}
-}
-
-func parseURL(hasCaFile bool, urls string) *url.URL {
-	if urls == "" {
-		usage()
-	}
-
-	schema := "http"
-	if hasCaFile {
-		schema = "https"
-	}
-
-	if strings.HasPrefix(urls, ":") {
-		if urls == ":" {
-			urls = schema + "://localhost/"
-		} else if len(urls) > 1 && urls[1] != '/' {
-			urls = schema + "://localhost" + urls
-		} else {
-			urls = schema + "://localhost" + urls[1:]
-		}
-	}
-	if !strings.HasPrefix(urls, "http://") && !strings.HasPrefix(urls, "https://") {
-		urls = schema + "://" + urls
-	}
-	u, err := url.Parse(urls)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if auth != "" {
-		if userpass := strings.Split(auth, ":"); len(userpass) == 2 {
-			u.User = url.UserPassword(userpass[0], userpass[1])
-		} else {
-			u.User = url.User(auth)
-		}
-	}
-
-	return u
 }
 
 func isWindows() bool {
