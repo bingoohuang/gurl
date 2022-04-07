@@ -17,6 +17,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/osx"
@@ -55,9 +56,12 @@ func main() {
 	}
 
 	stdin := parseStdin()
+
+	start := time.Now()
 	for _, urlAddr := range *Urls {
 		run(urlAddr, nonFlagArgs, stdin)
 	}
+	fmt.Println("Complete, cost: ", time.Since(start))
 }
 
 func parseStdin() io.Reader {
