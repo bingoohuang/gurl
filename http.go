@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
+	"github.com/bingoohuang/jj"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -140,10 +140,12 @@ func formatResponseBody(r *Request, pretty, hasDevice bool) string {
 
 func formatBytes(body []byte, pretty, hasDevice bool) string {
 	isJSON := json.Valid(body)
-	if pretty && isJSON {
-		var output bytes.Buffer
-		if err := json.Indent(&output, body, "", "  "); err == nil {
-			body = output.Bytes()
+
+	if isJSON {
+		if pretty {
+			body = jj.Pretty(body, jj.DefaultOptions)
+		} else {
+			body = jj.Ugly(body)
 		}
 	}
 
