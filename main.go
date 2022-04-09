@@ -77,8 +77,7 @@ func parseStdin() io.Reader {
 		panic(err)
 	}
 
-	if stat.Size() > 0 {
-		log.Printf("Read from stdin")
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
 		return os.Stdin
 	}
 
