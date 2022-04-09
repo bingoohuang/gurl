@@ -26,9 +26,9 @@ import (
 )
 
 // NewRequest return *Request with specific method
-func NewRequest(rawurl, method string) *Request {
+func NewRequest(rawURL, method string) *Request {
 	var resp http.Response
-	u, err := url.Parse(rawurl)
+	u, err := url.Parse(rawURL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func NewRequest(rawurl, method string) *Request {
 		ProtoMinor: 1,
 	}
 	return &Request{
-		url:     rawurl,
+		url:     rawURL,
 		Req:     &req,
 		queries: map[string]string{},
 		params:  map[string]string{},
@@ -113,6 +113,7 @@ type Request struct {
 	ConnInfo  httptrace.GotConnInfo
 
 	bodyCh chan interface{}
+	stat   *httpStat
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -406,10 +407,11 @@ func (l LogRedirects) RoundTrip(req *http.Request) (resp *http.Response, err err
 	if err != nil {
 		return
 	}
-	switch resp.StatusCode {
-	case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther, http.StatusTemporaryRedirect:
-		log.Printf("%s redirect(%d) to %s", req.URL, resp.StatusCode, resp.Header.Get("Location"))
+	if isRedirect(resp.StatusCode) && HasPrintOption(printVerbose) {
+		log.Printf("FROM %s", req.URL)
+		log.Printf("Redirect(%d) to %s", resp.StatusCode, resp.Header.Get("Location"))
 	}
+
 	return
 }
 
@@ -531,6 +533,6 @@ func (b *Request) ToXML(v interface{}) error {
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
 func TimeoutDialer(cTimeout time.Duration) func(context.Context, string, string) (net.Conn, error) {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
-		return net.DialTimeout(network, addr, cTimeout)
+		return (&net.Dialer{Timeout: cTimeout}).DialContext(ctx, network, addr)
 	}
 }

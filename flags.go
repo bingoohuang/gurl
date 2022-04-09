@@ -56,6 +56,7 @@ const (
 	printRespHeader
 	printRespBody
 	printReqSession
+	printVerbose
 )
 
 func parsePrintOption(s string) {
@@ -66,6 +67,7 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 'h', printRespHeader)
 	AdjustPrintOption(&s, 'b', printRespBody)
 	AdjustPrintOption(&s, 's', printReqSession)
+	AdjustPrintOption(&s, 'v', printVerbose)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)
@@ -100,7 +102,7 @@ flags:
   -ca               Ca certificate file
   -proxy=PROXY_URL  Proxy with host and port
   -print,p          String specifying what the output should contain, default will print all information
-                       H: request headers  B: request body  h: response headers  b: response body s: http conn session
+                       H: request headers  B: request body  h: response headers  b: response body s: http conn session v: Verbose
   -t                Set timeout for read and write, default 1m
   -k                Disable keepalive
   -think            Think time, like 5s, 100ms, 100ms-5s, 100-200ms and etc.

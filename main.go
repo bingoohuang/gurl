@@ -61,7 +61,10 @@ func main() {
 	for _, urlAddr := range *Urls {
 		run(urlAddr, nonFlagArgs, stdin)
 	}
-	fmt.Println("Complete, cost: ", time.Since(start))
+
+	if HasPrintOption(printVerbose) {
+		fmt.Println("Complete, cost: ", time.Since(start))
+	}
 }
 
 func parseStdin() io.Reader {
@@ -100,6 +103,8 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		password, _ := u.User.Password()
 		req.SetBasicAuth(u.User.Username(), password)
 	}
+
+	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), createClientTrace(req)))
 
 	req.SetTLSClientConfig(createTlsConfig())
 	if proxyURL := parseProxyURL(req.Req); proxyURL != nil {
@@ -170,13 +175,6 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		return
 	}
 
-	trace := &httptrace.ClientTrace{
-		GotConn: func(info httptrace.GotConnInfo) {
-			req.ConnInfo = info
-		},
-	}
-	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), trace))
-
 	for i := 0; benchN == 0 || i < benchN; i++ {
 		if err := doRequest(req, u); err != nil {
 			if !errors.Is(err, io.EOF) {
@@ -215,11 +213,11 @@ func parseProxyURL(req *http.Request) *url.URL {
 		return rest.FixURI(proxy, rest.WithFatalErr(true)).Data
 	}
 
-	eurl, err := http.ProxyFromEnvironment(req)
+	p, err := http.ProxyFromEnvironment(req)
 	if err != nil {
 		log.Fatal("Environment Proxy Url parse err", err)
 	}
-	return eurl
+	return p
 }
 
 func createTlsConfig() (tlsConfig *tls.Config) {
@@ -296,6 +294,10 @@ func doRequestInternal(req *Request, u *url.URL) {
 		printResponseForWindows(req, res)
 	} else {
 		printResponseForNonWindows(req, res)
+	}
+
+	if benchN == 1 && HasPrintOption(printVerbose) {
+		req.stat.print(u.Scheme)
 	}
 }
 
