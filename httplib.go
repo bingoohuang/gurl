@@ -247,16 +247,17 @@ func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
 		if strings.HasPrefix(t, "@") {
-			fileData := osx.ReadFile(t[1:], osx.WithFatalOnError(true)).Data
-			bf := bytes.NewBuffer(fileData)
-			b.BodyAndSize(bf, int64(len(fileData)))
+			f := osx.ReadFile(t[1:], osx.WithFatalOnError(true)).Data
+			b.BodyAndSize(bytes.NewBuffer(f), int64(len(f)))
 		} else {
-			bf := bytes.NewBufferString(t)
-			b.BodyAndSize(bf, int64(len(t)))
+			if f := osx.ReadFile(t); f.OK() {
+				b.BodyAndSize(bytes.NewBuffer(f.Data), int64(len(f.Data)))
+			} else {
+				b.BodyAndSize(bytes.NewBufferString(t), int64(len(t)))
+			}
 		}
 	case []byte:
-		bf := bytes.NewBuffer(t)
-		b.BodyAndSize(bf, int64(len(t)))
+		b.BodyAndSize(bytes.NewBuffer(t), int64(len(t)))
 	}
 	return b
 }
