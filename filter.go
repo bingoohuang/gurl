@@ -66,9 +66,11 @@ func filter(args []string) []string {
 					break
 				}
 			}
-		} else if body != "" {
-			*method = "POST"
 		}
+	}
+
+	if !methodFoundInArgs && *method == "GET" && body != "" {
+		*method = "POST"
 	}
 
 	return args
