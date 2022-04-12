@@ -316,7 +316,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 		printResponseForNonWindows(req, res, false)
 	}
 
-	if benchN == 1 && HasPrintOption(printVerbose) {
+	if HasPrintOption(printVerbose) {
 		req.stat.print(u.Scheme)
 	}
 }
