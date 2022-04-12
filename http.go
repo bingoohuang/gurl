@@ -23,7 +23,9 @@ var defaultSetting = Settings{
 	DumpBody:       true,
 }
 
-var keyReq = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
+var (
+	keyReg = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
+)
 
 func getHTTP(method string, url string, args []string, timeout time.Duration) (r *Request) {
 	r = NewRequest(url, method)
@@ -49,7 +51,7 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 	// File upload fields field@/dir/file, field@file;type=mime	Only available with --form, -f and --multipart. For example screenshot@~/Pictures/img.png, or 'cv@cv.txt;type=text/markdown'. With --form, the presence of a file field results in a --multipart request
 	for i := range args {
 		arg := args[i]
-		subs := keyReq.FindStringSubmatch(arg)
+		subs := keyReg.FindStringSubmatch(arg)
 		if len(subs) == 0 {
 			continue
 		}

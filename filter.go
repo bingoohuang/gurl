@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/rest"
@@ -25,8 +26,15 @@ func filter(args []string) []string {
 			continue
 		}
 
-		if subs := keyReq.FindStringSubmatch(arg); len(subs) > 0 && subs[1] != "" {
-			filteredArgs = append(filteredArgs, arg)
+		if subs := keyReg.FindStringSubmatch(arg); len(subs) > 0 && subs[1] != "" && ss.IsDigits(subs[3]) {
+			k := subs[1]
+			if ip := net.ParseIP(k); ip != nil { // 127.0.0.1:5003
+				*Urls = append(*Urls, arg)
+			} else if strings.Contains(subs[1], ".") && subs[2] == ":" { // a.b.c:5003
+				*Urls = append(*Urls, arg)
+			} else {
+				filteredArgs = append(filteredArgs, arg)
+			}
 			continue
 		}
 
@@ -46,7 +54,7 @@ func filter(args []string) []string {
 			*method = "POST"
 		} else if len(args) > 0 {
 			for _, v := range args[1:] {
-				subs := keyReq.FindStringSubmatch(v)
+				subs := keyReg.FindStringSubmatch(v)
 				if len(subs) == 0 {
 					continue
 				}
