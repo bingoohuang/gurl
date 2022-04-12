@@ -277,7 +277,7 @@ func (b *Request) NextBody() (err error) {
 
 // JsonBody adds request raw body encoding by JSON.
 func (b *Request) JsonBody(obj interface{}) (*Request, error) {
-	if b.Req.Body == nil && obj != nil {
+	if obj != nil {
 		buf := bytes.NewBuffer(nil)
 		enc := json.NewEncoder(buf)
 		if err := enc.Encode(obj); err != nil {
@@ -358,7 +358,6 @@ func (b *Request) buildUrl() {
 }
 
 func (b *Request) Reset() {
-	b.Req.Body = nil
 	b.resp.StatusCode = 0
 	b.body = nil
 }

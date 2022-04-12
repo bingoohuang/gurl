@@ -63,7 +63,7 @@ func main() {
 	}
 
 	if HasPrintOption(printVerbose) {
-		fmt.Println("Complete, cost: ", time.Since(start))
+		fmt.Println("Complete, total cost: ", time.Since(start))
 	}
 }
 
@@ -111,6 +111,47 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		req.SetProxy(http.ProxyURL(proxyURL))
 	}
 
+	if stdin != nil {
+		stdinCh := make(chan interface{})
+		go readStdin(stdin, stdinCh)
+		req.BodyCh(stdinCh)
+	}
+
+	thinkerFn := func() {}
+	if thinker, _ := thinktime.ParseThinkTime(think); thinker != nil {
+		thinkerFn = func() {
+			thinker.Think(true)
+		}
+	}
+
+	req.SetupTransport()
+
+	if benchC > 1 { // AB bench
+		req.Debug(false)
+		RunBench(req, thinkerFn)
+		return
+	}
+
+	for i := 0; benchN == 0 || i < benchN; i++ {
+		start := time.Now()
+
+		err := doRequest(req, u)
+		log.Printf("current request cost time: %s", time.Since(start))
+
+		if err != nil {
+			if !errors.Is(err, io.EOF) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
+		req.Reset()
+		if benchN == 0 || i < benchN-1 {
+			thinkerFn()
+		}
+	}
+}
+
+func setBody(req *Request) {
 	if len(uploadFiles) > 0 {
 		var fileReaders []io.ReadCloser
 		for _, uploadFile := range uploadFiles {
@@ -151,40 +192,6 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		}
 	} else if body != "" {
 		req.Body(body)
-	}
-
-	if stdin != nil {
-		stdinCh := make(chan interface{})
-		go readStdin(stdin, stdinCh)
-		req.BodyCh(stdinCh)
-	}
-
-	thinkerFn := func() {}
-	if thinker, _ := thinktime.ParseThinkTime(think); thinker != nil {
-		thinkerFn = func() {
-			thinker.Think(true)
-		}
-	}
-
-	req.SetupTransport()
-
-	if benchC > 1 { // AB bench
-		req.Debug(false)
-		RunBench(req, thinkerFn)
-		return
-	}
-
-	for i := 0; benchN == 0 || i < benchN; i++ {
-		if err := doRequest(req, u); err != nil {
-			if !errors.Is(err, io.EOF) {
-				log.Printf("error: %v", err)
-			}
-			break
-		}
-		req.Reset()
-		if benchN == 0 || i < benchN-1 {
-			thinkerFn()
-		}
 	}
 }
 
@@ -241,6 +248,8 @@ func doRequest(req *Request, u *url.URL) error {
 		if err := req.NextBody(); err != nil {
 			return err
 		}
+	} else {
+		setBody(req)
 	}
 
 	doRequestInternal(req, u)
@@ -274,7 +283,12 @@ func doRequestInternal(req *Request, u *url.URL) {
 	}
 	cl, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
 	ct := res.Header.Get("Content-Type")
-	if download || cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml") {
+	download = strings.ToLower(download)
+
+	if download == "no" || download == "n" {
+		// do not goto downloading
+	} else if (download == "yes" || download == "y") ||
+		(cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml")) {
 		if *method != "HEAD" {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
@@ -334,7 +348,7 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 			fmt.Println(ColorfulRequest(string(dumpHeader)))
 		}
 		if HasPrintOption(printReqBody) {
-			if !saveTempFile(dumpBody, MaxResponseSize) {
+			if !saveTempFile(dumpBody, MaxRequestSize) {
 				fmt.Println(formatBytes(dumpBody, pretty, true))
 			}
 		}
@@ -343,6 +357,11 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 			for k, val := range res.Header {
 				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
 			}
+
+			if res.Close {
+				fmt.Printf("%s: %s\n", Color("Connection", Gray), Color("Close", Cyan))
+			}
+
 			fmt.Println()
 		}
 		if !download && HasPrintOption(printRespBody) {
