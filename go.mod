@@ -3,7 +3,7 @@ module github.com/bingoohuang/gurl
 go 1.18
 
 require (
-	github.com/bingoohuang/gg v0.0.0-20220406072444-e015c5e7b20d
+	github.com/bingoohuang/gg v0.0.0-20220412050757-14d06220b568
 	github.com/bingoohuang/goup v0.0.0-20220406072954-87a41b91f087
 	github.com/bingoohuang/jj v0.0.0-20220223101833-5e5b441b6f72
 	github.com/fatih/color v1.10.0

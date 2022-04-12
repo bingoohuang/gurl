@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/iox"
@@ -21,17 +20,8 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 		log.Fatalf("create download file %q failed: %v", filename, err)
 	}
 
-	if !isWindows() {
-		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
-		for k, val := range res.Header {
-			fmt.Println(Color(k, Gray), ":", Color(strings.Join(val, " "), Cyan))
-		}
-	} else {
-		fmt.Println(res.Proto, res.Status)
-		for k, val := range res.Header {
-			fmt.Println(k, ":", strings.Join(val, " "))
-		}
-	}
+	printResponseForNonWindows(req, res, true)
+
 	fmt.Printf("\nDownloading to %q\n", filename)
 
 	total, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)

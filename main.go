@@ -279,6 +279,13 @@ func doRequestInternal(req *Request, u *url.URL) {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
 			}
+			if ss.ContainsFold(ct, "json") && !strings.HasSuffix(fn, ".json") {
+				fn += ".json"
+			} else if ss.ContainsFold(ct, "text") && !strings.HasSuffix(fn, ".txt") {
+				fn += ".txt"
+			} else if ss.ContainsFold(ct, "xml") && !strings.HasSuffix(fn, ".xml") {
+				fn += ".xml"
+			}
 			if fn != "" {
 				downloadFile(req, res, fn)
 				return
@@ -292,7 +299,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 	if isWindows() {
 		printResponseForWindows(req, res)
 	} else {
-		printResponseForNonWindows(req, res)
+		printResponseForNonWindows(req, res, false)
 	}
 
 	if benchN == 1 && HasPrintOption(printVerbose) {
@@ -300,7 +307,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 	}
 }
 
-func printResponseForNonWindows(req *Request, res *http.Response) {
+func printResponseForNonWindows(req *Request, res *http.Response, download bool) {
 	fi, err := os.Stdout.Stat()
 	if err != nil {
 		panic(err)
@@ -327,7 +334,9 @@ func printResponseForNonWindows(req *Request, res *http.Response) {
 			fmt.Println(ColorfulRequest(string(dumpHeader)))
 		}
 		if HasPrintOption(printReqBody) {
-			fmt.Println(string(dumpBody))
+			if !saveTempFile(dumpBody, MaxResponseSize) {
+				fmt.Println(formatBytes(dumpBody, pretty, true))
+			}
 		}
 		if HasPrintOption(printRespHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
@@ -336,10 +345,10 @@ func printResponseForNonWindows(req *Request, res *http.Response) {
 			}
 			fmt.Println()
 		}
-		if HasPrintOption(printRespBody) {
+		if !download && HasPrintOption(printRespBody) {
 			fmt.Println(formatResponseBody(req, pretty, true))
 		}
-	} else {
+	} else if !download {
 		b := formatResponseBody(req, pretty, false)
 		_, _ = os.Stdout.WriteString(b)
 	}

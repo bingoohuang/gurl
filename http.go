@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/jj"
 	"io/ioutil"
 	"log"
@@ -129,13 +130,32 @@ func readFile(s string) (data []byte, fn string, e error) {
 	return content, s, nil
 }
 
+const MaxRequestSize = "MAX_REQUEST_SIZE"
+const MaxResponseSize = "MAX_RESPONSE_SIZE"
+
 func formatResponseBody(r *Request, pretty, hasDevice bool) string {
 	dat, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
 	}
 
+	if saveTempFile(dat, MaxResponseSize) {
+		return ""
+	}
+
 	return formatBytes(dat, pretty, hasDevice)
+}
+
+func saveTempFile(dat []byte, envName string) bool {
+	if maxBodySize := osx.EnvSize(envName, 256); len(dat) > maxBodySize {
+		if t := iox.WriteTempFile(iox.WithTempContent(dat)); t.Err == nil {
+			log.Printf("body is too large, %d > %d (can change it by env %s, write to file: %s",
+				len(dat), maxBodySize, envName, t.Name)
+			return true
+		}
+	}
+
+	return false
 }
 
 func formatBytes(body []byte, pretty, hasDevice bool) string {
