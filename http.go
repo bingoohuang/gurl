@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/bingoohuang/gg/pkg/man"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -152,8 +153,8 @@ func formatResponseBody(r *Request, pretty, hasDevice bool) string {
 func saveTempFile(dat []byte, envName string) bool {
 	if maxBodySize := osx.EnvSize(envName, 1024); len(dat) > maxBodySize {
 		if t := iox.WriteTempFile(iox.WithTempContent(dat)); t.Err == nil {
-			log.Printf("body is too large, %d > %d (set $%s), write to file: %s",
-				len(dat), maxBodySize, envName, t.Name)
+			log.Printf("body is too large, %d / %s > %d / %s (set $%s), write to file: %s",
+				len(dat), man.Bytes(uint64(len(dat))), maxBodySize, man.Bytes(uint64(maxBodySize)), envName, t.Name)
 			return true
 		}
 	}
