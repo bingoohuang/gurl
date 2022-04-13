@@ -312,7 +312,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 		printResponseForNonWindows(req, res, false)
 	}
 
-	if HasPrintOption(printVerbose) {
+	if HasPrintOption(printHTTPTrace) {
 		req.stat.print(u.Scheme)
 	}
 }
