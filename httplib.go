@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/goup/shapeio"
+
 	"github.com/bingoohuang/gg/pkg/iox"
 	"github.com/bingoohuang/gg/pkg/osx"
 )
@@ -303,7 +305,7 @@ func appendUrl(url, append string) string {
 	return url + "?" + append
 }
 
-func (b *Request) buildUrl() {
+func (b *Request) BuildUrl() {
 	paramBody := createParamBody(b.params)
 	queryBody := createParamBody(b.queries)
 	b.url = appendUrl(b.url, queryBody)
@@ -371,7 +373,13 @@ func (b *Request) Response() (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if limitRate > 0 && resp.Body != nil {
+		resp.Body = shapeio.NewReader(resp.Body, shapeio.WithRateLimit(float64(limitRate)))
+	}
+
 	b.resp = resp
+
 	return resp, nil
 }
 
@@ -416,7 +424,6 @@ func (l LogRedirects) RoundTrip(req *http.Request) (resp *http.Response, err err
 }
 
 func (b *Request) SendOut() (*http.Response, error) {
-	b.buildUrl()
 	u, err := url.Parse(b.url)
 	if err != nil {
 		return nil, err
@@ -444,6 +451,10 @@ func (b *Request) SendOut() (*http.Response, error) {
 			println(err.Error())
 		}
 		b.Dump = dump
+	}
+
+	if limitRate > 0 && b.Req.Body != nil {
+		b.Req.Body = shapeio.NewReader(b.Req.Body, shapeio.WithRateLimit(float64(limitRate)))
 	}
 
 	return client.Do(b.Req)

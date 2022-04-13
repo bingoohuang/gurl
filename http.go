@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/bingoohuang/gg/pkg/osx"
-	"github.com/bingoohuang/jj"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,6 +9,9 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/osx"
+	"github.com/bingoohuang/jj"
 
 	"github.com/bingoohuang/gg/pkg/iox"
 	"github.com/bingoohuang/gg/pkg/v"
@@ -23,9 +24,7 @@ var defaultSetting = Settings{
 	DumpBody:       true,
 }
 
-var (
-	keyReg = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
-)
+var keyReg = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
 
 func getHTTP(method string, url string, args []string, timeout time.Duration) (r *Request) {
 	r = NewRequest(url, method)
@@ -132,8 +131,10 @@ func readFile(s string) (data []byte, fn string, e error) {
 	return content, s, nil
 }
 
-const MaxRequestSize = "MAX_REQUEST_SIZE"
-const MaxResponseSize = "MAX_RESPONSE_SIZE"
+const (
+	MaxRequestSize  = "MAX_REQUEST_SIZE"
+	MaxResponseSize = "MAX_RESPONSE_SIZE"
+)
 
 func formatResponseBody(r *Request, pretty, hasDevice bool) string {
 	dat, err := r.Bytes()

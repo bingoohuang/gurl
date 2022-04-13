@@ -3,12 +3,13 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/fatih/color"
 	"log"
 	"net/http/httptrace"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 // some code is copy from https://github.com/davecheney/httpstat.
@@ -65,7 +66,6 @@ func createClientTrace(req *Request) *httptrace.ClientTrace {
 			stat.t6 = time.Now()
 		},
 	}
-
 }
 
 func (stat *httpStat) print(urlSchema string) {
@@ -115,7 +115,6 @@ func (stat *httpStat) print(urlSchema string) {
 			fmtb(stat.t7, stat.t0), // total
 		)
 	}
-
 }
 
 func isRedirect(statusCode int) bool { return statusCode > 299 && statusCode < 400 }

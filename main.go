@@ -22,12 +22,10 @@ import (
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/gg/pkg/rest"
-	"github.com/bingoohuang/goup"
-	"github.com/bingoohuang/goup/shapeio"
-
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/gg/pkg/v"
+	"github.com/bingoohuang/goup"
 )
 
 func main() {
@@ -125,6 +123,7 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 	}
 
 	req.SetupTransport()
+	req.BuildUrl()
 
 	if benchC > 1 { // AB bench
 		req.Debug(false)
@@ -176,10 +175,6 @@ func setBody(req *Request) {
 
 		up := goup.PrepareMultipartPayload(fields)
 		uploadFilePb.SetTotal(up.Size)
-
-		if limitRate > 0 {
-			up.Body = shapeio.NewReader(up.Body, shapeio.WithRateLimit(float64(limitRate)))
-		}
 
 		pb := &goup.PbReader{Reader: up.Body, Adder: goup.AdderFn(func(value uint64) {
 			uploadFilePb.Add64(int64(value))

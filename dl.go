@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/iox"
-	"github.com/bingoohuang/goup/shapeio"
 )
 
 func downloadFile(req *Request, res *http.Response, filename string) {
@@ -28,9 +27,6 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 	pb := NewProgressBar(total).Start()
 	br := newProgressBarReader(res.Body, pb)
 
-	if limitRate > 0 {
-		br = shapeio.NewReader(br, shapeio.WithRateLimit(float64(limitRate)))
-	}
 	if res.Header.Get("Content-Encoding") == "gzip" {
 		reader, err := gzip.NewReader(br)
 		if err != nil {
