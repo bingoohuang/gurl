@@ -28,43 +28,28 @@ type httpStat struct {
 }
 
 func createClientTrace(req *Request) *httptrace.ClientTrace {
-	stat := &httpStat{}
-	req.stat = stat
+	req.stat = &httpStat{}
 	return &httptrace.ClientTrace{
-		DNSStart: func(_ httptrace.DNSStartInfo) {
-			stat.t0 = time.Now()
-		},
-		DNSDone: func(_ httptrace.DNSDoneInfo) {
-			stat.t1 = time.Now()
-		},
+		DNSStart: func(_ httptrace.DNSStartInfo) { req.stat.t0 = time.Now() },
+		DNSDone:  func(_ httptrace.DNSDoneInfo) { req.stat.t1 = time.Now() },
 		ConnectStart: func(_, _ string) {
-			if stat.t1.IsZero() {
-				stat.t1 = time.Now() // connecting to IP
+			if req.stat.t1.IsZero() {
+				req.stat.t1 = time.Now() // connecting to IP
 			}
 		},
 		ConnectDone: func(net, addr string, err error) {
 			if err != nil {
 				log.Fatalf("unable to connect to host %v: %v", addr, err)
 			}
-			stat.t2 = time.Now()
-
-			if HasPrintOption(printVerbose) {
-				printf("\n%s%s\n", color.GreenString("Connected to "), color.CyanString(addr))
-			}
+			req.stat.t2 = time.Now()
 		},
 		GotConn: func(info httptrace.GotConnInfo) {
-			stat.t3 = time.Now()
+			req.stat.t3 = time.Now()
 			req.ConnInfo = info
 		},
-		GotFirstResponseByte: func() {
-			stat.t4 = time.Now()
-		},
-		TLSHandshakeStart: func() {
-			stat.t5 = time.Now()
-		},
-		TLSHandshakeDone: func(_ tls.ConnectionState, _ error) {
-			stat.t6 = time.Now()
-		},
+		GotFirstResponseByte: func() { req.stat.t4 = time.Now() },
+		TLSHandshakeStart:    func() { req.stat.t5 = time.Now() },
+		TLSHandshakeDone:     func(_ tls.ConnectionState, _ error) { req.stat.t6 = time.Now() },
 	}
 }
 
@@ -74,10 +59,10 @@ func (stat *httpStat) print(urlSchema string) {
 	if stat.t0.IsZero() { // we skipped DNS
 		stat.t0 = stat.t1
 	}
-	fmta := func(b, a time.Time) string {
+	fa := func(b, a time.Time) string {
 		return color.CyanString("%7d ms", int(b.Sub(a)/time.Millisecond))
 	}
-	fmtb := func(b, a time.Time) string {
+	fb := func(b, a time.Time) string {
 		return color.CyanString("%-9s", strconv.Itoa(int(b.Sub(a)/time.Millisecond))+" ms")
 	}
 
@@ -87,32 +72,30 @@ func (stat *httpStat) print(urlSchema string) {
 		return strings.Join(v, "\n")
 	}
 
-	fmt.Println()
-
 	switch urlSchema {
 	case "https":
 		printf(colorize(httpsTemplate),
-			fmta(stat.t1, stat.t0), // dns lookup
-			fmta(stat.t2, stat.t1), // tcp connection
-			fmta(stat.t6, stat.t5), // tls handshake
-			fmta(stat.t4, stat.t3), // server processing
-			fmta(stat.t7, stat.t4), // content transfer
-			fmtb(stat.t1, stat.t0), // namelookup
-			fmtb(stat.t2, stat.t0), // connect
-			fmtb(stat.t3, stat.t0), // pretransfer
-			fmtb(stat.t4, stat.t0), // starttransfer
-			fmtb(stat.t7, stat.t0), // total
+			fa(stat.t1, stat.t0), // dns lookup
+			fa(stat.t2, stat.t1), // tcp connection
+			fa(stat.t6, stat.t5), // tls handshake
+			fa(stat.t4, stat.t3), // server processing
+			fa(stat.t7, stat.t4), // content transfer
+			fb(stat.t1, stat.t0), // namelookup
+			fb(stat.t2, stat.t0), // connect
+			fb(stat.t3, stat.t0), // pretransfer
+			fb(stat.t4, stat.t0), // starttransfer
+			fb(stat.t7, stat.t0), // total
 		)
 	case "http":
 		printf(colorize(httpTemplate),
-			fmta(stat.t1, stat.t0), // dns lookup
-			fmta(stat.t3, stat.t1), // tcp connection
-			fmta(stat.t4, stat.t3), // server processing
-			fmta(stat.t7, stat.t4), // content transfer
-			fmtb(stat.t1, stat.t0), // namelookup
-			fmtb(stat.t3, stat.t0), // connect
-			fmtb(stat.t4, stat.t0), // starttransfer
-			fmtb(stat.t7, stat.t0), // total
+			fa(stat.t1, stat.t0), // dns lookup
+			fa(stat.t3, stat.t1), // tcp connection
+			fa(stat.t4, stat.t3), // server processing
+			fa(stat.t7, stat.t4), // content transfer
+			fb(stat.t1, stat.t0), // namelookup
+			fb(stat.t3, stat.t0), // connect
+			fb(stat.t4, stat.t0), // starttransfer
+			fb(stat.t7, stat.t0), // total
 		)
 	}
 }

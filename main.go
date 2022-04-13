@@ -136,7 +136,7 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 
 		err := doRequest(req, u)
 		if HasPrintOption(printVerbose) {
-			log.Printf("current request cost time: %s", time.Since(start))
+			log.Printf("current request cost: %s", time.Since(start))
 		}
 		if err != nil {
 			if !errors.Is(err, io.EOF) {
