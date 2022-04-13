@@ -21,7 +21,7 @@ func filter(args []string) []string {
 			continue
 		}
 
-		if ss.HasPrefix(arg, "http:", "https:") {
+		if ss.HasPrefix(arg, "http://", "https://") {
 			*Urls = append(*Urls, arg)
 			continue
 		}
