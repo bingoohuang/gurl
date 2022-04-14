@@ -431,7 +431,7 @@ func (b *Request) SendOut() (*http.Response, error) {
 
 	b.Req.URL = u
 
-	var jar http.CookieJar = nil
+	var jar http.CookieJar
 	if b.Setting.EnableCookie {
 		jar, _ = cookiejar.New(nil)
 	}

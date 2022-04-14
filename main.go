@@ -345,7 +345,7 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 			fmt.Println()
 		}
 		if HasPrintOption(printReqBody) {
-			if !saveTempFile(dumpBody, MaxRequestSize) {
+			if !saveTempFile(dumpBody, MaxPayloadSize) {
 				fmt.Println(formatBytes(dumpBody, pretty, true))
 			}
 			fmt.Println()
