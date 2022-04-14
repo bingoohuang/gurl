@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, raw, insecureSSL bool
-	auth, proxy, printV, body, think, caFile, download    string
+	disableKeepAlive, ver, form, pretty, raw, insecureSSL, gzipOn bool
+	auth, proxy, printV, body, think, caFile, download            string
 
 	uploadFiles    []string
 	printOption    uint8
@@ -36,6 +36,7 @@ func init() {
 	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
 	fla9.StringVar(&caFile, "ca", "", "ca certificate file")
 	fla9.BoolVar(&form, "f", false, "Submitting as a form")
+	fla9.BoolVar(&gzipOn, "gzip", true, "Gzip request body or not")
 	fla9.StringVar(&download, "d", "", "Download the url content as file, yes/no")
 	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
 	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")

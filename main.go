@@ -342,11 +342,13 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 		}
 		if HasPrintOption(printReqHeader) {
 			fmt.Println(ColorfulRequest(string(dumpHeader)))
+			fmt.Println()
 		}
 		if HasPrintOption(printReqBody) {
 			if !saveTempFile(dumpBody, MaxRequestSize) {
 				fmt.Println(formatBytes(dumpBody, pretty, true))
 			}
+			fmt.Println()
 		}
 		if HasPrintOption(printRespHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))

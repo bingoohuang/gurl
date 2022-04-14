@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/bingoohuang/gg/pkg/man"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/man"
 
 	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/jj"

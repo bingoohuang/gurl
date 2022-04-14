@@ -445,6 +445,13 @@ func (b *Request) SendOut() (*http.Response, error) {
 		b.Req.Header.Set("User-Agent", b.Setting.UserAgent)
 	}
 
+	if b.Req.Body != nil && gzipOn {
+		b.Req.ContentLength = -1
+		b.Req.Header.Del("Content-Length")
+		b.Req.Header.Set("Transfer-Encoding", "chunked")
+		b.Req.Header.Set("Content-Encoding", "gzip")
+	}
+
 	if b.Setting.ShowDebug {
 		dump, err := httputil.DumpRequest(b.Req, b.Setting.DumpBody)
 		if err != nil {
@@ -453,11 +460,28 @@ func (b *Request) SendOut() (*http.Response, error) {
 		b.Dump = dump
 	}
 
+	if b.Req.Body != nil && gzipOn {
+		b.Req.Body = NewGzipReader(b.Req.Body)
+	}
+
 	if limitRate > 0 && b.Req.Body != nil {
 		b.Req.Body = shapeio.NewReader(b.Req.Body, shapeio.WithRateLimit(float64(limitRate)))
 	}
 
 	return client.Do(b.Req)
+}
+
+func NewGzipReader(source io.Reader) *io.PipeReader {
+	r, w := io.Pipe()
+	go func() {
+		defer w.Close()
+
+		zip := gzip.NewWriter(w)
+		defer zip.Close()
+
+		io.Copy(zip, source)
+	}()
+	return r
 }
 
 // String returns the body string in response.
