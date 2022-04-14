@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, raw, insecureSSL, gzipOn bool
-	auth, proxy, printV, body, think, caFile, download            string
+	disableKeepAlive, ver, form, pretty, ugly, raw, insecureSSL, gzipOn bool
+	auth, proxy, printV, body, think, caFile, download                  string
 
 	uploadFiles    []string
 	printOption    uint8
@@ -33,6 +33,7 @@ func init() {
 	fla9.BoolVar(&disableKeepAlive, "k", false, "Disable Keepalive enabled")
 	fla9.BoolVar(&ver, "version,v", false, "Print Version Number")
 	fla9.BoolVar(&raw, "raw,r", false, "Print JSON Raw Format")
+	fla9.BoolVar(&ugly, "ugly", false, "Print JSON In Ugly compact Format")
 	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
 	fla9.StringVar(&caFile, "ca", "", "ca certificate file")
 	fla9.BoolVar(&form, "f", false, "Submitting as a form")

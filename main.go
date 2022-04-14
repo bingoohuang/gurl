@@ -334,10 +334,9 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 		}
 
 		if HasPrintOption(printReqSession) {
-			info := req.ConnInfo
-			c := info.Conn
+			i := req.ConnInfo
 			connSession := fmt.Sprintf("%s->%s (reused: %t, wasIdle: %t, idle: %s)",
-				c.LocalAddr(), c.RemoteAddr(), info.Reused, info.WasIdle, info.IdleTime)
+				i.Conn.LocalAddr(), i.Conn.RemoteAddr(), i.Reused, i.WasIdle, i.IdleTime)
 			fmt.Println(Color("Conn-Session:", Magenta), Color(connSession, Yellow))
 		}
 		if HasPrintOption(printReqHeader) {
@@ -346,7 +345,7 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 		}
 		if HasPrintOption(printReqBody) {
 			if !saveTempFile(dumpBody, MaxPayloadSize) {
-				fmt.Println(formatBytes(dumpBody, pretty, true))
+				fmt.Println(formatBytes(dumpBody, pretty, ugly, true))
 			}
 			fmt.Println()
 		}
@@ -363,10 +362,10 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 			fmt.Println()
 		}
 		if !download && HasPrintOption(printRespBody) {
-			fmt.Println(formatResponseBody(req, pretty, true))
+			fmt.Println(formatResponseBody(req, pretty, ugly, true))
 		}
 	} else if !download {
-		b := formatResponseBody(req, pretty, false)
+		b := formatResponseBody(req, pretty, ugly, false)
 		_, _ = os.Stdout.WriteString(b)
 	}
 }
@@ -397,7 +396,7 @@ func printResponseForWindows(req *Request, res *http.Response) {
 		fmt.Println("")
 	}
 	if HasPrintOption(printRespBody) {
-		fmt.Println(formatResponseBody(req, pretty, false))
+		fmt.Println(formatResponseBody(req, pretty, ugly, false))
 	}
 }
 
