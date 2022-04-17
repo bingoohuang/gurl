@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -164,6 +165,7 @@ func saveTempFile(dat []byte, envName string) bool {
 }
 
 func formatBytes(body []byte, pretty, ugly, hasDevice bool) string {
+	body = bytes.TrimSpace(body)
 	isJSON := json.Valid(body)
 
 	if isJSON {
