@@ -25,6 +25,7 @@ func grayscale(code color.Attribute) func(string, ...interface{}) string {
 type httpStat struct {
 	t0, t1, t2, t3, t4, t5, t6 time.Time
 	t7                         time.Time // after read body
+	t31                        time.Time // WroteRequest
 }
 
 func createClientTrace(req *Request) *httptrace.ClientTrace {
@@ -46,6 +47,9 @@ func createClientTrace(req *Request) *httptrace.ClientTrace {
 		GotConn: func(info httptrace.GotConnInfo) {
 			req.stat.t3 = time.Now()
 			req.ConnInfo = info
+		},
+		WroteRequest: func(info httptrace.WroteRequestInfo) {
+			req.stat.t31 = time.Now()
 		},
 		GotFirstResponseByte: func() { req.stat.t4 = time.Now() },
 		TLSHandshakeStart:    func() { req.stat.t5 = time.Now() },
@@ -75,27 +79,31 @@ func (stat *httpStat) print(urlSchema string) {
 	switch urlSchema {
 	case "https":
 		printf(colorize(httpsTemplate),
-			fa(stat.t1, stat.t0), // dns lookup
-			fa(stat.t2, stat.t1), // tcp connection
-			fa(stat.t6, stat.t5), // tls handshake
-			fa(stat.t4, stat.t3), // server processing
-			fa(stat.t7, stat.t4), // content transfer
-			fb(stat.t1, stat.t0), // namelookup
-			fb(stat.t2, stat.t0), // connect
-			fb(stat.t3, stat.t0), // pretransfer
-			fb(stat.t4, stat.t0), // starttransfer
-			fb(stat.t7, stat.t0), // total
+			fa(stat.t1, stat.t0),  // dns lookup
+			fa(stat.t2, stat.t1),  // tcp connection
+			fa(stat.t6, stat.t5),  // tls handshake
+			fa(stat.t31, stat.t3), // Request transfer
+			fa(stat.t4, stat.t31), // server processing
+			fa(stat.t7, stat.t4),  // Response Transfer
+			fb(stat.t1, stat.t0),  // namelookup
+			fb(stat.t2, stat.t0),  // connect
+			fb(stat.t3, stat.t0),  // pretransfer
+			fb(stat.t31, stat.t0), // wrote request
+			fb(stat.t4, stat.t0),  // starttransfer
+			fb(stat.t7, stat.t0),  // total
 		)
 	case "http":
 		printf(colorize(httpTemplate),
-			fa(stat.t1, stat.t0), // dns lookup
-			fa(stat.t3, stat.t1), // tcp connection
-			fa(stat.t4, stat.t3), // server processing
-			fa(stat.t7, stat.t4), // content transfer
-			fb(stat.t1, stat.t0), // namelookup
-			fb(stat.t3, stat.t0), // connect
-			fb(stat.t4, stat.t0), // starttransfer
-			fb(stat.t7, stat.t0), // total
+			fa(stat.t1, stat.t0),  // dns lookup
+			fa(stat.t3, stat.t1),  // tcp connection
+			fa(stat.t31, stat.t3), // Request transfer
+			fa(stat.t4, stat.t3),  // server processing
+			fa(stat.t7, stat.t4),  // content transfer
+			fb(stat.t1, stat.t0),  // namelookup
+			fb(stat.t3, stat.t0),  // connect
+			fb(stat.t31, stat.t0), // wrote request
+			fb(stat.t4, stat.t0),  // starttransfer
+			fb(stat.t7, stat.t0),  // total
 		)
 	}
 }
@@ -104,21 +112,23 @@ func isRedirect(statusCode int) bool { return statusCode > 299 && statusCode < 4
 
 const (
 	httpsTemplate = `` +
-		`  DNS Lookup   TCP Connection   TLS Handshake   Server Processing   Content Transfer` + "\n" +
-		`[%s  |     %s |    %s |        %s |       %s ]` + "\n" +
-		`             |                |               |                   |                  |` + "\n" +
-		` namelookup: %s        |               |                   |                  |` + "\n" +
-		`                     connect: %s       |                   |                  |` + "\n" +
-		`                                 pretransfer: %s           |                  |` + "\n" +
-		`                                                   starttransfer: %s          |` + "\n" +
-		`                                                                              total: %s` + "\n"
+		`  DNS Lookup   TCP Connection   TLS Handshake   Request Transfer   Server Processing   Response Transfer` + "\n" +
+		`[%s  |     %s |    %s |      %s |        %s |       %s ]` + "\n" +
+		`             |                |               |                 |                   |                  |` + "\n" +
+		` namelookup: %s        |               |                 |                   |                  |` + "\n" +
+		`                     connect: %s       |                 |                   |                  |` + "\n" +
+		`                                 pretransfer: %s         |                   |                  |` + "\n" +
+		`                                                  wrote request: %s          |                  |` + "\n" +
+		`                                                                      starttransfer: %s         |` + "\n" +
+		`                                                                                                 total: %s` + "\n"
 
 	httpTemplate = `` +
-		`   DNS Lookup   TCP Connection   Server Processing   Content Transfer` + "\n" +
-		`[ %s  |     %s  |        %s |       %s]` + "\n" +
-		`              |                 |                   |                 |` + "\n" +
-		`  namelookup: %s         |                   |                 |` + "\n" +
-		`                       connect: %s           |                 |` + "\n" +
-		`                                     starttransfer: %s         |` + "\n" +
-		`                                                               total: %s` + "\n"
+		`   DNS Lookup   TCP Connection   Request Transfer   Server Processing   Response Transfer` + "\n" +
+		`[ %s  |    %s  |       %s |       %s |       %s  ]` + "\n" +
+		`              |                |                 |                   |                   |` + "\n" +
+		`  namelookup: %s        |                  |                  |                   |` + "\n" +
+		`                       connect: %s         |                  |                   |` + "\n" +
+		`                                    wrote request: %s         |                   |` + "\n" +
+		`                                                        starttransfer: %s         |` + "\n" +
+		`                                                                           total: %s` + "\n"
 )
