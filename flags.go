@@ -27,6 +27,7 @@ var (
 )
 
 func init() {
+	fla9.BoolVar(&isjson, "json,j", true, "Send the data as a JSON object")
 	flagEnv(&urls, "url,u", "", "HTTP request URL")
 	fla9.StringVar(&method, "method,m", "GET", "HTTP method")
 
