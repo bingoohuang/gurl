@@ -37,7 +37,7 @@ func FormatBytes(i int64) (result string) {
 
 const EnvPrefix = "GURL_"
 
-func flagEnv(name, value, usage string) *[]string {
+func flagEnv(v *[]string, name, value, usage string) {
 	if value == "" {
 		value = os.Getenv(EnvPrefix + strings.ToUpper(name))
 	}
@@ -46,7 +46,7 @@ func flagEnv(name, value, usage string) *[]string {
 		defaultValue = []string{value}
 	}
 
-	return fla9.Strings(name, defaultValue, usage)
+	fla9.StringsVar(v, name, defaultValue, usage)
 }
 
 func flagEnvVar(p *string, name, value, usage string) {

@@ -13,23 +13,23 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, ugly, raw, insecureSSL, gzipOn bool
-	auth, proxy, printV, body, think, caFile, download                  string
+	disableKeepAlive, ver, form, pretty, ugly, raw, insecureSSL, gzipOn, isjson bool
+	auth, proxy, printV, body, think, caFile, download, method                  string
 
-	uploadFiles    []string
-	printOption    uint8
-	benchN, benchC int
-	currentN       atomic.Int64
-	timeout        time.Duration
-	limitRate      uint64
+	uploadFiles, urls []string
+	printOption       uint8
+	benchN, benchC    int
+	currentN          atomic.Int64
+	timeout           time.Duration
+	limitRate         uint64
 
-	isjson  = fla9.Bool("json,j", true, "Send the data as a JSON object")
-	method  = fla9.String("method,m", "GET", "HTTP method")
-	Urls    = flagEnv("url,u", "", "HTTP request URL")
 	jsonmap = map[string]interface{}{}
 )
 
 func init() {
+	flagEnv(&urls, "url,u", "", "HTTP request URL")
+	fla9.StringVar(&method, "method,m", "GET", "HTTP method")
+
 	fla9.BoolVar(&disableKeepAlive, "k", false, "Disable Keepalive enabled")
 	fla9.BoolVar(&ver, "version,v", false, "Print Version Number")
 	fla9.BoolVar(&raw, "raw,r", false, "Print JSON Raw Format")
@@ -37,7 +37,7 @@ func init() {
 	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
 	fla9.StringVar(&caFile, "ca", "", "ca certificate file")
 	fla9.BoolVar(&form, "f", false, "Submitting as a form")
-	fla9.BoolVar(&gzipOn, "gzip", true, "Gzip request body or not")
+	fla9.BoolVar(&gzipOn, "gzip", false, "Gzip request body or not")
 	fla9.StringVar(&download, "d", "", "Download the url content as file, yes/no")
 	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
 	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")

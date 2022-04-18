@@ -49,14 +49,14 @@ func main() {
 		defaultSetting.DumpBody = false
 	}
 
-	if len(*Urls) == 0 {
+	if len(urls) == 0 {
 		log.Fatal("Miss the URL")
 	}
 
 	stdin := parseStdin()
 
 	start := time.Now()
-	for _, urlAddr := range *Urls {
+	for _, urlAddr := range urls {
 		run(urlAddr, nonFlagArgs, stdin)
 	}
 
@@ -91,11 +91,11 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
 	).Data
 
-	if stdin != nil && *method == http.MethodGet {
-		*method = http.MethodPost
+	if stdin != nil && method == http.MethodGet {
+		method = http.MethodPost
 	}
 
-	req := getHTTP(*method, u.String(), nonFlagArgs, timeout)
+	req := getHTTP(method, u.String(), nonFlagArgs, timeout)
 	if u.User != nil {
 		password, _ := u.User.Password()
 		req.SetBasicAuth(u.User.Username(), password)
@@ -285,7 +285,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 		// do not goto downloading
 	} else if (download == "yes" || download == "y") ||
 		(cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml")) {
-		if *method != "HEAD" {
+		if method != "HEAD" {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
 			}

@@ -35,7 +35,7 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 	r.Setting = defaultSetting
 	r.Setting.ConnectTimeout = timeout
 	r.Header("Accept-Encoding", "gzip, deflate")
-	if *isjson {
+	if isjson {
 		r.Header("Accept", "application/json")
 		r.Header("Content-Type", "application/json")
 	} else if form || method == "GET" {

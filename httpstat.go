@@ -113,22 +113,22 @@ func isRedirect(statusCode int) bool { return statusCode > 299 && statusCode < 4
 const (
 	httpsTemplate = `` +
 		`  DNS Lookup   TCP Connection   TLS Handshake   Request Transfer   Server Processing   Response Transfer` + "\n" +
-		`[%s  |     %s |    %s |      %s |        %s |       %s ]` + "\n" +
+		`[%s  |    %s  |   %s  |     %s  |       %s  |      %s  ]` + "\n" +
 		`             |                |               |                 |                   |                  |` + "\n" +
 		` namelookup: %s        |               |                 |                   |                  |` + "\n" +
 		`                     connect: %s       |                 |                   |                  |` + "\n" +
 		`                                 pretransfer: %s         |                   |                  |` + "\n" +
-		`                                                  wrote request: %s          |                  |` + "\n" +
-		`                                                                      starttransfer: %s         |` + "\n" +
-		`                                                                                                 total: %s` + "\n"
+		`                                                 wrote request: %s           |                  |` + "\n" +
+		`                                                                     starttransfer: %s          |` + "\n" +
+		`                                                                                                total: %s` + "\n"
 
 	httpTemplate = `` +
 		`   DNS Lookup   TCP Connection   Request Transfer   Server Processing   Response Transfer` + "\n" +
-		`[ %s  |    %s  |       %s |       %s |       %s  ]` + "\n" +
-		`              |                |                 |                   |                   |` + "\n" +
+		`[ %s  |    %s  |      %s  |      %s  |       %s  ]` + "\n" +
+		`              |                |                  |                  |                   |` + "\n" +
 		`  namelookup: %s        |                  |                  |                   |` + "\n" +
-		`                       connect: %s         |                  |                   |` + "\n" +
-		`                                    wrote request: %s         |                   |` + "\n" +
-		`                                                        starttransfer: %s         |` + "\n" +
-		`                                                                           total: %s` + "\n"
+		`                      connect: %s          |                  |                   |` + "\n" +
+		`                                   wrote request: %s          |                   |` + "\n" +
+		`                                                      starttransfer: %s           |` + "\n" +
+		`                                                                                  total: %s` + "\n"
 )
