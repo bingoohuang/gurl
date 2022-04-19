@@ -374,8 +374,8 @@ func (b *Request) Response() (*http.Response, error) {
 		return nil, err
 	}
 
-	if limitRate > 0 && resp.Body != nil {
-		resp.Body = shapeio.NewReader(resp.Body, shapeio.WithRateLimit(float64(limitRate)))
+	if limitRate.IsForRsp() && resp.Body != nil {
+		resp.Body = shapeio.NewReader(resp.Body, shapeio.WithRateLimit(limitRate.Float64()))
 	}
 
 	b.resp = resp
@@ -464,8 +464,8 @@ func (b *Request) SendOut() (*http.Response, error) {
 		b.Req.Body = NewGzipReader(b.Req.Body)
 	}
 
-	if limitRate > 0 && b.Req.Body != nil {
-		b.Req.Body = shapeio.NewReader(b.Req.Body, shapeio.WithRateLimit(float64(limitRate)))
+	if limitRate.IsForReq() && b.Req.Body != nil {
+		b.Req.Body = shapeio.NewReader(b.Req.Body, shapeio.WithRateLimit(limitRate.Float64()))
 	}
 
 	return client.Do(b.Req)

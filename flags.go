@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/man"
+
 	"go.uber.org/atomic"
 
 	"github.com/bingoohuang/gg/pkg/fla9"
@@ -21,7 +23,7 @@ var (
 	benchN, benchC    int
 	currentN          atomic.Int64
 	timeout           time.Duration
-	limitRate         uint64
+	limitRate         = NewRateLimitFlag()
 
 	jsonmap = map[string]interface{}{}
 )
@@ -43,7 +45,7 @@ func init() {
 	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
 	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")
 	fla9.StringsVar(&uploadFiles, "F", nil, "Upload files")
-	fla9.SizeVar(&limitRate, "L", "0", "Limit rate /s")
+	fla9.Var(limitRate, "L", "Limit rate /s, append :req/:rsp to specific the limit direction")
 	fla9.StringVar(&think, "think", "0", "Think time")
 
 	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
@@ -132,3 +134,67 @@ func usage() {
 	fmt.Print(help)
 	os.Exit(2)
 }
+
+type RateLimitDirection int
+
+const (
+	RateLimitBoth RateLimitDirection = iota
+	RateLimitRequest
+	RateLimitResponse
+)
+
+func NewRateLimitFlag() *RateLimitFlag {
+	val := uint64(0)
+	return &RateLimitFlag{Val: &val}
+}
+
+type RateLimitFlag struct {
+	Val       *uint64
+	Direction RateLimitDirection
+}
+
+func (i *RateLimitFlag) Enabled() bool { return i.Val != nil && *i.Val > 0 }
+
+func (i *RateLimitFlag) String() string {
+	if !i.Enabled() {
+		return "0"
+	}
+
+	s := man.Bytes(*i.Val)
+	switch i.Direction {
+	case RateLimitRequest:
+		return s + ":req"
+	case RateLimitResponse:
+		return s + ":rsp"
+	}
+
+	return s
+}
+
+func (i *RateLimitFlag) Set(value string) (err error) {
+	dirPos := strings.IndexByte(value, ':')
+	i.Direction = RateLimitBoth
+	if dirPos > 0 {
+		switch dir := value[dirPos+1:]; strings.ToLower(dir) {
+		case "req":
+			i.Direction = RateLimitRequest
+		case "rsp":
+			i.Direction = RateLimitResponse
+		default:
+			log.Fatalf("unknown rate limit %s", value)
+		}
+		value = value[:dirPos]
+	}
+	*i.Val, err = man.ParseBytes(value)
+	return err
+}
+
+func (i *RateLimitFlag) IsForReq() bool {
+	return i.Enabled() && (i.Direction == RateLimitRequest || i.Direction == RateLimitBoth)
+}
+
+func (i *RateLimitFlag) IsForRsp() bool {
+	return i.Enabled() && (i.Direction == RateLimitResponse || i.Direction == RateLimitBoth)
+}
+
+func (i *RateLimitFlag) Float64() float64 { return float64(*i.Val) }
