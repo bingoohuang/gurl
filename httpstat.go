@@ -97,7 +97,7 @@ func (stat *httpStat) print(urlSchema string) {
 			fa(stat.t1, stat.t0),  // dns lookup
 			fa(stat.t3, stat.t1),  // tcp connection
 			fa(stat.t31, stat.t3), // Request transfer
-			fa(stat.t4, stat.t3),  // server processing
+			fa(stat.t4, stat.t31), // server processing
 			fa(stat.t7, stat.t4),  // content transfer
 			fb(stat.t1, stat.t0),  // namelookup
 			fb(stat.t3, stat.t0),  // connect
