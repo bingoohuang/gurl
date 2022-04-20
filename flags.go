@@ -29,30 +29,30 @@ var (
 )
 
 func init() {
-	fla9.BoolVar(&isjson, "json,j", true, "Send the data as a JSON object")
-	flagEnv(&urls, "url,u", "", "HTTP request URL")
-	fla9.StringVar(&method, "method,m", "GET", "HTTP method")
+	fla9.BoolVar(&isjson, "json,j", true, "")
+	flagEnv(&urls, "url,u", "", "")
+	fla9.StringVar(&method, "method,m", "GET", "")
 
-	fla9.BoolVar(&disableKeepAlive, "k", false, "Disable Keepalive enabled")
-	fla9.BoolVar(&ver, "version,v", false, "Print Version Number")
-	fla9.BoolVar(&raw, "raw,r", false, "Print JSON Raw Format")
-	fla9.BoolVar(&ugly, "ugly", false, "Print JSON In Ugly compact Format")
-	fla9.StringVar(&printV, "print,p", "A", "Print request and response")
-	fla9.StringVar(&caFile, "ca", "", "ca certificate file")
-	fla9.BoolVar(&form, "f", false, "Submitting as a form")
-	fla9.BoolVar(&gzipOn, "gzip", false, "Gzip request body or not")
-	fla9.StringVar(&download, "d", "", "Download the url content as file, yes/no")
-	fla9.BoolVar(&insecureSSL, "i", false, "Allow connections to SSL sites without certs")
-	fla9.DurationVar(&timeout, "t", 1*time.Minute, "Timeout for read and write")
-	fla9.StringsVar(&uploadFiles, "F", nil, "Upload files")
-	fla9.Var(limitRate, "L", "Limit rate /s, append :req/:rsp to specific the limit direction")
-	fla9.StringVar(&think, "think", "0", "Think time")
+	fla9.BoolVar(&disableKeepAlive, "k", false, "")
+	fla9.BoolVar(&ver, "version,v", false, "")
+	fla9.BoolVar(&raw, "raw,r", false, "")
+	fla9.BoolVar(&ugly, "ugly", false, "")
+	fla9.StringVar(&printV, "print,p", "A", "")
+	fla9.StringVar(&caFile, "ca", "", "")
+	fla9.BoolVar(&form, "f", false, "")
+	fla9.BoolVar(&gzipOn, "gzip", false, "")
+	fla9.StringVar(&download, "d", "", "")
+	fla9.BoolVar(&insecureSSL, "i", false, "")
+	fla9.DurationVar(&timeout, "t", 1*time.Minute, "")
+	fla9.StringsVar(&uploadFiles, "F", nil, "")
+	fla9.Var(limitRate, "L", "")
+	fla9.StringVar(&think, "think", "0", "")
 
-	flagEnvVar(&auth, "auth", "", "HTTP authentication username:password, USER[:PASS]")
-	flagEnvVar(&proxy, "proxy,P", "", "Proxy host and port, PROXY_URL")
-	fla9.IntVar(&benchN, "n", 1, "Number of bench requests to run")
-	fla9.IntVar(&benchC, "c", 1, "Number of bench requests to run concurrently.")
-	fla9.StringVar(&body, "body,b", "", "Raw data send as body")
+	flagEnvVar(&auth, "auth", "", "")
+	flagEnvVar(&proxy, "proxy,P", "", "")
+	fla9.IntVar(&benchN, "n", 1, "")
+	fla9.IntVar(&benchC, "c", 1, "")
+	fla9.StringVar(&body, "body,b", "", "")
 }
 
 const (
@@ -96,23 +96,29 @@ const help = `gurl is a Go implemented cURL-like cli tool for humans.
 Usage:
 	gurl [flags] [METHOD] URL [URL] [ITEM [ITEM]]
 flags:
-  -auth=USER[:PASS] Pass a username:password pair as the argument
+  -json -j          Send the data in a JSON object as application/json
+  -u                HTTP request URL
+  -method -m        HTTP method
+  -k                Disable keepalive
+  -version -v       Print Version Number
+  -raw -r           Print JSON Raw format other than pretty
+  -ugly             Print JSON In Ugly compact Format
+  -ca               Ca certificate file
+  -f                Submitting the data as a form
+  -gzip             Gzip request body or not
+  -d                Download the url content as file, yes/n
+  -i                Allow connections to SSL sites without certs
+  -t                Timeout for read and write, default 1m
+  -F filename       Upload a file, e.g. gurl :2110 -F 1.png -F 2.png
+  -L limit          Limit rate /s, like 10K, append :req/:rsp to specific the limit direction
+  -think            Think time, like 5s, 100ms, 100ms-5s, 100-200ms and etc.
+  -auth=USER[:PASS] HTTP authentication username:password, USER[:PASS]
+  -proxy=PROXY_URL  Proxy host and port, PROXY_URL
   -n=0 -c=100       Number of requests and concurrency to run
   -body,b           Send RAW data as body, or @filename to load body from the file's content
-  -f                Submitting the data as a form
-  -d                Download the url content as file
-  -F filename       Upload a file, e.g. gurl :2110 -F 1.png -F 2.png
-  -L limit          Limit rate for upload or download /s, like 10K
-  -raw,r            Print JSON Raw format other than pretty
-  -i                Allow connections to SSL sites without certs
-  -j                Send the data in a JSON object as application/json
-  -ca               Ca certificate file
-  -proxy=PROXY_URL  Proxy with host and port
-  -print,p          String specifying what the output should contain, default will print all information
-                       H: request headers  B: request body  h: response headers  b: response body s: http conn session v: Verbose t: HTTP trace
-  -t                Set timeout for read and write, default 1m
-  -k                Disable keepalive
-  -think            Think time, like 5s, 100ms, 100ms-5s, 100-200ms and etc.
+  -print -p         String specifying what the output should contain, default will print all information
+                       H: request headers  B: request body  h: response headers  b: response body 
+                       s: http conn session v: Verbose t: HTTP trace
   -version,v        Show Version Number
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).
