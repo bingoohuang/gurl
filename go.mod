@@ -3,9 +3,9 @@ module github.com/bingoohuang/gurl
 go 1.18
 
 require (
-	github.com/bingoohuang/gg v0.0.0-20220412050757-14d06220b568
+	github.com/bingoohuang/gg v0.0.0-20220429020038-43c9021bdf18
 	github.com/bingoohuang/goup v0.0.0-20220406072954-87a41b91f087
-	github.com/bingoohuang/jj v0.0.0-20220223101833-5e5b441b6f72
+	github.com/bingoohuang/jj v0.0.0-20220428084335-44a9b165a9b7
 	github.com/fatih/color v1.10.0
 	go.uber.org/atomic v1.9.0
 )
@@ -13,6 +13,7 @@ require (
 require (
 	github.com/Pallinder/go-randomdata v1.2.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.15-0.20210929170527-d423e9c6c3bf // indirect
 	github.com/minio/sio v0.3.0 // indirect

@@ -136,7 +136,7 @@ func readFile(s string) (data []byte, fn string, e error) {
 
 const (
 	MaxPayloadSize        = "MAX_PAYLOAD_SIZE"
-	DefaultMaxPayloadSize = 1024
+	DefaultMaxPayloadSize = 1024 * 4
 )
 
 func formatResponseBody(r *Request, pretty, ugly, hasDevice bool) string {
@@ -145,15 +145,19 @@ func formatResponseBody(r *Request, pretty, ugly, hasDevice bool) string {
 		log.Fatalln("can't get the url", err)
 	}
 
-	if saveTempFile(dat, MaxPayloadSize) {
+	if saveTempFile(dat, MaxPayloadSize, ugly) {
 		return ""
 	}
 
 	return formatBytes(dat, pretty, ugly, hasDevice)
 }
 
-func saveTempFile(dat []byte, envName string) bool {
-	if m := osx.EnvSize(envName, DefaultMaxPayloadSize); len(dat) > m {
+func saveTempFile(dat []byte, envName string, ugly bool) bool {
+	if ugly {
+		return false
+	}
+
+	if m := osx.EnvSize(envName, DefaultMaxPayloadSize); m > 0 && len(dat) > m {
 		if t := iox.WriteTempFile(iox.WithTempContent(dat)); t.Err == nil {
 			log.Printf("body is too large, %d / %s > %d / %s (set $%s), write to file: %s",
 				len(dat), man.Bytes(uint64(len(dat))), m, man.Bytes(uint64(m)), envName, t.Name)
@@ -166,7 +170,7 @@ func saveTempFile(dat []byte, envName string) bool {
 
 func formatBytes(body []byte, pretty, ugly, hasDevice bool) string {
 	body = bytes.TrimSpace(body)
-	isJSON := json.Valid(body)
+	isJSON := jj.ParseBytes(body).IsJSON()
 
 	if isJSON {
 		if ugly {
