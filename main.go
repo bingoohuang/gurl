@@ -85,6 +85,7 @@ func parseStdin() io.Reader {
 var uploadFilePb *ProgressBar
 
 func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
+	urlAddr = Eval(urlAddr)
 	u := rest.FixURI(urlAddr,
 		rest.WithAuth(auth),
 		rest.WithFatalErr(true),

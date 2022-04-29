@@ -120,18 +120,22 @@ func readFile(s string) (data []byte, fn string, e error) {
 		return []byte(s), "", nil
 	}
 
-	s = strings.TrimPrefix(s, "@")
-	f, err := os.Open(s)
+	filename := s[1:]
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		return []byte(s), "", nil
+	}
+
+	f, err := os.Open(filename)
 	if err != nil {
-		return nil, s, err
+		return nil, filename, err
 	}
 	defer iox.Close(f)
 
 	content, err := ioutil.ReadAll(f)
 	if err != nil {
-		return nil, s, err
+		return nil, filename, err
 	}
-	return content, s, nil
+	return content, filename, nil
 }
 
 const (

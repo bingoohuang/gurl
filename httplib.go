@@ -245,21 +245,30 @@ func (b *Request) BodyCh(data chan interface{}) *Request {
 	return b
 }
 
+func evalString(data string) (io.Reader, int64) {
+	eval := Eval(data)
+	return bytes.NewBufferString(eval), int64(len(eval))
+}
+func evalBytes(data []byte) (io.Reader, int64) {
+	eval := Eval(string(data))
+	return bytes.NewBufferString(eval), int64(len(eval))
+}
+
 func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
 		if strings.HasPrefix(t, "@") {
 			f := osx.ReadFile(t[1:], osx.WithFatalOnError(true)).Data
-			b.BodyAndSize(bytes.NewBuffer(f), int64(len(f)))
+			b.BodyAndSize(evalBytes(f))
 		} else {
 			if f := osx.ReadFile(t); f.OK() {
-				b.BodyAndSize(bytes.NewBuffer(f.Data), int64(len(f.Data)))
+				b.BodyAndSize(evalBytes(f.Data))
 			} else {
-				b.BodyAndSize(bytes.NewBufferString(t), int64(len(t)))
+				b.BodyAndSize(evalString(t))
 			}
 		}
 	case []byte:
-		b.BodyAndSize(bytes.NewBuffer(t), int64(len(t)))
+		b.BodyAndSize(evalBytes(t))
 	}
 	return b
 }
@@ -286,8 +295,10 @@ func (b *Request) JsonBody(obj interface{}) (*Request, error) {
 		if err := enc.Encode(obj); err != nil {
 			return b, err
 		}
-		b.Req.Body = ioutil.NopCloser(buf)
-		b.Req.ContentLength = int64(buf.Len())
+
+		eval := Eval(buf.String())
+		b.Req.Body = ioutil.NopCloser(strings.NewReader(eval))
+		b.Req.ContentLength = int64(len(eval))
 		b.Req.Header.Set("Content-Type", "application/json")
 	}
 	return b, nil
