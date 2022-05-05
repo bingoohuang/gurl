@@ -28,6 +28,8 @@ import (
 	"github.com/bingoohuang/goup"
 )
 
+const DryRequestURL = `http://dry.run.url`
+
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	fla9.Usage = usage
@@ -50,7 +52,7 @@ func main() {
 	}
 
 	if len(urls) == 0 {
-		log.Fatal("Miss the URL")
+		urls = []string{DryRequestURL}
 	}
 
 	stdin := parseStdin()
@@ -308,9 +310,9 @@ func doRequestInternal(req *Request, u *url.URL) {
 	_, _ = req.Bytes()
 
 	if isWindows() {
-		printResponseForWindows(req, res)
+		printRequestResponseForWindows(req, res)
 	} else {
-		printResponseForNonWindows(req, res, false)
+		printRequestResponseForNonWindows(req, res, false)
 	}
 
 	if HasPrintOption(printHTTPTrace) {
@@ -318,7 +320,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 	}
 }
 
-func printResponseForNonWindows(req *Request, res *http.Response, download bool) {
+func printRequestResponseForNonWindows(req *Request, res *http.Response, download bool) {
 	fi, err := os.Stdout.Stat()
 	if err != nil {
 		panic(err)
@@ -334,7 +336,7 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 			}
 		}
 
-		if HasPrintOption(printReqSession) {
+		if HasPrintOption(printReqSession) && req.ConnInfo.Conn != nil {
 			i := req.ConnInfo
 			connSession := fmt.Sprintf("%s->%s (reused: %t, wasIdle: %t, idle: %s)",
 				i.Conn.LocalAddr(), i.Conn.RemoteAddr(), i.Reused, i.WasIdle, i.IdleTime)
@@ -349,7 +351,7 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 				fmt.Println(formatBytes(dumpBody, pretty, ugly, true))
 			}
 		}
-		if HasPrintOption(printRespHeader) {
+		if !req.DryRequest && HasPrintOption(printRespHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 			for k, val := range res.Header {
 				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
@@ -361,16 +363,16 @@ func printResponseForNonWindows(req *Request, res *http.Response, download bool)
 
 			fmt.Println()
 		}
-		if !download && HasPrintOption(printRespBody) {
+		if !req.DryRequest && !download && HasPrintOption(printRespBody) {
 			fmt.Println(formatResponseBody(req, pretty, ugly, true))
 		}
-	} else if !download {
+	} else if !req.DryRequest && !download {
 		b := formatResponseBody(req, pretty, ugly, false)
 		_, _ = os.Stdout.WriteString(b)
 	}
 }
 
-func printResponseForWindows(req *Request, res *http.Response) {
+func printRequestResponseForWindows(req *Request, res *http.Response) {
 	var dumpHeader, dumpBody []byte
 	dps := strings.Split(string(req.Dump), "\n")
 	for i, line := range dps {
@@ -388,14 +390,14 @@ func printResponseForWindows(req *Request, res *http.Response) {
 		fmt.Println(string(dumpBody))
 		fmt.Println("")
 	}
-	if HasPrintOption(printRespHeader) {
+	if !req.DryRequest && HasPrintOption(printRespHeader) {
 		fmt.Println(res.Proto, res.Status)
 		for k, val := range res.Header {
 			fmt.Println(k, ":", strings.Join(val, " "))
 		}
 		fmt.Println("")
 	}
-	if HasPrintOption(printRespBody) {
+	if !req.DryRequest && HasPrintOption(printRespBody) {
 		fmt.Println(formatResponseBody(req, pretty, ugly, false))
 	}
 }

@@ -34,6 +34,7 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 	r.DisableKeepAlives = disableKeepAlive
 	r.Setting = defaultSetting
 	r.Setting.ConnectTimeout = timeout
+	r.DryRequest = strings.HasPrefix(url, DryRequestURL)
 	r.Header("Accept-Encoding", "gzip, deflate")
 	if isjson {
 		r.Header("Accept", "application/json")

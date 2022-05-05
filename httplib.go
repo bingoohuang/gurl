@@ -114,8 +114,9 @@ type Request struct {
 	Transport http.RoundTripper
 	ConnInfo  httptrace.GotConnInfo
 
-	bodyCh chan interface{}
-	stat   *httpStat
+	bodyCh     chan interface{}
+	stat       *httpStat
+	DryRequest bool
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -249,6 +250,7 @@ func evalString(data string) (io.Reader, int64) {
 	eval := Eval(data)
 	return bytes.NewBufferString(eval), int64(len(eval))
 }
+
 func evalBytes(data []byte) (io.Reader, int64) {
 	eval := Eval(string(data))
 	return bytes.NewBufferString(eval), int64(len(eval))
@@ -380,6 +382,7 @@ func (b *Request) Response() (*http.Response, error) {
 	if b.resp.StatusCode != 0 {
 		return b.resp, nil
 	}
+
 	resp, err := b.SendOut()
 	if err != nil {
 		return nil, err
@@ -477,6 +480,10 @@ func (b *Request) SendOut() (*http.Response, error) {
 
 	if limitRate.IsForReq() && b.Req.Body != nil {
 		b.Req.Body = shapeio.NewReader(b.Req.Body, shapeio.WithRateLimit(limitRate.Float64()))
+	}
+
+	if b.DryRequest {
+		return &http.Response{}, nil
 	}
 
 	return client.Do(b.Req)

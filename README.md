@@ -406,3 +406,23 @@ In your ~/.bash_profile:
 	export HTTP_PROXY=http://10.10.1.10:3128
 	export HTTPS_PROXY=https://10.10.1.10:1080
 	export NO_PROXY=localhost,example.com
+
+## usages
+
+```sh
+$ gurl POST name=@姓名_cache name2=@姓名_cache_2 name3=@姓名_cache name4=@姓名_cache_2
+POST / HTTP/1.1
+Host: dry.run.url
+Accept: application/json
+Accept-Encoding: gzip, deflate
+Content-Type: application/json
+Gurl-Date: Thu, 05 May 2022 15:04:48 GMT
+User-Agent: gurl/1.0.0
+
+{
+  "name": "尤囧壁",
+  "name2": "濮阳橐釻",
+  "name3": "尤囧壁",
+  "name4": "濮阳橐釻"
+}
+```

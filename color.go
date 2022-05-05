@@ -29,6 +29,10 @@ func ColorStart(color uint8) string {
 }
 
 func ColorfulRequest(str string) string {
+	if len(str) == 0 {
+		return str
+	}
+
 	lines := strings.Split(str, "\n")
 	if HasPrintOption(printReqHeader) {
 		strs := strings.Split(lines[0], " ")

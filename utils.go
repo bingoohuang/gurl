@@ -17,7 +17,7 @@ func inSlice(str string, l []string) bool {
 	return false
 }
 
-// FormatBytes Convert bytes to human readable string. Like a 2 MB, 64.2 KB, 52 B
+// FormatBytes Convert bytes to human-readable string. Like a 2 MB, 64.2 KB, 52 B
 func FormatBytes(i int64) (result string) {
 	switch {
 	case i > (1024 * 1024 * 1024 * 1024):

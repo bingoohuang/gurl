@@ -1,9 +1,10 @@
 package main
 
 import (
+	"regexp"
+
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/bingoohuang/jj"
-	"strings"
 )
 
 var (
@@ -62,17 +63,21 @@ func (v *Valuer) Register(fn string, f jj.SubstitutionFn) {
 	jj.DefaultSubstituteFns.Register(fn, f)
 }
 
+var cacheSuffix = regexp.MustCompile(`^(.+)_cache(_\d+)?`)
+
 func (v *Valuer) Value(name, params string) interface{} {
-	cacheSuffix := strings.HasSuffix(name, "_cache")
-	if cacheSuffix {
+	pureName := name
+	subs := cacheSuffix.FindStringSubmatch(name)
+	if len(subs) > 0 {
+		pureName = subs[1]
 		if x, ok := v.Map[name]; ok {
 			return x
 		}
 	}
 
-	x := jj.DefaultGen.Value(name, params)
+	x := jj.DefaultGen.Value(pureName, params)
 
-	if cacheSuffix {
+	if len(subs) > 0 {
 		v.Map[name] = x
 	}
 	return x

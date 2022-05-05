@@ -19,7 +19,7 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 		log.Fatalf("create download file %q failed: %v", filename, err)
 	}
 
-	printResponseForNonWindows(req, res, true)
+	printRequestResponseForNonWindows(req, res, true)
 
 	fmt.Printf("\nDownloading to %q\n", filename)
 
