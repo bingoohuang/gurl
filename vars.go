@@ -12,22 +12,40 @@ var (
 )
 
 func Eval(s string) string {
-	var lines []string
+	var lines string
 	for {
-		genResult, i := gen.Process(s)
+		blanks, left := eatBlanks(s)
+		if len(blanks) > 0 {
+			lines += blanks
+		}
+		genResult, i := gen.Process(left)
 		if i <= 0 {
 			break
 		}
 
-		lines = append(lines, genResult.Out)
-		s = s[i:]
+		lines += genResult.Out
+		s = left[i:]
+
 	}
 
 	if len(lines) > 0 {
-		return strings.Join(lines, "\n")
+		return lines
 	}
 
 	return vars.ToString(vars.ParseExpr(s).Eval(valuer))
+}
+
+func eatBlanks(s string) (blanks, left string) {
+	for i, c := range s {
+		if c == ' ' || c == '\r' || c == '\n' {
+			blanks += string(c)
+		} else {
+			left = s[i:]
+			break
+		}
+	}
+
+	return
 }
 
 type Valuer struct {
@@ -45,11 +63,17 @@ func (v *Valuer) Register(fn string, f jj.SubstitutionFn) {
 }
 
 func (v *Valuer) Value(name, params string) interface{} {
-	if x, ok := v.Map[name]; ok {
-		return x
+	cacheSuffix := strings.HasSuffix(name, "_cache")
+	if cacheSuffix {
+		if x, ok := v.Map[name]; ok {
+			return x
+		}
 	}
 
 	x := jj.DefaultGen.Value(name, params)
-	v.Map[name] = x
+
+	if cacheSuffix {
+		v.Map[name] = x
+	}
 	return x
 }
