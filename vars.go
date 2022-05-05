@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/bingoohuang/jj"
+	"strings"
 )
 
 var (
@@ -11,8 +12,19 @@ var (
 )
 
 func Eval(s string) string {
-	if jj.Parse(s).IsJSON() {
-		return gen.Gen(s)
+	var lines []string
+	for {
+		genResult, i := gen.Process(s)
+		if i <= 0 {
+			break
+		}
+
+		lines = append(lines, genResult.Out)
+		s = s[i:]
+	}
+
+	if len(lines) > 0 {
+		return strings.Join(lines, "\n")
 	}
 
 	return vars.ToString(vars.ParseExpr(s).Eval(valuer))
