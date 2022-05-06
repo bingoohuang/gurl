@@ -410,19 +410,21 @@ In your ~/.bash_profile:
 ## usages
 
 ```sh
-$ gurl POST name=@姓名_cache name2=@姓名_cache_2 name3=@姓名_cache name4=@姓名_cache_2
+$ gurl POST name=@姓名_1 name2=@姓名_2 name3=@姓名_1 name4=@姓名_2 name5=@姓名 name6=@姓名
 POST / HTTP/1.1
 Host: dry.run.url
 Accept: application/json
 Accept-Encoding: gzip, deflate
 Content-Type: application/json
-Gurl-Date: Thu, 05 May 2022 15:04:48 GMT
+Gurl-Date: Fri, 06 May 2022 00:45:34 GMT
 User-Agent: gurl/1.0.0
 
 {
-  "name": "尤囧壁",
-  "name2": "濮阳橐釻",
-  "name3": "尤囧壁",
-  "name4": "濮阳橐釻"
+  "name": "轩辕局徖",
+  "name2": "夏嬮耤",
+  "name3": "轩辕局徖",
+  "name4": "夏嬮耤",
+  "name5": "寇碭韅",
+  "name6": "尤搮蜃"
 }
 ```

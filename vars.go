@@ -63,7 +63,7 @@ func (v *Valuer) Register(fn string, f jj.SubstitutionFn) {
 	jj.DefaultSubstituteFns.Register(fn, f)
 }
 
-var cacheSuffix = regexp.MustCompile(`^(.+)_cache(_\d+)?`)
+var cacheSuffix = regexp.MustCompile(`^(.+)_\d+`)
 
 func (v *Valuer) Value(name, params string) interface{} {
 	pureName := name
