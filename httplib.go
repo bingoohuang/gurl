@@ -117,6 +117,7 @@ type Request struct {
 	bodyCh     chan interface{}
 	stat       *httpStat
 	DryRequest bool
+	Timeout    time.Duration
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -336,8 +337,8 @@ func (b *Request) BuildUrl() {
 			pr, pw := io.Pipe()
 			bodyWriter := multipart.NewWriter(pw)
 			go func() {
-				for formname, filename := range b.files {
-					fileWriter, err := bodyWriter.CreateFormFile(formname, filename)
+				for formName, filename := range b.files {
+					fileWriter, err := bodyWriter.CreateFormFile(formName, filename)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -486,7 +487,14 @@ func (b *Request) SendOut() (*http.Response, error) {
 		return &http.Response{}, nil
 	}
 
-	return client.Do(b.Req)
+	req := b.Req
+	if b.Timeout > 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+		req = req.WithContext(ctx)
+	}
+
+	return client.Do(req)
 }
 
 func NewGzipReader(source io.Reader) *io.PipeReader {
