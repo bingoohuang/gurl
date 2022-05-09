@@ -26,12 +26,16 @@ func filter(args []string) []string {
 			continue
 		}
 
-		if subs := keyReg.FindStringSubmatch(arg); len(subs) > 0 && subs[1] != "" && ss.IsDigits(subs[3]) {
-			k := subs[1]
-			if ip := net.ParseIP(k); ip != nil { // 127.0.0.1:5003
-				urls = append(urls, arg)
-			} else if strings.Contains(subs[1], ".") && subs[2] == ":" { // a.b.c:5003
-				urls = append(urls, arg)
+		if subs := keyReg.FindStringSubmatch(arg); len(subs) > 0 && subs[1] != "" {
+			if ss.IsDigits(subs[3]) {
+				k := subs[1]
+				if ip := net.ParseIP(k); ip != nil { // 127.0.0.1:5003
+					urls = append(urls, arg)
+				} else if strings.Contains(subs[1], ".") && subs[2] == ":" { // a.b.c:5003
+					urls = append(urls, arg)
+				} else {
+					filteredArgs = append(filteredArgs, arg)
+				}
 			} else {
 				filteredArgs = append(filteredArgs, arg)
 			}

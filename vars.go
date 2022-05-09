@@ -1,8 +1,10 @@
 package main
 
 import (
+	"log"
 	"regexp"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/bingoohuang/jj"
 )
@@ -76,9 +78,32 @@ func (v *Valuer) Value(name, params string) interface{} {
 	}
 
 	x := jj.DefaultGen.Value(pureName, params)
+	if x == "" {
+		x = surveyValue(name, x)
+	}
 
 	if len(subs) > 0 {
 		v.Map[name] = x
 	}
+	return x
+}
+
+func surveyValue(name string, x interface{}) interface{} {
+	qs := []*survey.Question{{
+		Name:     "value",
+		Prompt:   &survey.Input{Message: "Input the value of " + name + ":"},
+		Validate: survey.Required,
+	}}
+
+	// the answers will be written to this struct
+	answers := struct {
+		Value string // survey will match the question and field names
+	}{}
+
+	// perform the questions
+	if err := survey.Ask(qs, &answers); err != nil {
+		log.Fatal(err)
+	}
+	x = answers.Value
 	return x
 }

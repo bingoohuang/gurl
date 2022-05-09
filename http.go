@@ -82,9 +82,9 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 			r.Query(k, tryReadFile(val))
 		case "=": // Params
 			if val = tryReadFile(val); form || method == "GET" {
-				r.Param(k, val)
+				r.Param(k, Eval(val)) // As Query parameter,
 			} else {
-				jsonmap[k] = val
+				jsonmap[k] = val // body will be eval later
 			}
 		case ":": // Headers
 			if k == "Host" {
@@ -124,7 +124,8 @@ func readFile(s string) (data []byte, fn string, e error) {
 
 	filename := s[1:]
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return []byte(s), "", nil
+		return []byte(Eval(s)), "", nil
+		// return []byte(s), "", nil
 	}
 
 	f, err := os.Open(filename)
