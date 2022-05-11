@@ -55,7 +55,7 @@ func ColorfulRequest(str string) string {
 
 func ColorfulResponse(str string, isJSON bool) string {
 	if isJSON {
-		return string(jj.Color([]byte(str), nil))
+		return string(jj.Color([]byte(str), nil, &jj.ColorOption{CountEntries: countingItems}))
 	}
 
 	return ColorfulHTML(str)

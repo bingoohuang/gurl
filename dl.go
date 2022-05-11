@@ -37,9 +37,12 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 
 	// disable timeout for downloading.
 	// A zero value for t means I/O operations will not time out.
-	if err := req.ConnInfo.Conn.SetDeadline(time.Time{}); err != nil {
-		log.Printf("failed to set deadline: %v", err)
+	if req.ConnInfo.Conn != nil {
+		if err := req.ConnInfo.Conn.SetDeadline(time.Time{}); err != nil {
+			log.Printf("failed to set deadline: %v", err)
+		}
 	}
+
 	if _, err := io.Copy(fd, br); err != nil {
 		// A successful Copy returns err == nil, not err == EOF.
 		log.Fatalf("download file %q failed: %v", filename, err)

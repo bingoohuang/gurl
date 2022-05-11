@@ -280,9 +280,13 @@ func doRequestInternal(req *Request, u *url.URL) {
 			fn = params["filename"]
 		}
 	}
-	cl, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
+	clh := res.Header.Get("Content-Length")
+	cl, _ := strconv.ParseInt(clh, 10, 64)
 	ct := res.Header.Get("Content-Type")
 	download = strings.ToLower(download)
+	if clh != "" && cl == 0 {
+		download = "no"
+	}
 
 	if download == "no" || download == "n" {
 		// do not goto downloading

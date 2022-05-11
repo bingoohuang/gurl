@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, ugly, raw, insecureSSL, gzipOn, isjson bool
-	auth, proxy, printV, body, think, caFile, download, method                  string
+	disableKeepAlive, ver, form, pretty, ugly, raw, insecureSSL, gzipOn, isjson, countingItems bool
+	auth, proxy, printV, body, think, caFile, download, method                                 string
 
 	uploadFiles, urls []string
 	printOption       uint8
@@ -37,6 +37,7 @@ func init() {
 	fla9.BoolVar(&ver, "version,v", false, "")
 	fla9.BoolVar(&raw, "raw,r", false, "")
 	fla9.BoolVar(&ugly, "ugly", false, "")
+	fla9.BoolVar(&countingItems, "count", false, "")
 	fla9.StringVar(&printV, "print,p", "A", "")
 	fla9.StringVar(&caFile, "ca", "", "")
 	fla9.BoolVar(&form, "f", false, "")
@@ -103,6 +104,7 @@ flags:
   -version -v       Print Version Number
   -raw -r           Print JSON Raw format other than pretty
   -ugly             Print JSON In Ugly compact Format
+  -C                Print items counting in colored output
   -ca               Ca certificate file
   -f                Submitting the data as a form
   -gzip             Gzip request body or not

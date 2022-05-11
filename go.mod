@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
 	github.com/bingoohuang/gg v0.0.0-20220429020038-43c9021bdf18
 	github.com/bingoohuang/goup v0.0.0-20220406072954-87a41b91f087
-	github.com/bingoohuang/jj v0.0.0-20220428084335-44a9b165a9b7
+	github.com/bingoohuang/jj v0.0.0-20220511043610-9434bce0f217
 	github.com/fatih/color v1.10.0
 	go.uber.org/atomic v1.9.0
 )
