@@ -105,23 +105,8 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		req.SetBasicAuth(u.User.Username(), password)
 	}
 
-	if req.Timeout > 0 {
-		var cancelCtx context.Context
-		cancelCtx, req.cancelTimeout = context.WithCancel(context.Background())
-		ctx, cancel := context.WithCancel(context.Background())
-		go func() {
-			t := time.After(req.Timeout)
-			select {
-			case <-t:
-				cancel()
-			case <-cancelCtx.Done():
-			}
-		}()
-		req.Req = req.Req.WithContext(ctx)
-	}
-
-	// WithClientTrace 必须最后设置，否则会失效，所以 Cancel 提前设置
 	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), createClientTrace(req)))
+	setTimeoutRequest(req)
 
 	req.SetTLSClientConfig(createTlsConfig())
 	if proxyURL := parseProxyURL(req.Req); proxyURL != nil {
@@ -168,6 +153,23 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		if benchN == 0 || i < benchN-1 {
 			thinkerFn()
 		}
+	}
+}
+
+func setTimeoutRequest(req *Request) {
+	if req.Timeout > 0 {
+		var cancelCtx context.Context
+		cancelCtx, req.cancelTimeout = context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(req.Req.Context())
+		go func() {
+			t := time.After(req.Timeout)
+			select {
+			case <-t:
+				cancel()
+			case <-cancelCtx.Done():
+			}
+		}()
+		req.Req = req.Req.WithContext(ctx)
 	}
 }
 
