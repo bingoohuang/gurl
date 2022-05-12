@@ -114,10 +114,11 @@ type Request struct {
 	Transport http.RoundTripper
 	ConnInfo  httptrace.GotConnInfo
 
-	bodyCh     chan interface{}
-	stat       *httpStat
-	DryRequest bool
-	Timeout    time.Duration
+	bodyCh        chan interface{}
+	stat          *httpStat
+	DryRequest    bool
+	Timeout       time.Duration
+	cancelTimeout context.CancelFunc
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -488,11 +489,6 @@ func (b *Request) SendOut() (*http.Response, error) {
 	}
 
 	req := b.Req
-	if b.Timeout > 0 {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		defer cancel()
-		req = req.WithContext(ctx)
-	}
 
 	return client.Do(req)
 }

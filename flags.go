@@ -44,7 +44,7 @@ func init() {
 	fla9.BoolVar(&gzipOn, "gzip", false, "")
 	fla9.StringVar(&download, "d", "", "")
 	fla9.BoolVar(&insecureSSL, "i", false, "")
-	fla9.DurationVar(&timeout, "t", 1*time.Minute, "")
+	fla9.DurationVar(&timeout, "t", time.Minute, "")
 	fla9.StringsVar(&uploadFiles, "F", nil, "")
 	fla9.Var(limitRate, "L", "")
 	fla9.StringVar(&think, "think", "0", "")
