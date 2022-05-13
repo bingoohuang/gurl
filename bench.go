@@ -37,7 +37,7 @@ func RunBench(b *Request, thinkerFn func()) {
 	close(jobs)
 
 	wg.Wait()
-	printReport(results, "", time.Now().Sub(start))
+	printReport(results, "", time.Since(start))
 	close(results)
 }
 
@@ -57,7 +57,7 @@ func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *Request, t
 
 		results <- &result{
 			statusCode:    code,
-			duration:      time.Now().Sub(s),
+			duration:      time.Since(s),
 			err:           err,
 			contentLength: size,
 		}

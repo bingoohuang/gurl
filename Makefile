@@ -44,6 +44,9 @@ lint-all:
 
 lint:
 	golangci-lint run ./...
+check:
+	go vet ./...
+	go run honnef.co/go/tools/cmd/staticcheck@v0.3.1 ./...
 
 fmt:
 	gofumpt -l -w .

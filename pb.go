@@ -156,7 +156,7 @@ func (pb *ProgressBar) write(current int64) {
 	}
 
 	// time left
-	fromStart := time.Now().Sub(pb.startTime)
+	fromStart := time.Since(pb.startTime)
 	if atomic.LoadInt32(&pb.isFinish) != 0 {
 		if pb.ShowFinalTime {
 			left := (fromStart / time.Second) * time.Second
@@ -203,7 +203,7 @@ func (pb *ProgressBar) write(current int64) {
 	out = countersBox + barBox + percentBox + speedBox + timeLeftBox
 
 	if pb.printMaxWidth > 0 {
-		fmt.Print(fmt.Sprintf("\033[%dD", pb.printMaxWidth))
+		fmt.Printf("\033[%dD", pb.printMaxWidth)
 	}
 
 	// and print!

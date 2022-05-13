@@ -313,7 +313,7 @@ func appendUrl(url, append string) string {
 		return url
 	}
 
-	if strings.Index(url, "?") != -1 {
+	if !strings.Contains(url, "?") {
 		return url + "&" + append
 	}
 
@@ -532,9 +532,9 @@ func (b *Request) Bytes() ([]byte, error) {
 	}
 	defer iox.Close(resp.Body)
 	if resp.Header.Get("Content-Encoding") == "gzip" {
-		reader, err := gzip.NewReader(resp.Body)
-		if err != nil {
-			return nil, err
+		reader, err1 := gzip.NewReader(resp.Body)
+		if err1 != nil {
+			return nil, err1
 		}
 		b.body, err = ioutil.ReadAll(reader)
 	} else {
