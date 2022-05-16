@@ -138,7 +138,6 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 
 	for i := 0; benchN == 0 || i < benchN; i++ {
 		start := time.Now()
-
 		err := doRequest(req, u)
 		if HasPrintOption(printVerbose) {
 			log.Printf("current request cost: %s", time.Since(start))
@@ -315,11 +314,11 @@ func doRequestInternal(req *Request, u *url.URL) {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
 			}
-			if ss.ContainsFold(ct, "json") && !strings.HasSuffix(fn, ".json") {
+			if ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json") {
 				fn += ".json"
-			} else if ss.ContainsFold(ct, "text") && !strings.HasSuffix(fn, ".txt") {
+			} else if ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt") {
 				fn += ".txt"
-			} else if ss.ContainsFold(ct, "xml") && !strings.HasSuffix(fn, ".xml") {
+			} else if ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml") {
 				fn += ".xml"
 			}
 			if fn != "" {
