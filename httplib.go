@@ -313,7 +313,7 @@ func appendUrl(url, append string) string {
 		return url
 	}
 
-	if !strings.Contains(url, "?") {
+	if strings.Contains(url, "?") {
 		return url + "&" + append
 	}
 
