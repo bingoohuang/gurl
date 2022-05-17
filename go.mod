@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.4
-	github.com/bingoohuang/gg v0.0.0-20220429020038-43c9021bdf18
+	github.com/bingoohuang/gg v0.0.0-20220517011151-5dbef606a12e
 	github.com/bingoohuang/goup v0.0.0-20220406072954-87a41b91f087
-	github.com/bingoohuang/jj v0.0.0-20220511053206-f9861d0c3e44
+	github.com/bingoohuang/jj v0.0.0-20220513123231-e3092785c925
 	github.com/fatih/color v1.10.0
 	go.uber.org/atomic v1.9.0
 )
