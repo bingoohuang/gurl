@@ -26,26 +26,31 @@ func filter(args []string) []string {
 			continue
 		}
 
-		if subs := keyReg.FindStringSubmatch(arg); len(subs) > 0 && subs[1] != "" {
-			if ss.IsDigits(subs[3]) {
-				k := subs[1]
-				if ip := net.ParseIP(k); ip != nil { // 127.0.0.1:5003
-					urls = append(urls, arg)
-				} else if strings.Contains(subs[1], ".") && subs[2] == ":" { // a.b.c:5003
-					urls = append(urls, arg)
-				} else {
-					filteredArgs = append(filteredArgs, arg)
-				}
-			} else {
-				filteredArgs = append(filteredArgs, arg)
-			}
-			continue
-		}
-
 		if inSlice(strings.ToUpper(arg), methodList) {
 			method = strings.ToUpper(arg)
 			methodFoundInArgs = true
-		} else if addr := rest.FixURI(arg, defaultSchema); addr.OK() && strings.ContainsAny(arg, ":/") {
+			continue
+		}
+
+		if subs := keyReg.FindStringSubmatch(arg); len(subs) > 0 && subs[1] != "" {
+			k := subs[1]
+			if ip := net.ParseIP(k); ip != nil { // 127.0.0.1:5003
+				if addr := rest.FixURI(arg, defaultSchema); addr.OK() && strings.ContainsAny(arg, ":/") {
+					urls = append(urls, addr.Data.String())
+					continue
+				}
+			} else if strings.Contains(subs[1], ".") && subs[2] == ":" { // a.b.c:5003
+				if addr := rest.FixURI(arg, defaultSchema); addr.OK() && strings.ContainsAny(arg, ":/") {
+					urls = append(urls, addr.Data.String())
+					continue
+				}
+			}
+
+			filteredArgs = append(filteredArgs, arg)
+			continue
+		}
+
+		if addr := rest.FixURI(arg, defaultSchema); addr.OK() && strings.ContainsAny(arg, ":/") {
 			urls = append(urls, addr.Data.String())
 		} else {
 			filteredArgs = append(filteredArgs, arg)
