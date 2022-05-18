@@ -347,51 +347,51 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 	if err != nil {
 		panic(err)
 	}
-	if fi.Mode()&os.ModeDevice == os.ModeDevice {
-		var dumpHeader, dumpBody []byte
-		dps := strings.Split(string(req.Dump), "\n")
-		for i, line := range dps {
-			if len(strings.Trim(line, "\r\n ")) == 0 {
-				dumpHeader = []byte(strings.Join(dps[:i], "\n"))
-				dumpBody = []byte(strings.Join(dps[i:], "\n"))
-				break
-			}
-		}
-
-		if HasPrintOption(printReqSession) && req.ConnInfo.Conn != nil {
-			i := req.ConnInfo
-			connSession := fmt.Sprintf("%s->%s (reused: %t, wasIdle: %t, idle: %s)",
-				i.Conn.LocalAddr(), i.Conn.RemoteAddr(), i.Reused, i.WasIdle, i.IdleTime)
-			fmt.Println(Color("Conn-Session:", Magenta), Color(connSession, Yellow))
-		}
-		if HasPrintOption(printReqHeader) {
-			fmt.Println(ColorfulRequest(string(dumpHeader)))
-			fmt.Println()
-		}
-		if HasPrintOption(printReqBody) {
-			if !saveTempFile(dumpBody, MaxPayloadSize, ugly) {
-				fmt.Println(formatBytes(dumpBody, pretty, ugly, true))
-			}
-		}
-		if !req.DryRequest && HasPrintOption(printRespHeader) {
-			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
-			for k, val := range res.Header {
-				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
-			}
-
-			if res.Close {
-				fmt.Printf("%s: %s\n", Color("Connection", Gray), Color("Close", Cyan))
-			}
-
-			fmt.Println()
-		}
-		if !req.DryRequest && !download && HasPrintOption(printRespBody) {
-			fmt.Println(formatResponseBody(req, pretty, ugly, true))
-		}
-	} else if !req.DryRequest && !download {
-		b := formatResponseBody(req, pretty, ugly, false)
-		_, _ = os.Stdout.WriteString(b)
+	if useColor := fi.Mode()&os.ModeDevice == os.ModeDevice; !useColor {
+		Color = NoColor
 	}
+
+	var dumpHeader, dumpBody []byte
+	dps := strings.Split(string(req.Dump), "\n")
+	for i, line := range dps {
+		if len(strings.Trim(line, "\r\n ")) == 0 {
+			dumpHeader = []byte(strings.Join(dps[:i], "\n"))
+			dumpBody = []byte(strings.Join(dps[i:], "\n"))
+			break
+		}
+	}
+
+	if HasPrintOption(printReqSession) && req.ConnInfo.Conn != nil {
+		i := req.ConnInfo
+		connSession := fmt.Sprintf("%s->%s (reused: %t, wasIdle: %t, idle: %s)",
+			i.Conn.LocalAddr(), i.Conn.RemoteAddr(), i.Reused, i.WasIdle, i.IdleTime)
+		fmt.Println(Color("Conn-Session:", Magenta), Color(connSession, Yellow))
+	}
+	if HasPrintOption(printReqHeader) {
+		fmt.Println(ColorfulRequest(string(dumpHeader)))
+		fmt.Println()
+	}
+	if HasPrintOption(printReqBody) {
+		if !saveTempFile(dumpBody, MaxPayloadSize, ugly) {
+			fmt.Println(formatBytes(dumpBody, pretty, ugly, true))
+		}
+	}
+	if !req.DryRequest && HasPrintOption(printRespHeader) {
+		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
+		for k, val := range res.Header {
+			fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
+		}
+
+		if res.Close {
+			fmt.Printf("%s: %s\n", Color("Connection", Gray), Color("Close", Cyan))
+		}
+
+		fmt.Println()
+	}
+	if !req.DryRequest && !download && HasPrintOption(printRespBody) {
+		fmt.Println(formatResponseBody(req, pretty, ugly, true))
+	}
+
 }
 
 func printRequestResponseForWindows(req *Request, res *http.Response) {

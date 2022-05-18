@@ -20,9 +20,11 @@ const (
 	EndColor = "\033[0m"
 )
 
-func Color(str string, color uint8) string {
+var Color = func(str string, color uint8) string {
 	return fmt.Sprintf("%s%s%s", ColorStart(color), str, EndColor)
 }
+
+var NoColor = func(str string, _ uint8) string { return str }
 
 func ColorStart(color uint8) string {
 	return fmt.Sprintf("\033[%dm", color)
