@@ -146,7 +146,7 @@ const (
 	DefaultMaxPayloadSize = 1024 * 4
 )
 
-func formatResponseBody(r *Request, pretty, ugly, hasDevice bool) string {
+func formatResponseBody(r *Request, pretty, ugly bool) string {
 	dat, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
@@ -156,7 +156,7 @@ func formatResponseBody(r *Request, pretty, ugly, hasDevice bool) string {
 		return ""
 	}
 
-	return formatBytes(dat, pretty, ugly, hasDevice)
+	return formatBytes(dat, pretty, ugly)
 }
 
 func saveTempFile(dat []byte, envName string, ugly bool) bool {
@@ -175,7 +175,7 @@ func saveTempFile(dat []byte, envName string, ugly bool) bool {
 	return false
 }
 
-func formatBytes(body []byte, pretty, ugly, hasDevice bool) string {
+func formatBytes(body []byte, pretty, ugly bool) string {
 	body = bytes.TrimSpace(body)
 	isJSON := jj.ParseBytes(body).IsJSON()
 
@@ -187,7 +187,7 @@ func formatBytes(body []byte, pretty, ugly, hasDevice bool) string {
 		}
 	}
 
-	if hasDevice {
+	if hasStdoutDevice {
 		return ColorfulResponse(string(body), isJSON)
 	}
 

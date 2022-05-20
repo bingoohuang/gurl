@@ -67,8 +67,8 @@ const (
 )
 
 func parsePrintOption(s string) {
-	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
-	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession)
+	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose|printHTTPTrace)
+	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose|printHTTPTrace)
 	AdjustPrintOption(&s, 'H', printReqHeader)
 	AdjustPrintOption(&s, 'B', printReqBody)
 	AdjustPrintOption(&s, 'h', printRespHeader)

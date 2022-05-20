@@ -342,15 +342,15 @@ func doRequestInternal(req *Request, u *url.URL) {
 	}
 }
 
-func printRequestResponseForNonWindows(req *Request, res *http.Response, download bool) {
+var hasStdoutDevice = func() bool {
 	fi, err := os.Stdout.Stat()
 	if err != nil {
-		panic(err)
+		return false
 	}
-	if useColor := fi.Mode()&os.ModeDevice == os.ModeDevice; !useColor {
-		Color = NoColor
-	}
+	return fi.Mode()&os.ModeDevice == os.ModeDevice
+}()
 
+func printRequestResponseForNonWindows(req *Request, res *http.Response, download bool) {
 	var dumpHeader, dumpBody []byte
 	dps := strings.Split(string(req.Dump), "\n")
 	for i, line := range dps {
@@ -373,7 +373,7 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 	}
 	if HasPrintOption(printReqBody) {
 		if !saveTempFile(dumpBody, MaxPayloadSize, ugly) {
-			fmt.Println(formatBytes(dumpBody, pretty, ugly, true))
+			fmt.Println(formatBytes(dumpBody, pretty, ugly))
 		}
 	}
 	if !req.DryRequest && HasPrintOption(printRespHeader) {
@@ -389,9 +389,8 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 		fmt.Println()
 	}
 	if !req.DryRequest && !download && HasPrintOption(printRespBody) {
-		fmt.Println(formatResponseBody(req, pretty, ugly, true))
+		fmt.Println(formatResponseBody(req, pretty, ugly))
 	}
-
 }
 
 func printRequestResponseForWindows(req *Request, res *http.Response) {
@@ -420,7 +419,7 @@ func printRequestResponseForWindows(req *Request, res *http.Response) {
 		fmt.Println("")
 	}
 	if !req.DryRequest && HasPrintOption(printRespBody) {
-		fmt.Println(formatResponseBody(req, pretty, ugly, false))
+		fmt.Println(formatResponseBody(req, pretty, ugly))
 	}
 }
 
