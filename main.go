@@ -110,7 +110,9 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 
 	req.SetTLSClientConfig(createTlsConfig())
 	if proxyURL := parseProxyURL(req.Req); proxyURL != nil {
-		log.Printf("Proxy URL: %s", proxyURL)
+		if HasPrintOption(printVerbose) {
+			log.Printf("Proxy URL: %s", proxyURL)
+		}
 		req.SetProxy(http.ProxyURL(proxyURL))
 	}
 
