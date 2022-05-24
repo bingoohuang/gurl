@@ -11,7 +11,8 @@ Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the aut
 
 Features:
 
-1. 2022年03月09日 支持 ca
+1. 2022年05月24日 支持 从文件按行读取请求体，发送多次请求，例如 `gurl :9200/person1/_doc/@ksuid -b persons.txt:line -auth ZWxhc3RpYzoxcWF6WkFRIQ -n0 -pucb -ugly`
+2. 2022年03月09日 支持 ca
    ```sh
    🕙[2022-03-09 22:51:20.235] ❯ httplive &
    🕙[2022-03-09 22:58:50.814] ❯ gurl https://localhost:5003/v -ca .cert/localhost.pem  -pb

@@ -67,6 +67,10 @@ func (v *Valuer) Register(fn string, f jj.SubstitutionFn) {
 
 var cacheSuffix = regexp.MustCompile(`^(.+)_\d+`)
 
+func (v *Valuer) ClearCache() {
+	v.Map = make(map[string]interface{})
+}
+
 func (v *Valuer) Value(name, params string) interface{} {
 	pureName := name
 	subs := cacheSuffix.FindStringSubmatch(name)

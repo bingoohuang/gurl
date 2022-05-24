@@ -9,13 +9,13 @@ import (
 
 const (
 	Gray = uint8(iota + 90)
-	Red
+	_    // Red
 	Green
 	Yellow
-	Blue
+	_ // Blue
 	Magenta
 	Cyan
-	White
+	_ // White
 
 	EndColor = "\033[0m"
 )

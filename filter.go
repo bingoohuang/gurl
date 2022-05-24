@@ -8,11 +8,13 @@ import (
 	"github.com/bingoohuang/gg/pkg/ss"
 )
 
-var methodList = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+var (
+	methodList            = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	methodSpecifiedInArgs bool
+)
 
 func filter(args []string) []string {
 	var filteredArgs []string
-	methodFoundInArgs := false
 	defaultSchema := rest.WithDefaultScheme(ss.If(caFile != "", "https", "http"))
 
 	for _, arg := range args {
@@ -28,7 +30,7 @@ func filter(args []string) []string {
 
 		if inSlice(strings.ToUpper(arg), methodList) {
 			method = strings.ToUpper(arg)
-			methodFoundInArgs = true
+			methodSpecifiedInArgs = true
 			continue
 		}
 
@@ -58,7 +60,7 @@ func filter(args []string) []string {
 	}
 	args = filteredArgs
 
-	if !methodFoundInArgs && method == "GET" {
+	if isMethodDefaultGet() {
 		if len(uploadFiles) > 0 {
 			method = "POST"
 		} else if len(args) > 0 {
@@ -86,9 +88,13 @@ func filter(args []string) []string {
 		}
 	}
 
-	if !methodFoundInArgs && method == "GET" && body != "" {
+	if isMethodDefaultGet() && body != "" {
 		method = "POST"
 	}
 
 	return args
+}
+
+func isMethodDefaultGet() bool {
+	return !methodSpecifiedInArgs && method == "GET"
 }

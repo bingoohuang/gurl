@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/codec/b64"
 	"io"
 	"log"
 	"mime"
@@ -87,22 +88,37 @@ func parseStdin() io.Reader {
 
 var uploadFilePb *ProgressBar
 
-func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
-	urlAddr = Eval(urlAddr)
-	u := rest.FixURI(urlAddr,
-		rest.WithAuth(auth),
+func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
+	if reader != nil && isMethodDefaultGet() {
+		method = http.MethodPost
+	}
+
+	urlAddr2 := Eval(urlAddr)
+	u := rest.FixURI(urlAddr2,
 		rest.WithFatalErr(true),
 		rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
 	).Data
 
-	if stdin != nil && method == http.MethodGet {
-		method = http.MethodPost
+	addrGen := func() *url.URL { return u }
+	if urlAddr2 != urlAddr {
+		addrGen = func() *url.URL {
+			return rest.FixURI(Eval(urlAddr),
+				rest.WithFatalErr(true),
+				rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
+			).Data
+		}
 	}
+	req := getHTTP(method, addrGen().String(), nonFlagArgs, timeout)
 
-	req := getHTTP(method, u.String(), nonFlagArgs, timeout)
-	if u.User != nil {
-		password, _ := u.User.Password()
-		req.SetBasicAuth(u.User.Username(), password)
+	if auth != "" {
+		// check if it is already set by base64 encoded
+		if c, err := b64.DecodeString(auth); err != nil {
+			auth, _ = b64.EncodeString(auth)
+		} else {
+			auth, _ = b64.EncodeString(c)
+		}
+
+		req.Req.Header.Set("Authorization", "Basic "+auth)
 	}
 
 	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), createClientTrace(req)))
@@ -116,11 +132,13 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 		req.SetProxy(http.ProxyURL(proxyURL))
 	}
 
-	if stdin != nil {
-		stdinCh := make(chan interface{})
-		go readStdin(stdin, stdinCh)
-		req.BodyCh(stdinCh)
+	if reader != nil {
+		ch := make(chan string)
+		go readStdin(reader, ch)
+		req.BodyCh(ch)
 	}
+
+	req.BodyFileLines(body)
 
 	thinkerFn := func() {}
 	if thinker, _ := thinktime.ParseThinkTime(think); thinker != nil {
@@ -140,7 +158,7 @@ func run(urlAddr string, nonFlagArgs []string, stdin io.Reader) {
 
 	for i := 0; benchN == 0 || i < benchN; i++ {
 		start := time.Now()
-		err := doRequest(req, u)
+		err := doRequest(req, addrGen)
 		if HasPrintOption(printVerbose) {
 			log.Printf("current request cost: %s", time.Since(start))
 		}
@@ -162,12 +180,20 @@ func setTimeoutRequest(req *Request) {
 		var cancelCtx context.Context
 		cancelCtx, req.cancelTimeout = context.WithCancel(context.Background())
 		ctx, cancel := context.WithCancel(req.Req.Context())
+		req.timeResetCh = make(chan struct{})
 		go func() {
-			t := time.After(req.Timeout)
-			select {
-			case <-t:
-				cancel()
-			case <-cancelCtx.Done():
+			t := time.NewTicker(req.Timeout)
+			defer t.Stop()
+
+			for {
+				select {
+				case <-t.C:
+					cancel()
+				case <-cancelCtx.Done():
+					return
+				case <-req.timeResetCh:
+					t.Reset(req.Timeout)
+				}
 			}
 		}()
 		req.Req = req.Req.WithContext(ctx)
@@ -214,7 +240,7 @@ func setBody(req *Request) {
 	}
 }
 
-func readStdin(stdin io.Reader, stdinCh chan interface{}) {
+func readStdin(stdin io.Reader, stdinCh chan string) {
 	d := json.NewDecoder(stdin)
 	d.UseNumber()
 
@@ -228,7 +254,8 @@ func readStdin(stdin io.Reader, stdinCh chan interface{}) {
 			}
 			return
 		}
-		stdinCh <- j
+		js, _ := json.Marshal(j)
+		stdinCh <- string(js)
 	}
 }
 
@@ -262,7 +289,7 @@ func createTlsConfig() (tlsConfig *tls.Config) {
 	return
 }
 
-func doRequest(req *Request, u *url.URL) error {
+func doRequest(req *Request, addrGen func() *url.URL) error {
 	if req.bodyCh != nil {
 		if err := req.NextBody(); err != nil {
 			return err
@@ -270,6 +297,9 @@ func doRequest(req *Request, u *url.URL) error {
 	} else {
 		setBody(req)
 	}
+
+	u := addrGen()
+	req.url = u.String()
 
 	doRequestInternal(req, u)
 	return nil
@@ -354,7 +384,7 @@ var hasStdoutDevice = func() bool {
 
 func printRequestResponseForNonWindows(req *Request, res *http.Response, download bool) {
 	var dumpHeader, dumpBody []byte
-	dps := strings.Split(string(req.Dump), "\n")
+	dps := strings.Split(string(req.reqDump), "\n")
 	for i, line := range dps {
 		if len(strings.Trim(line, "\r\n ")) == 0 {
 			dumpHeader = []byte(strings.Join(dps[:i], "\n"))
@@ -372,32 +402,41 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 	if HasPrintOption(printReqHeader) {
 		fmt.Println(ColorfulRequest(string(dumpHeader)))
 		fmt.Println()
+	} else if HasPrintOption(printReqURL) {
+		fmt.Println(Color(req.Req.URL.String(), Green))
 	}
+
 	if HasPrintOption(printReqBody) {
 		if !saveTempFile(dumpBody, MaxPayloadSize, ugly) {
 			fmt.Println(formatBytes(dumpBody, pretty, ugly))
 		}
 	}
-	if !req.DryRequest && HasPrintOption(printRespHeader) {
-		fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
-		for k, val := range res.Header {
-			fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
+
+	if !req.DryRequest {
+		if HasPrintOption(printRespHeader) {
+			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
+			for k, val := range res.Header {
+				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
+			}
+
+			if res.Close {
+				fmt.Printf("%s: %s\n", Color("Connection", Gray), Color("Close", Cyan))
+			}
+
+			fmt.Println()
+		} else if HasPrintOption(printRespCode) {
+			fmt.Println(Color(res.Status, Green))
 		}
 
-		if res.Close {
-			fmt.Printf("%s: %s\n", Color("Connection", Gray), Color("Close", Cyan))
+		if !download && HasPrintOption(printRespBody) {
+			fmt.Println(formatResponseBody(req, pretty, ugly))
 		}
-
-		fmt.Println()
-	}
-	if !req.DryRequest && !download && HasPrintOption(printRespBody) {
-		fmt.Println(formatResponseBody(req, pretty, ugly))
 	}
 }
 
 func printRequestResponseForWindows(req *Request, res *http.Response) {
 	var dumpHeader, dumpBody []byte
-	dps := strings.Split(string(req.Dump), "\n")
+	dps := strings.Split(string(req.reqDump), "\n")
 	for i, line := range dps {
 		if len(strings.Trim(line, "\r\n ")) == 0 {
 			dumpHeader = []byte(strings.Join(dps[:i], "\n"))

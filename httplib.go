@@ -21,6 +21,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/filex"
+	"github.com/bingoohuang/jj"
+
 	"github.com/bingoohuang/goup/shapeio"
 
 	"github.com/bingoohuang/gg/pkg/iox"
@@ -99,26 +102,28 @@ type Settings struct {
 
 // Request provides more useful methods for requesting one url than http.Request.
 type Request struct {
-	url string
+	url      string
+	urlQuery []string
 
 	Req  *http.Request
 	resp *http.Response
 
 	queries, params, files map[string]string
 
-	Setting    Settings
-	body, Dump []byte
+	Setting          Settings
+	rspBody, reqDump []byte
 
 	DisableKeepAlives bool
 
 	Transport http.RoundTripper
 	ConnInfo  httptrace.GotConnInfo
 
-	bodyCh        chan interface{}
+	bodyCh        chan string
 	stat          *httpStat
 	DryRequest    bool
 	Timeout       time.Duration
 	cancelTimeout context.CancelFunc
+	timeResetCh   chan struct{}
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -243,7 +248,7 @@ func (b *Request) BodyAndSize(body io.Reader, size int64) *Request {
 }
 
 // BodyCh set body channel..
-func (b *Request) BodyCh(data chan interface{}) *Request {
+func (b *Request) BodyCh(data chan string) *Request {
 	b.bodyCh = data
 	return b
 }
@@ -256,6 +261,26 @@ func evalString(data string) (io.Reader, int64) {
 func evalBytes(data []byte) (io.Reader, int64) {
 	eval := Eval(string(data))
 	return bytes.NewBufferString(eval), int64(len(eval))
+}
+
+func (b *Request) BodyFileLines(t string) bool {
+	if strings.HasPrefix(t, "@") {
+		t = t[1:]
+	}
+
+	if lineMode := strings.HasSuffix(t, ":line"); lineMode {
+		if fn := strings.TrimSuffix(t, ":line"); filex.Exists(fn) {
+			t = strings.TrimSuffix(t, ":line")
+			lines, err := filex.LinesChan(t, 1000)
+			if err != nil {
+				log.Fatalf("E! create line chan for %s, failed: %v", t, err)
+			}
+			b.BodyCh(lines)
+			return true
+		}
+	}
+
+	return false
 }
 
 func (b *Request) Body(data interface{}) *Request {
@@ -284,7 +309,7 @@ func (b *Request) NextBody() (err error) {
 			b.bodyCh = nil
 			return io.EOF
 		}
-		_, err = b.JsonBody(d)
+		b.BodyString(d)
 		return
 	}
 
@@ -300,12 +325,18 @@ func (b *Request) JsonBody(obj interface{}) (*Request, error) {
 			return b, err
 		}
 
-		eval := Eval(buf.String())
-		b.Req.Body = ioutil.NopCloser(strings.NewReader(eval))
-		b.Req.ContentLength = int64(len(eval))
-		b.Req.Header.Set("Content-Type", "application/json")
+		b.BodyString(buf.String())
 	}
 	return b, nil
+}
+
+func (b *Request) BodyString(s string) {
+	eval := Eval(s)
+	b.Req.Body = ioutil.NopCloser(strings.NewReader(eval))
+	b.Req.ContentLength = int64(len(eval))
+	if jj.Valid(s) {
+		b.Req.Header.Set("Content-Type", "application/json")
+	}
 }
 
 func appendUrl(url, append string) string {
@@ -321,13 +352,14 @@ func appendUrl(url, append string) string {
 }
 
 func (b *Request) BuildUrl() {
-	paramBody := createParamBody(b.params)
-	queryBody := createParamBody(b.queries)
-	b.url = appendUrl(b.url, queryBody)
+	if queryBody := createParamBody(b.queries); queryBody != "" {
+		b.urlQuery = append(b.urlQuery, queryBody)
+	}
 
+	paramBody := createParamBody(b.params)
 	// build GET url with query string
 	if b.Req.Method == "GET" && len(paramBody) > 0 {
-		b.url = appendUrl(b.url, paramBody)
+		b.urlQuery = append(b.urlQuery, paramBody)
 		return
 	}
 
@@ -377,7 +409,11 @@ func (b *Request) BuildUrl() {
 
 func (b *Request) Reset() {
 	b.resp.StatusCode = 0
-	b.body = nil
+	b.rspBody = nil
+	if b.timeResetCh != nil {
+		b.timeResetCh <- struct{}{}
+	}
+	valuer.ClearCache()
 }
 
 func (b *Request) Response() (*http.Response, error) {
@@ -440,7 +476,12 @@ func (l LogRedirects) RoundTrip(req *http.Request) (resp *http.Response, err err
 }
 
 func (b *Request) SendOut() (*http.Response, error) {
-	u, err := url.Parse(b.url)
+	full := b.url
+	for _, q := range b.urlQuery {
+		full = appendUrl(full, q)
+	}
+
+	u, err := url.Parse(full)
 	if err != nil {
 		return nil, err
 	}
@@ -473,7 +514,7 @@ func (b *Request) SendOut() (*http.Response, error) {
 		if err != nil {
 			println(err.Error())
 		}
-		b.Dump = dump
+		b.reqDump = dump
 	}
 
 	if b.Req.Body != nil && gzipOn {
@@ -520,8 +561,8 @@ func (b *Request) String() (string, error) {
 // Bytes returns the body []byte in response.
 // it calls Response inner.
 func (b *Request) Bytes() ([]byte, error) {
-	if b.body != nil {
-		return b.body, nil
+	if b.rspBody != nil {
+		return b.rspBody, nil
 	}
 	resp, err := b.Response()
 	if err != nil {
@@ -536,14 +577,14 @@ func (b *Request) Bytes() ([]byte, error) {
 		if err1 != nil {
 			return nil, err1
 		}
-		b.body, err = ioutil.ReadAll(reader)
+		b.rspBody, err = ioutil.ReadAll(reader)
 	} else {
-		b.body, err = ioutil.ReadAll(resp.Body)
+		b.rspBody, err = ioutil.ReadAll(resp.Body)
 	}
 	if err != nil {
 		return nil, err
 	}
-	return b.body, nil
+	return b.rspBody, nil
 }
 
 // ToFile saves the body data in response to one file.

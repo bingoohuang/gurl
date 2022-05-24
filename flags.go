@@ -19,7 +19,7 @@ var (
 	auth, proxy, printV, body, think, caFile, download, method                                 string
 
 	uploadFiles, urls []string
-	printOption       uint8
+	printOption       uint16
 	benchN, benchC    int
 	currentN          atomic.Int64
 	timeout           time.Duration
@@ -57,9 +57,11 @@ func init() {
 }
 
 const (
-	printReqHeader uint8 = 1 << iota
+	printReqHeader uint16 = 1 << iota
+	printReqURL
 	printReqBody
 	printRespHeader
+	printRespCode
 	printRespBody
 	printReqSession
 	printVerbose
@@ -76,20 +78,22 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 's', printReqSession)
 	AdjustPrintOption(&s, 'v', printVerbose)
 	AdjustPrintOption(&s, 't', printHTTPTrace)
+	AdjustPrintOption(&s, 'c', printRespCode)
+	AdjustPrintOption(&s, 'u', printReqURL)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)
 	}
 }
 
-func AdjustPrintOption(s *string, r rune, flags uint8) {
+func AdjustPrintOption(s *string, r rune, flags uint16) {
 	if strings.ContainsRune(*s, r) {
 		printOption |= flags
 		*s = strings.ReplaceAll(*s, string(r), "")
 	}
 }
 
-func HasPrintOption(flags uint8) bool {
+func HasPrintOption(flags uint16) bool {
 	return printOption&flags == flags
 }
 
@@ -119,7 +123,8 @@ flags:
   -n=0 -c=100       Number of requests and concurrency to run
   -body,b           Send RAW data as body, or @filename to load body from the file's content
   -print -p         String specifying what the output should contain, default will print all information
-                       H: request headers  B: request body  h: response headers  b: response body 
+                       H: request headers  B: request body,  u: request URL
+                       h: response headers  b: response body, c: status code
                        s: http conn session v: Verbose t: HTTP trace
   -version,v        Show Version Number
 METHOD:
