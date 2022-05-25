@@ -411,7 +411,10 @@ func (b *Request) Reset() {
 	b.resp.StatusCode = 0
 	b.rspBody = nil
 	if b.timeResetCh != nil {
-		b.timeResetCh <- struct{}{}
+		select {
+		case b.timeResetCh <- struct{}{}:
+		default:
+		}
 	}
 	valuer.ClearCache()
 }

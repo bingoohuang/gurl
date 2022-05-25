@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bingoohuang/gg/pkg/codec/b64"
 	"io"
 	"log"
 	"mime"
@@ -20,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/codec/b64"
 
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/osx"
@@ -65,7 +66,7 @@ func main() {
 	}
 
 	if HasPrintOption(printVerbose) {
-		fmt.Println("Complete, total cost: ", time.Since(start))
+		log.Printf("complete, total cost: %s", time.Since(start))
 	}
 }
 
@@ -347,11 +348,11 @@ func doRequestInternal(req *Request, u *url.URL) {
 				_, fn = path.Split(u.Path)
 			}
 			if ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json") {
-				fn += ".json"
+				fn = ss.If(ugly, "", fn+".json")
 			} else if ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt") {
-				fn += ".txt"
+				fn = ss.If(ugly, "", fn+".txt")
 			} else if ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml") {
-				fn += ".xml"
+				fn = ss.If(ugly, "", fn+".xml")
 			}
 			if fn != "" {
 				downloadFile(req, res, fn)
