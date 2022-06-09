@@ -420,6 +420,10 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
 			}
 
+			// Checks whether chunked is part of the encodings stack
+			if chunked(res.TransferEncoding) {
+				fmt.Printf("%s: %s\n", Color("Transfer-Encoding", Gray), Color("chunked", Cyan))
+			}
 			if res.Close {
 				fmt.Printf("%s: %s\n", Color("Connection", Gray), Color("Close", Cyan))
 			}
@@ -434,6 +438,8 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 		}
 	}
 }
+
+func chunked(te []string) bool { return len(te) > 0 && te[0] == "chunked" }
 
 func printRequestResponseForWindows(req *Request, res *http.Response) {
 	var dumpHeader, dumpBody []byte
