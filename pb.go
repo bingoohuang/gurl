@@ -40,7 +40,7 @@ type ProgressBarReader struct {
 }
 
 func (pr *ProgressBarReader) Read(p []byte) (n int, err error) {
-	if n, err = pr.ReadCloser.Read(p); n > 0 {
+	if n, err = pr.ReadCloser.Read(p); n > 0 && pr.pb != nil {
 		pr.pb.Add(n)
 	}
 	return
@@ -51,6 +51,10 @@ func newProgressBarReader(r io.ReadCloser, pb *ProgressBar) io.ReadCloser {
 }
 
 func NewProgressBar(total int64) (pb *ProgressBar) {
+	if HasPrintOption(quietFileUploadDownloadProgressing) {
+		return nil
+	}
+
 	pb = &ProgressBar{
 		Total:         total,
 		RefreshRate:   DefaultRefreshRate,
@@ -74,6 +78,10 @@ func (pb *ProgressBar) SetTotal(total int64) {
 }
 
 func (pb *ProgressBar) Start() *ProgressBar {
+	if pb == nil {
+		return nil
+	}
+
 	pb.startTime = time.Now()
 	atomic.StoreInt32(&pb.isFinish, 0)
 	if pb.Total == 0 {

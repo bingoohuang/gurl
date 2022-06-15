@@ -15,8 +15,9 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, ugly, raw, insecureSSL, gzipOn, isjson, countingItems bool
-	auth, proxy, printV, body, think, caFile, download, method                                 string
+	disableKeepAlive, ver, form, pretty                        bool
+	ugly, raw, insecureSSL, gzipOn, isjson, countingItems      bool
+	auth, proxy, printV, body, think, caFile, download, method string
 
 	uploadFiles, urls []string
 	printOption       uint16
@@ -66,6 +67,7 @@ const (
 	printReqSession
 	printVerbose
 	printHTTPTrace
+	quietFileUploadDownloadProgressing
 )
 
 func parsePrintOption(s string) {
@@ -80,6 +82,7 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 't', printHTTPTrace)
 	AdjustPrintOption(&s, 'c', printRespCode)
 	AdjustPrintOption(&s, 'u', printReqURL)
+	AdjustPrintOption(&s, 'q', quietFileUploadDownloadProgressing)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)
@@ -126,6 +129,7 @@ flags:
                        H: request headers  B: request body,  u: request URL
                        h: response headers  b: response body, c: status code
                        s: http conn session v: Verbose t: HTTP trace
+                       q: keep quiet for file uploading/downloading progress
   -version,v        Show Version Number
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).

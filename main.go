@@ -224,11 +224,13 @@ func setBody(req *Request) {
 		}
 
 		up := goup.PrepareMultipartPayload(fields)
-		uploadFilePb.SetTotal(up.Size)
-
-		pb := &goup.PbReader{Reader: up.Body, Adder: goup.AdderFn(func(value uint64) {
-			uploadFilePb.Add64(int64(value))
-		})}
+		pb := &goup.PbReader{Reader: up.Body}
+		if uploadFilePb != nil {
+			uploadFilePb.SetTotal(up.Size)
+			pb.Adder = goup.AdderFn(func(value uint64) {
+				uploadFilePb.Add64(int64(value))
+			})
+		}
 
 		req.BodyAndSize(pb, up.Size)
 		req.Setting.DumpBody = false
@@ -326,9 +328,11 @@ func doRequestInternal(req *Request, u *url.URL) {
 	}
 
 	fn := ""
+	fnFromContentDisposition := false
 	if d := res.Header.Get("Content-Disposition"); d != "" {
 		if _, params, _ := mime.ParseMediaType(d); params != nil {
 			fn = params["filename"]
+			fnFromContentDisposition = true
 		}
 	}
 	clh := res.Header.Get("Content-Length")
@@ -347,12 +351,15 @@ func doRequestInternal(req *Request, u *url.URL) {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
 			}
-			if ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json") {
-				fn = ss.If(ugly, "", fn+".json")
-			} else if ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt") {
-				fn = ss.If(ugly, "", fn+".txt")
-			} else if ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml") {
-				fn = ss.If(ugly, "", fn+".xml")
+
+			if !fnFromContentDisposition {
+				if ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json") {
+					fn = ss.If(ugly, "", fn+".json")
+				} else if ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt") {
+					fn = ss.If(ugly, "", fn+".txt")
+				} else if ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml") {
+					fn = ss.If(ugly, "", fn+".xml")
+				}
 			}
 			if fn != "" {
 				downloadFile(req, res, fn)
