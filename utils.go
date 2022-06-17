@@ -2,11 +2,39 @@ package main
 
 import (
 	"fmt"
+	"github.com/AlecAivazis/survey/v2"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/fla9"
 )
+
+func surveyConfirm() {
+	qs := []*survey.Question{{
+		Name: "confirm",
+		Prompt: &survey.Select{
+			Message: "Please confirm your action:",
+			Options: []string{"continue", "exit"},
+			Default: "continue",
+		},
+	}}
+
+	// the answers will be written to this struct
+	answers := struct {
+		Confirm string
+	}{}
+
+	// perform the questions
+	if err := survey.Ask(qs, &answers); err != nil {
+		log.Fatal(err)
+	}
+
+	switch answers.Confirm {
+	case "exit":
+		os.Exit(0)
+	}
+}
 
 func inSlice(str string, l []string) bool {
 	for i := range l {

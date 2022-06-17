@@ -170,6 +170,11 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 			break
 		}
 		req.Reset()
+
+		if confirmNum > 0 && (i+1)%confirmNum == 0 {
+			surveyConfirm()
+		}
+
 		if benchN == 0 || i < benchN-1 {
 			thinkerFn()
 		}
