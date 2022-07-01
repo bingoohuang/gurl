@@ -158,6 +158,18 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 	}
 
 	for i := 0; benchN == 0 || i < benchN; i++ {
+		if i > 0 {
+			req.Reset()
+
+			if confirmNum > 0 && (i+1)%confirmNum == 0 {
+				surveyConfirm()
+			}
+
+			if benchN == 0 || i < benchN-1 {
+				thinkerFn()
+			}
+		}
+
 		start := time.Now()
 		err := doRequest(req, addrGen)
 		if HasPrintOption(printVerbose) {
@@ -168,15 +180,6 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 				log.Printf("error: %v", err)
 			}
 			break
-		}
-		req.Reset()
-
-		if confirmNum > 0 && (i+1)%confirmNum == 0 {
-			surveyConfirm()
-		}
-
-		if benchN == 0 || i < benchN-1 {
-			thinkerFn()
 		}
 	}
 }
@@ -329,7 +332,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 		fmt.Println()
 	}
 	if err != nil {
-		log.Fatalln("execute error:", err)
+		log.Fatalf("execute error: %+v", err)
 	}
 
 	fn := ""
