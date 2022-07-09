@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, ugly, raw, insecureSSL, gzipOn, isjson, countingItems bool
-	auth, proxy, printV, body, think, caFile, download, method                                 string
+	disableKeepAlive, ver, form, pretty, ugly, raw, gzipOn, isjson, countingItems bool
+	auth, proxy, printV, body, think, caFile, download, method                    string
 
 	uploadFiles, urls []string
 	printOption       uint16
@@ -30,7 +30,7 @@ var (
 
 func init() {
 	fla9.BoolVar(&isjson, "json,j", true, "")
-	flagEnv(&urls, "url,u", "", "")
+	flagEnv(&urls, "url,u", "", "", "URL")
 	fla9.StringVar(&method, "method,m", "GET", "")
 
 	fla9.BoolVar(&disableKeepAlive, "k", false, "")
@@ -43,14 +43,13 @@ func init() {
 	fla9.BoolVar(&form, "f", false, "")
 	fla9.BoolVar(&gzipOn, "gzip", false, "")
 	fla9.StringVar(&download, "d", "", "")
-	fla9.BoolVar(&insecureSSL, "i", false, "")
 	fla9.DurationVar(&timeout, "t", time.Minute, "")
 	fla9.StringsVar(&uploadFiles, "F", nil, "")
 	fla9.Var(limitRate, "L", "")
 	fla9.StringVar(&think, "think", "0", "")
 
-	flagEnvVar(&auth, "auth", "", "")
-	flagEnvVar(&proxy, "proxy,P", "", "")
+	flagEnvVar(&auth, "auth", "", "", `AUTH`)
+	flagEnvVar(&proxy, "proxy,P", "", "", `PROXY`)
 	fla9.IntVar(&benchN, "n", 1, "")
 	fla9.IntVar(&benchC, "c", 1, "")
 	fla9.StringVar(&body, "body,b", "", "")
@@ -113,7 +112,6 @@ flags:
   -f                Submitting the data as a form
   -gzip             Gzip request body or not
   -d                Download the url content as file, yes/n
-  -i                Allow connections to SSL sites without certs
   -t                Timeout for read and write, default 1m
   -F filename       Upload a file, e.g. gurl :2110 -F 1.png -F 2.png
   -L limit          Limit rate /s, like 10K, append :req/:rsp to specific the limit direction
@@ -133,13 +131,18 @@ URL:
   The only one needed to perform a request is a URL. The default scheme is http://,
   which can be omitted from the argument; example.org works just fine.
 ITEM:
-  Can be any of: Query      : key=value  Header: key:value       Post data: key=value 
+  Can be any of: Query      : key=value  Header: key:value       Post data: key=value
                  Force query: key==value key==@/path/file
                  JSON data  : key:=value Upload: key@/path/file
                  File content as body: @/path/file
 Example:
   gurl beego.me
   gurl :8080
+Envs:
+  1. URL:         URL
+  2. PROXY:       Proxy host and port， like: http://proxy.cn, https://user:pass@proxy.cn
+  3. AUTH:        HTTP authentication username:password, USER[:PASS]
+  4. TLS_VERIFY:  Enable client verifies the server's certificate chain and host name.
 more help information please refer to https://github.com/bingoohuang/gurl
 `
 

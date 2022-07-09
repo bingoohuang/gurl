@@ -280,8 +280,7 @@ func createTlsConfig() (tlsConfig *tls.Config) {
 		tlsConfig = &tls.Config{RootCAs: pool}
 	}
 
-	// Insecure SSL Support
-	if insecureSSL {
+	if !EnvBool(`TLS_VERIFY`) {
 		if tlsConfig == nil {
 			tlsConfig = &tls.Config{}
 		}

@@ -6,7 +6,13 @@ import (
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/fla9"
+	"github.com/bingoohuang/gg/pkg/ss"
 )
+
+func EnvBool(name string) bool {
+	value := os.Getenv(name)
+	return ss.AnyOfFold(value, "y", "yes", "1", "on", "true", "t")
+}
 
 func inSlice(str string, l []string) bool {
 	for i := range l {
@@ -35,11 +41,9 @@ func FormatBytes(i int64) (result string) {
 	return
 }
 
-const EnvPrefix = "GURL_"
-
-func flagEnv(v *[]string, name, value, usage string) {
+func flagEnv(v *[]string, name, value, usage, envName string) {
 	if value == "" {
-		value = os.Getenv(EnvPrefix + strings.ToUpper(name))
+		value = os.Getenv(envName)
 	}
 	var defaultValue []string
 	if value != "" {
@@ -49,9 +53,9 @@ func flagEnv(v *[]string, name, value, usage string) {
 	fla9.StringsVar(v, name, defaultValue, usage)
 }
 
-func flagEnvVar(p *string, name, value, usage string) {
+func flagEnvVar(p *string, name, value, usage, envName string) {
 	if value == "" {
-		value = os.Getenv(EnvPrefix + strings.ToUpper(name))
+		value = os.Getenv(envName)
 	}
 	fla9.StringVar(p, name, value, usage)
 }
