@@ -158,6 +158,18 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 	}
 
 	for i := 0; benchN == 0 || i < benchN; i++ {
+		if i > 0 {
+			req.Reset()
+
+			if confirmNum > 0 && (i+1)%confirmNum == 0 {
+				surveyConfirm()
+			}
+
+			if benchN == 0 || i < benchN-1 {
+				thinkerFn()
+			}
+		}
+
 		start := time.Now()
 		err := doRequest(req, addrGen)
 		if HasPrintOption(printVerbose) {
@@ -168,10 +180,6 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 				log.Printf("error: %v", err)
 			}
 			break
-		}
-		req.Reset()
-		if benchN == 0 || i < benchN-1 {
-			thinkerFn()
 		}
 	}
 }
@@ -224,11 +232,13 @@ func setBody(req *Request) {
 		}
 
 		up := goup.PrepareMultipartPayload(fields)
-		uploadFilePb.SetTotal(up.Size)
-
-		pb := &goup.PbReader{Reader: up.Body, Adder: goup.AdderFn(func(value uint64) {
-			uploadFilePb.Add64(int64(value))
-		})}
+		pb := &goup.PbReader{Reader: up.Body}
+		if uploadFilePb != nil {
+			uploadFilePb.SetTotal(up.Size)
+			pb.Adder = goup.AdderFn(func(value uint64) {
+				uploadFilePb.Add64(int64(value))
+			})
+		}
 
 		req.BodyAndSize(pb, up.Size)
 		req.Setting.DumpBody = false
@@ -321,13 +331,15 @@ func doRequestInternal(req *Request, u *url.URL) {
 		fmt.Println()
 	}
 	if err != nil {
-		log.Fatalln("execute error:", err)
+		log.Fatalf("execute error: %+v", err)
 	}
 
 	fn := ""
+	fnFromContentDisposition := false
 	if d := res.Header.Get("Content-Disposition"); d != "" {
 		if _, params, _ := mime.ParseMediaType(d); params != nil {
 			fn = params["filename"]
+			fnFromContentDisposition = true
 		}
 	}
 	clh := res.Header.Get("Content-Length")
@@ -346,12 +358,15 @@ func doRequestInternal(req *Request, u *url.URL) {
 			if fn == "" {
 				_, fn = path.Split(u.Path)
 			}
-			if ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json") {
-				fn = ss.If(ugly, "", fn+".json")
-			} else if ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt") {
-				fn = ss.If(ugly, "", fn+".txt")
-			} else if ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml") {
-				fn = ss.If(ugly, "", fn+".xml")
+
+			if !fnFromContentDisposition {
+				if ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json") {
+					fn = ss.If(ugly, "", fn+".json")
+				} else if ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt") {
+					fn = ss.If(ugly, "", fn+".txt")
+				} else if ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml") {
+					fn = ss.If(ugly, "", fn+".xml")
+				}
 			}
 			if fn != "" {
 				downloadFile(req, res, fn)
@@ -419,6 +434,10 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
 			}
 
+			// Checks whether chunked is part of the encodings stack
+			if chunked(res.TransferEncoding) {
+				fmt.Printf("%s: %s\n", Color("Transfer-Encoding", Gray), Color("chunked", Cyan))
+			}
 			if res.Close {
 				fmt.Printf("%s: %s\n", Color("Connection", Gray), Color("Close", Cyan))
 			}
@@ -433,6 +452,8 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 		}
 	}
 }
+
+func chunked(te []string) bool { return len(te) > 0 && te[0] == "chunked" }
 
 func printRequestResponseForWindows(req *Request, res *http.Response) {
 	var dumpHeader, dumpBody []byte

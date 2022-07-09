@@ -30,6 +30,9 @@ var defaultSetting = Settings{
 var keyReg = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
 
 func getHTTP(method string, url string, args []string, timeout time.Duration) (r *Request) {
+	if confirmNum > 0 {
+		timeout = 0
+	}
 	r = NewRequest(url, method)
 	r.DisableKeepAlives = disableKeepAlive
 	r.Setting = defaultSetting

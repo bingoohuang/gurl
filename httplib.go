@@ -512,6 +512,14 @@ func (b *Request) SendOut() (*http.Response, error) {
 		b.Req.Header.Set("Content-Encoding", "gzip")
 	}
 
+	// -proxy http://username:password@127.0.0.1:7777 可以干活，不需要下面的独立设置
+	/*
+		if b.Setting.Proxy != nil { // adding proxy authentication
+			basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte(("username:password")))
+			b.Req.Header.Add("Proxy-Authorization", basicAuth)
+		}
+	*/
+
 	if b.Setting.ShowDebug {
 		dump, err := httputil.DumpRequest(b.Req, b.Setting.DumpBody)
 		if err != nil {

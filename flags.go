@@ -15,15 +15,16 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, ugly, raw, gzipOn, isjson, countingItems bool
-	auth, proxy, printV, body, think, caFile, download, method                    string
+	disableKeepAlive, ver, form, pretty                        bool
+	ugly, raw, insecureSSL, gzipOn, isjson, countingItems      bool
+	auth, proxy, printV, body, think, caFile, download, method string
 
-	uploadFiles, urls []string
-	printOption       uint16
-	benchN, benchC    int
-	currentN          atomic.Int64
-	timeout           time.Duration
-	limitRate         = NewRateLimitFlag()
+	uploadFiles, urls          []string
+	printOption                uint16
+	benchN, benchC, confirmNum int
+	currentN                   atomic.Int64
+	timeout                    time.Duration
+	limitRate                  = NewRateLimitFlag()
 
 	jsonmap = map[string]interface{}{}
 )
@@ -51,6 +52,7 @@ func init() {
 	flagEnvVar(&auth, "auth", "", "", `AUTH`)
 	flagEnvVar(&proxy, "proxy,P", "", "", `PROXY`)
 	fla9.IntVar(&benchN, "n", 1, "")
+	fla9.IntVar(&confirmNum, "confirm", 0, "")
 	fla9.IntVar(&benchC, "c", 1, "")
 	fla9.StringVar(&body, "body,b", "", "")
 }
@@ -65,6 +67,7 @@ const (
 	printReqSession
 	printVerbose
 	printHTTPTrace
+	quietFileUploadDownloadProgressing
 )
 
 func parsePrintOption(s string) {
@@ -79,6 +82,7 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 't', printHTTPTrace)
 	AdjustPrintOption(&s, 'c', printRespCode)
 	AdjustPrintOption(&s, 'u', printReqURL)
+	AdjustPrintOption(&s, 'q', quietFileUploadDownloadProgressing)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)
@@ -118,12 +122,14 @@ flags:
   -think            Think time, like 5s, 100ms, 100ms-5s, 100-200ms and etc.
   -auth=USER[:PASS] HTTP authentication username:password, USER[:PASS]
   -proxy=PROXY_URL  Proxy host and port, PROXY_URL
-  -n=0 -c=100       Number of requests and concurrency to run
+  -n=1 -c=1         Number of requests and concurrency to run
+  -confirm=0        Should confirm after number of requests 
   -body,b           Send RAW data as body, or @filename to load body from the file's content
   -print -p         String specifying what the output should contain, default will print all information
                        H: request headers  B: request body,  u: request URL
                        h: response headers  b: response body, c: status code
                        s: http conn session v: Verbose t: HTTP trace
+                       q: keep quiet for file uploading/downloading progress
   -version,v        Show Version Number
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).

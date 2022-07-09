@@ -21,7 +21,9 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 
 	printRequestResponseForNonWindows(req, res, true)
 
-	fmt.Printf("\nDownloading to %q\n", filename)
+	if !HasPrintOption(quietFileUploadDownloadProgressing) {
+		fmt.Printf("Downloading to %q\n", filename)
+	}
 
 	total, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
 	pb := NewProgressBar(total).Start()
@@ -52,7 +54,9 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 		// A successful Copy returns err == nil, not err == EOF.
 		log.Fatalf("download file %q failed: %v", filename, err)
 	}
-	pb.Finish()
+	if pb != nil {
+		pb.Finish()
+	}
 	iox.Close(fd, br)
 	fmt.Println()
 }
