@@ -58,13 +58,8 @@ func NewRequest(rawURL, method string) *Request {
 
 func (b *Request) SetupTransport() {
 	trans := b.Setting.Transport
-	if trans == nil {
-		// create default transport
-		trans = &http.Transport{
-			TLSClientConfig: b.Setting.TlsClientConfig,
-			Proxy:           b.Setting.Proxy,
-			DialContext:     TimeoutDialer(b.Setting.ConnectTimeout),
-		}
+	if trans == nil { // create default transport
+		trans = &http.Transport{}
 	}
 
 	// if b.transport is *http.Transport then set the settings.
