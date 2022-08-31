@@ -315,10 +315,29 @@ func doRequest(req *Request, addrGen func() *url.URL) error {
 	return nil
 }
 
+func Stat(name string) (int64, bool, error) {
+	if s, err := os.Stat(name); err == nil {
+		return s.Size(), true, nil
+	} else if errors.Is(err, os.ErrNotExist) {
+		return 0, false, nil
+	} else {
+		// Schrodinger: file may or may not exist. See err for details.
+		// Therefore, do *NOT* use !os.IsNotExist(err) to test for file existence
+		return 0, false, err
+	}
+}
+
 func doRequestInternal(req *Request, u *url.URL) {
 	if benchN == 0 || benchN > 1 {
 		req.Header("Gurl-N", fmt.Sprintf("%d", currentN.Inc()))
 	}
+
+	_, pathFile := path.Split(u.Path)
+	pathFileSize, pathFileExists, _ := Stat(pathFile)
+	if pathFileExists && pathFileSize > 0 {
+		req.Header("Range", fmt.Sprintf("bytes=%d-", pathFileSize))
+	}
+
 	if uploadFilePb != nil {
 		fmt.Printf("Uploading \"%s\"\n", strings.Join(uploadFiles, "; "))
 		uploadFilePb.Set(0)
@@ -348,6 +367,8 @@ func doRequestInternal(req *Request, u *url.URL) {
 	download = strings.ToLower(download)
 	if clh != "" && cl == 0 {
 		download = "no"
+	} else if pathFileExists {
+		download = "yes"
 	}
 
 	if download == "no" || download == "n" {
@@ -356,7 +377,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 		(cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml")) {
 		if method != "HEAD" {
 			if fn == "" {
-				_, fn = path.Split(u.Path)
+				fn = pathFile
 			}
 
 			if !fnFromContentDisposition {
