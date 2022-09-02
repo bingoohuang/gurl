@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty                        bool
-	ugly, raw, insecureSSL, gzipOn, isjson, countingItems      bool
-	auth, proxy, printV, body, think, caFile, download, method string
+	disableKeepAlive, ver, form, pretty              bool
+	ugly, raw, gzipOn, isJSON, countingItems         bool
+	auth, proxy, printV, body, think, caFile, method string
 
 	uploadFiles, urls          []string
 	printOption                uint16
@@ -25,12 +25,13 @@ var (
 	currentN                   atomic.Int64
 	timeout                    time.Duration
 	limitRate                  = NewRateLimitFlag()
+	download                   = &fla9.StringBool{}
 
 	jsonmap = map[string]interface{}{}
 )
 
 func init() {
-	fla9.BoolVar(&isjson, "json,j", true, "")
+	fla9.BoolVar(&isJSON, "json,j", true, "")
 	flagEnv(&urls, "url,u", "", "", "URL")
 	fla9.StringVar(&method, "method,m", "GET", "")
 
@@ -43,7 +44,7 @@ func init() {
 	fla9.StringVar(&caFile, "ca", "", "")
 	fla9.BoolVar(&form, "f", false, "")
 	fla9.BoolVar(&gzipOn, "gzip", false, "")
-	fla9.StringVar(&download, "d", "", "")
+	fla9.Var(download, "d", "")
 	fla9.DurationVar(&timeout, "t", time.Minute, "")
 	fla9.StringsVar(&uploadFiles, "F", nil, "")
 	fla9.Var(limitRate, "L", "")
@@ -166,8 +167,7 @@ const (
 )
 
 func NewRateLimitFlag() *RateLimitFlag {
-	val := uint64(0)
-	return &RateLimitFlag{Val: &val}
+	return &RateLimitFlag{}
 }
 
 type RateLimitFlag struct {
@@ -207,8 +207,14 @@ func (i *RateLimitFlag) Set(value string) (err error) {
 		}
 		value = value[:dirPos]
 	}
-	*i.Val, err = man.ParseBytes(value)
-	return err
+
+	val, err := man.ParseBytes(value)
+	if err != nil {
+		return err
+	}
+
+	i.Val = &val
+	return nil
 }
 
 func (i *RateLimitFlag) IsForReq() bool {

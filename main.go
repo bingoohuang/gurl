@@ -321,10 +321,20 @@ func Stat(name string) (int64, bool, error) {
 	} else if errors.Is(err, os.ErrNotExist) {
 		return 0, false, nil
 	} else {
-		// Schrodinger: file may or may not exist. See err for details.
+		// file may or may not exist. See err for details.
 		// Therefore, do *NOT* use !os.IsNotExist(err) to test for file existence
 		return 0, false, err
 	}
+}
+
+func parseFileNameFromContentDisposition(header http.Header) (filename string) {
+	if d := header.Get("Content-Disposition"); d != "" {
+		if _, params, _ := mime.ParseMediaType(d); params != nil {
+			return params["filename"]
+		}
+	}
+
+	return ""
 }
 
 func doRequestInternal(req *Request, u *url.URL) {
@@ -336,6 +346,28 @@ func doRequestInternal(req *Request, u *url.URL) {
 	pathFileSize, pathFileExists, _ := Stat(pathFile)
 	if pathFileExists && pathFileSize > 0 {
 		req.Header("Range", fmt.Sprintf("bytes=%d-", pathFileSize))
+	}
+
+	dl := strings.ToLower(download.String())
+	if download.Exists && dl == "" {
+		dl = "yes"
+	}
+
+	fn := ""
+
+	// 如果URL显示的文件不存在并且携带显式下载命令行参数，则尝试先发送 Head 请求，尝试从中获取文件名，并且尝试断点续传
+	if !pathFileExists && (dl == "yes" || dl == "y") {
+		originalMethod := req.Req.Method
+		req.Req.Method = http.MethodHead
+		if res, err := req.Response(); err == nil {
+			if fn = parseFileNameFromContentDisposition(res.Header); fn != "" {
+				if fileSize, fileExists, _ := Stat(fn); fileExists && fileSize > 0 {
+					req.Header("Range", fmt.Sprintf("bytes=%d-", fileSize))
+				}
+			}
+		}
+		req.Req.Method = originalMethod
+		req.Reset()
 	}
 
 	if uploadFilePb != nil {
@@ -353,27 +385,24 @@ func doRequestInternal(req *Request, u *url.URL) {
 		log.Fatalf("execute error: %+v", err)
 	}
 
-	fn := ""
-	fnFromContentDisposition := false
-	if d := res.Header.Get("Content-Disposition"); d != "" {
-		if _, params, _ := mime.ParseMediaType(d); params != nil {
-			fn = params["filename"]
-			fnFromContentDisposition = true
-		}
+	if fn == "" {
+		fn = parseFileNameFromContentDisposition(res.Header)
 	}
+	fnFromContentDisposition := fn != ""
+
 	clh := res.Header.Get("Content-Length")
 	cl, _ := strconv.ParseInt(clh, 10, 64)
 	ct := res.Header.Get("Content-Type")
-	download = strings.ToLower(download)
+
 	if clh != "" && cl == 0 {
-		download = "no"
+		dl = "no"
 	} else if pathFileExists {
-		download = "yes"
+		dl = "yes"
 	}
 
-	if download == "no" || download == "n" {
+	if dl == "no" || dl == "n" {
 		// do not goto downloading
-	} else if (download == "yes" || download == "y") ||
+	} else if (dl == "yes" || dl == "y") ||
 		(cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml")) {
 		if method != "HEAD" {
 			if fn == "" {
