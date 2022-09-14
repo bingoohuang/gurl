@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty              bool
-	ugly, raw, gzipOn, isJSON, countingItems         bool
-	auth, proxy, printV, body, think, caFile, method string
+	disableKeepAlive, ver, form, pretty                   bool
+	ugly, raw, gzipOn, isJSON, countingItems              bool
+	auth, proxy, printV, body, think, caFile, method, dns string
 
 	uploadFiles, urls          []string
 	printOption                uint16
@@ -56,6 +56,7 @@ func init() {
 	fla9.IntVar(&confirmNum, "confirm", 0, "")
 	fla9.IntVar(&benchC, "c", 1, "")
 	fla9.StringVar(&body, "body,b", "", "")
+	fla9.StringVar(&dns, "dns", "", "")
 }
 
 const (
@@ -131,6 +132,7 @@ flags:
                        h: response headers  b: response body, c: status code
                        s: http conn session v: Verbose t: HTTP trace
                        q: keep quiet for file uploading/downloading progress
+  -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
   -version,v        Show Version Number
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).

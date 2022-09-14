@@ -11,9 +11,10 @@ Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the aut
 
 Features:
 
-1. 2022年08月31日 文件下载时，支持断点续传
-2. 2022年05月24日 支持 从文件按行读取请求体，发送多次请求，例如 `gurl :9200/person1/_doc/@ksuid -b persons.txt:line -auth ZWxhc3RpYzoxcWF6WkFRIQ -n0 -pucb -ugly`
-3. 2022年03月09日 支持 ca
+1. 2022年09月14日 支持指定 DNS 解析服务器，例如  `gurl http://a.cn:5003/echo -dns 127.0.0.1`
+2. 2022年08月31日 文件下载时，支持断点续传
+3. 2022年05月24日 支持 从文件按行读取请求体，发送多次请求，例如 `gurl :9200/person1/_doc/@ksuid -b persons.txt:line -auth ZWxhc3RpYzoxcWF6WkFRIQ -n0 -pucb -ugly`
+4. 2022年03月09日 支持 ca
    ```sh
    $ httplive &
    $ gurl https://localhost:5003/v -ca .cert/localhost.pem  -pb
@@ -24,10 +25,10 @@ Features:
      "version": "1.3.5"
    }
    ```
-4. 2022年02月21日 支持 timeout 参数，e.g.  `-timeout=0`
-5. 2022年02月09日 支持多
+5. 2022年02月21日 支持 timeout 参数，e.g.  `-timeout=0`
+6. 2022年02月09日 支持多
    URL. `gurl 192.168.126.{16,18,182}:15002/kv -pb` `gurl 192.168.126.{16,18,182}:15002/kv -pb POST v==12345`
-6. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
+7. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
 
 ```sh
 $ gurl PUT httpbin.org/put hello=world                                                              

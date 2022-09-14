@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net"
@@ -208,9 +207,9 @@ func (b *Request) SetTransport(transport http.RoundTripper) *Request {
 // example:
 //
 //	func(Req *http.Request) (*url.URL, error) {
-// 		u, _ := url.ParseRequestURI("http://127.0.0.1:8118")
-// 		return u, nil
-// 	}
+//		u, _ := url.ParseRequestURI("http://127.0.0.1:8118")
+//		return u, nil
+//	}
 func (b *Request) SetProxy(proxy func(*http.Request) (*url.URL, error)) *Request {
 	b.Setting.Proxy = proxy
 	return b
@@ -236,7 +235,7 @@ func (b *Request) PostFile(formname, filename string) *Request {
 }
 
 func (b *Request) BodyAndSize(body io.Reader, size int64) *Request {
-	b.Req.Body = ioutil.NopCloser(body)
+	b.Req.Body = io.NopCloser(body)
 	b.Req.ContentLength = size
 
 	return b
@@ -327,7 +326,7 @@ func (b *Request) JsonBody(obj interface{}) (*Request, error) {
 
 func (b *Request) BodyString(s string) {
 	eval := Eval(s)
-	b.Req.Body = ioutil.NopCloser(strings.NewReader(eval))
+	b.Req.Body = io.NopCloser(strings.NewReader(eval))
 	b.Req.ContentLength = int64(len(eval))
 	if jj.Valid(s) {
 		b.Req.Header.Set("Content-Type", "application/json")
@@ -374,7 +373,6 @@ func (b *Request) BuildUrl() {
 					if err != nil {
 						log.Fatal(err)
 					}
-					// iocopy
 					_, err = io.Copy(fileWriter, fh)
 					iox.Close(fh)
 					if err != nil {
@@ -390,7 +388,7 @@ func (b *Request) BuildUrl() {
 			contentType := bodyWriter.FormDataContentType()
 			b.Setting.DumpBody = false
 			b.Header("Content-Type", contentType)
-			b.Req.Body = ioutil.NopCloser(pr)
+			b.Req.Body = io.NopCloser(pr)
 			return
 		}
 
@@ -583,9 +581,9 @@ func (b *Request) Bytes() ([]byte, error) {
 		if err1 != nil {
 			return nil, err1
 		}
-		b.rspBody, err = ioutil.ReadAll(reader)
+		b.rspBody, err = io.ReadAll(reader)
 	} else {
-		b.rspBody, err = ioutil.ReadAll(resp.Body)
+		b.rspBody, err = io.ReadAll(resp.Body)
 	}
 	if err != nil {
 		return nil, err
@@ -634,9 +632,34 @@ func (b *Request) ToXML(v interface{}) error {
 	return xml.Unmarshal(data, v)
 }
 
+const (
+	// dnsResolverIP        = "8.8.8.8:53" // Google DNS resolver.
+	dnsResolverProto     = "udp" // Protocol to use for the DNS resolver
+	dnsResolverTimeoutMs = 5000  // Timeout (ms) for the DNS resolver (optional)
+)
+
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
 func TimeoutDialer(cTimeout time.Duration) func(context.Context, string, string) (net.Conn, error) {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
-		return (&net.Dialer{Timeout: cTimeout}).DialContext(ctx, network, addr)
+		dialer := &net.Dialer{Timeout: cTimeout}
+		if dns != "" {
+			dnsIP, dnsPort, err := net.SplitHostPort(dns)
+			if err != nil {
+				dnsIP = dns
+				dnsPort = "53"
+			}
+
+			dialer.Resolver = &net.Resolver{
+				PreferGo: true,
+				Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+					d := net.Dialer{
+						Timeout: time.Duration(dnsResolverTimeoutMs) * time.Millisecond,
+					}
+					return d.DialContext(ctx, dnsResolverProto, net.JoinHostPort(dnsIP, dnsPort))
+				},
+			}
+		}
+
+		return dialer.DialContext(ctx, network, addr)
 	}
 }
