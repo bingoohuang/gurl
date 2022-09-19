@@ -9,6 +9,7 @@ import (
 	"encoding/xml"
 	"io"
 	"log"
+	"math/rand"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -632,34 +633,58 @@ func (b *Request) ToXML(v interface{}) error {
 	return xml.Unmarshal(data, v)
 }
 
-const (
-	// dnsResolverIP        = "8.8.8.8:53" // Google DNS resolver.
-	dnsResolverProto     = "udp" // Protocol to use for the DNS resolver
-	dnsResolverTimeoutMs = 5000  // Timeout (ms) for the DNS resolver (optional)
-)
-
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
 func TimeoutDialer(cTimeout time.Duration) func(context.Context, string, string) (net.Conn, error) {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		dialer := &net.Dialer{Timeout: cTimeout}
-		if dns != "" {
-			dnsIP, dnsPort, err := net.SplitHostPort(dns)
-			if err != nil {
-				dnsIP = dns
-				dnsPort = "53"
-			}
+		dnsIP, dnsPort, err := net.SplitHostPort(dns)
+		if err != nil {
+			dnsIP = dns
+			dnsPort = "53"
+		}
 
-			dialer.Resolver = &net.Resolver{
-				PreferGo: true,
-				Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-					d := net.Dialer{
-						Timeout: time.Duration(dnsResolverTimeoutMs) * time.Millisecond,
-					}
-					return d.DialContext(ctx, dnsResolverProto, net.JoinHostPort(dnsIP, dnsPort))
-				},
+		if dns != "" {
+			addrHost, addrPort, err := net.SplitHostPort(addr)
+			if err != nil {
+				addrHost = addr
+				addrPort = "80"
+			}
+			if net.ParseIP(addrHost) == nil { // not an IP
+				dnsServer := net.JoinHostPort(dnsIP, dnsPort)
+				ips, err := Resolve(addrHost, dnsServer)
+				if err != nil {
+					log.Fatalf("resolve %s by dns server: %s failed: %v", addrHost, dnsServer, err)
+				}
+				if len(ips) > 0 {
+					rand.Seed(time.Now().UnixNano())
+					rand.Shuffle(len(ips), func(i, j int) { ips[i], ips[j] = ips[j], ips[i] })
+					addr = net.JoinHostPort(ips[0], addrPort)
+				}
 			}
 		}
 
 		return dialer.DialContext(ctx, network, addr)
 	}
+}
+
+// Resolve resolves host www.google.co by dnsServer like 8.8.8.8:5
+func Resolve(host, dnsServer string) ([]string, error) {
+	// https://stackoverflow.com/questions/59889882/specifying-dns-server-for-lookup-in-go
+	// more https://github.com/Focinfi/go-dns-resolver
+	r := &net.Resolver{
+		PreferGo: true,
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			d := net.Dialer{
+				Timeout: time.Millisecond * time.Duration(10000),
+			}
+			return d.DialContext(ctx, network, dnsServer)
+		},
+	}
+	addrs, err := r.LookupIP(context.Background(), "ip4", host)
+	ipv4s := make([]string, len(addrs))
+	for i, addr := range addrs {
+		ipv4s[i] = addr.String()
+	}
+
+	return ipv4s, err
 }
