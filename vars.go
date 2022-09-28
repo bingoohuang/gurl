@@ -23,6 +23,9 @@ func Eval(s string) string {
 		}
 		genResult, i := gen.Process(left)
 		if i <= 0 {
+			if s != "" {
+				lines += s
+			}
 			break
 		}
 
