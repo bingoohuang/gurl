@@ -22,12 +22,10 @@ import (
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/filex"
-	"github.com/bingoohuang/jj"
-
-	"github.com/bingoohuang/goup/shapeio"
-
 	"github.com/bingoohuang/gg/pkg/iox"
 	"github.com/bingoohuang/gg/pkg/osx"
+	"github.com/bingoohuang/goup/shapeio"
+	"github.com/bingoohuang/jj"
 )
 
 // NewRequest return *Request with specific method

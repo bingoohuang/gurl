@@ -7,11 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/gg/pkg/man"
-
-	"go.uber.org/atomic"
-
 	"github.com/bingoohuang/gg/pkg/fla9"
+	"github.com/bingoohuang/gg/pkg/man"
+	"go.uber.org/atomic"
 )
 
 var (

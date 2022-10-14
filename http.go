@@ -11,13 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/gg/pkg/man"
-
-	"github.com/bingoohuang/gg/pkg/osx"
-	"github.com/bingoohuang/jj"
-
 	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/gg/pkg/man"
+	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/gg/pkg/v"
+	"github.com/bingoohuang/jj"
 )
 
 var defaultSetting = Settings{

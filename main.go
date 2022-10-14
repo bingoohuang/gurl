@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/codec/b64"
-
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/gg/pkg/rest"
