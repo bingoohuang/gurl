@@ -15,6 +15,7 @@ Features:
 2. 2022年08月31日 文件下载时，支持断点续传
 3. 2022年05月24日 支持 从文件按行读取请求体，发送多次请求，例如 `gurl :9200/person1/_doc/@ksuid -b persons.txt:line -auth ZWxhc3RpYzoxcWF6WkFRIQ -n0 -pucb -ugly`
 4. 2022年03月09日 支持 ca
+
    ```sh
    $ httplive &
    $ gurl https://localhost:5003/v -ca .cert/localhost.pem  -pb
@@ -25,13 +26,14 @@ Features:
      "version": "1.3.5"
    }
    ```
+
 5. 2022年02月21日 支持 timeout 参数，e.g.  `-timeout=0`
 6. 2022年02月09日 支持多
    URL. `gurl 192.168.126.{16,18,182}:15002/kv -pb` `gurl 192.168.126.{16,18,182}:15002/kv -pb POST v==12345`
 7. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
 
 ```sh
-$ gurl PUT httpbin.org/put hello=world                                                              
+$ gurl PUT httpbin.org/put hello=world
 PUT /put? HTTP/1.1
 Host: httpbin.org
 Accept: application/json
@@ -88,7 +90,7 @@ Access-Control-Allow-Origin: *
 
     # Build the docker image
 	$ docker build -t bingoohuang/gurl .
-	
+
 	# Run gurl in a container
 	$ docker run --rm -it --net=host bingoohuang/gurl example.org
 
@@ -203,7 +205,7 @@ to http://localhost:3000 If the port is omitted, then port 80 is assumed.
 	Host: localhost
 
 	$ gurl :3000/bar
-	
+
 	GET /bar HTTP/1.1
 	Host: localhost:3000
 
@@ -230,7 +232,7 @@ sent and that their type is distinguished only by the separator used: `:`, `=`, 
 with an `@` expect a file path as value.
 
 |       Item Type         |              Description           |
-| ------------------------| ------------------------------ | 
+| ------------------------| ------------------------------ |
 |HTTP Headers `Name:Value`|Arbitrary HTTP header, e.g. `X-API-Token:123`.|
 |Data Fields `field=value`|Request data fields to be serialized as a JSON object (default), or to be form-encoded (--form, -f).|
 |Form File Fields `field@/dir/file`|Only available with `-form`, `-f`. For example `screenshot@~/Pictures/img.png`. The presence of a file field results in a `multipart/form-data` request.|
@@ -265,7 +267,7 @@ Simple example:
 	Accept-Encoding: gzip, deflate
 	Content-Type: application/json
 	Host: example.org
-	
+
 	{
 	    "name": "John",
 	    "email": "john@example.org"
@@ -299,7 +301,7 @@ files can also be embedded into fields using =@ and :=@:
 	Accept: application/json
 	Content-Type: application/json
 	Host: api.example.com
-	
+
 	{
 	    "age": 29,
 	    "hobbies": [
@@ -383,13 +385,13 @@ There are a couple of default headers that gurl sets:
 
 Any of the default headers can be overridden.
 
-# Authentication
+## Authentication
 
 Basic auth:
 
 	$ gurl -a=username:password example.org
 
-# Proxies
+## Proxies
 
 You can specify proxies to be used through the --proxy argument for each protocol (which is included in the value in
 case of redirects across protocols):
@@ -410,7 +412,7 @@ In your ~/.bash_profile:
 	export HTTPS_PROXY=https://10.10.1.10:1080
 	export NO_PROXY=localhost,example.com
 
-## usages
+## usages examples
 
 ```sh
 $ gurl POST name=@姓名_1 name2=@姓名_2 name3=@姓名_1 name4=@姓名_2 name5=@姓名 name6=@姓名
@@ -431,3 +433,7 @@ User-Agent: gurl/1.0.0
   "name6": "尤搮蜃"
 }
 ```
+
+## resources
+
+1. [rs/curlie](https://github.com/rs/curlie) The power of curl, the ease of use of httpie.
