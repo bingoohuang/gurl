@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty                   bool
-	ugly, raw, gzipOn, isJSON, countingItems              bool
-	auth, proxy, printV, body, think, caFile, method, dns string
+	disableKeepAlive, ver, form, pretty                     bool
+	ugly, raw, freeInnerJSON, gzipOn, isJSON, countingItems bool
+	auth, proxy, printV, body, think, caFile, method, dns   string
 
 	uploadFiles, urls          []string
 	printOption                uint16
@@ -68,6 +68,7 @@ const (
 	printVerbose
 	printHTTPTrace
 	quietFileUploadDownloadProgressing
+	freeInnerJSONTag
 )
 
 func parsePrintOption(s string) {
@@ -83,6 +84,7 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 'c', printRespCode)
 	AdjustPrintOption(&s, 'u', printReqURL)
 	AdjustPrintOption(&s, 'q', quietFileUploadDownloadProgressing)
+	AdjustPrintOption(&s, 'f', freeInnerJSONTag)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)

@@ -49,6 +49,7 @@ func main() {
 	}
 
 	parsePrintOption(printV)
+	freeInnerJSON = HasPrintOption(freeInnerJSONTag)
 	if !HasPrintOption(printReqBody) {
 		defaultSetting.DumpBody = false
 	}
@@ -472,7 +473,7 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 
 	if HasPrintOption(printReqBody) {
 		if !saveTempFile(dumpBody, MaxPayloadSize, ugly) {
-			fmt.Println(formatBytes(dumpBody, pretty, ugly))
+			fmt.Println(formatBytes(dumpBody, pretty, ugly, freeInnerJSON))
 		}
 	}
 
@@ -497,7 +498,7 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 		}
 
 		if !download && HasPrintOption(printRespBody) {
-			fmt.Println(formatResponseBody(req, pretty, ugly))
+			fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON))
 		}
 	}
 }
@@ -530,7 +531,7 @@ func printRequestResponseForWindows(req *Request, res *http.Response) {
 		fmt.Println("")
 	}
 	if !req.DryRequest && HasPrintOption(printRespBody) {
-		fmt.Println(formatResponseBody(req, pretty, ugly))
+		fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON))
 	}
 }
 

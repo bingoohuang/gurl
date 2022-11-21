@@ -147,7 +147,7 @@ const (
 	DefaultMaxPayloadSize = 1024 * 4
 )
 
-func formatResponseBody(r *Request, pretty, ugly bool) string {
+func formatResponseBody(r *Request, pretty, ugly, freeInnerJSON bool) string {
 	dat, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
@@ -157,7 +157,7 @@ func formatResponseBody(r *Request, pretty, ugly bool) string {
 		return ""
 	}
 
-	return formatBytes(dat, pretty, ugly)
+	return formatBytes(dat, pretty, ugly, freeInnerJSON)
 }
 
 func saveTempFile(dat []byte, envName string, ugly bool) bool {
@@ -176,11 +176,15 @@ func saveTempFile(dat []byte, envName string, ugly bool) bool {
 	return false
 }
 
-func formatBytes(body []byte, pretty, ugly bool) string {
+func formatBytes(body []byte, pretty, ugly, freeInnerJSON bool) string {
 	body = bytes.TrimSpace(body)
 	isJSON := jj.ParseBytes(body).IsJSON()
 
 	if isJSON {
+		if freeInnerJSON {
+			body = jj.FreeInnerJSON(body)
+		}
+
 		if ugly {
 			body = jj.Ugly(body)
 		} else if pretty {
