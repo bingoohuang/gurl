@@ -239,7 +239,7 @@ func setBody(req *Request) {
 			})
 		}
 
-		req.BodyAndSize(pb, up.Size)
+		req.BodyAndSize(io.NopCloser(pb), up.Size)
 		req.Setting.DumpBody = false
 
 		for hk, hv := range up.Headers {

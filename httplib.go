@@ -23,7 +23,6 @@ import (
 
 	"github.com/bingoohuang/gg/pkg/filex"
 	"github.com/bingoohuang/gg/pkg/iox"
-	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/goup/shapeio"
 	"github.com/bingoohuang/jj"
 )
@@ -233,8 +232,8 @@ func (b *Request) PostFile(formname, filename string) *Request {
 	return b
 }
 
-func (b *Request) BodyAndSize(body io.Reader, size int64) *Request {
-	b.Req.Body = io.NopCloser(body)
+func (b *Request) BodyAndSize(body io.ReadCloser, size int64) *Request {
+	b.Req.Body = body
 	b.Req.ContentLength = size
 
 	return b
@@ -246,14 +245,9 @@ func (b *Request) BodyCh(data chan string) *Request {
 	return b
 }
 
-func evalString(data string) (io.Reader, int64) {
-	eval := Eval(data)
-	return bytes.NewBufferString(eval), int64(len(eval))
-}
-
-func evalBytes(data []byte) (io.Reader, int64) {
+func evalBytes(data []byte) (io.ReadCloser, int64) {
 	eval := Eval(string(data))
-	return bytes.NewBufferString(eval), int64(len(eval))
+	return io.NopCloser(bytes.NewBufferString(eval)), int64(len(eval))
 }
 
 func (b *Request) BodyFileLines(t string) bool {
@@ -279,16 +273,20 @@ func (b *Request) BodyFileLines(t string) bool {
 func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
-		if strings.HasPrefix(t, "@") {
-			f := osx.ReadFile(t[1:], osx.WithFatalOnError(true)).Data
-			b.BodyAndSize(evalBytes(f))
-		} else {
-			if f := osx.ReadFile(t); f.OK() {
-				b.BodyAndSize(evalBytes(f.Data))
-			} else {
-				b.BodyAndSize(evalString(t))
-			}
+		filename := t
+		if at := strings.HasPrefix(t, "@"); at {
+			filename = t[1:]
 		}
+		if stat, _ := os.Stat(filename); stat != nil && !stat.IsDir() {
+			file, err := os.Open(filename)
+			if err != nil {
+				log.Fatalf("open %s failed: %v", filename, err)
+			}
+			b.BodyAndSize(file, stat.Size())
+			return b
+		}
+
+		b.BodyAndSize(evalBytes([]byte(t)))
 	case []byte:
 		b.BodyAndSize(evalBytes(t))
 	}
