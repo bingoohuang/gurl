@@ -478,6 +478,14 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 	}
 
 	if !req.DryRequest {
+		influxDB := false
+		for k := range res.Header {
+			if strings.Contains(k, "X-Influxdb-") {
+				influxDB = true
+				break
+			}
+		}
+
 		if HasPrintOption(printRespHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 			for k, val := range res.Header {
@@ -498,7 +506,7 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 		}
 
 		if !download && HasPrintOption(printRespBody) {
-			fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON))
+			fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON, influxDB))
 		}
 	}
 }
@@ -531,7 +539,7 @@ func printRequestResponseForWindows(req *Request, res *http.Response) {
 		fmt.Println("")
 	}
 	if !req.DryRequest && HasPrintOption(printRespBody) {
-		fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON))
+		fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON, false))
 	}
 }
 

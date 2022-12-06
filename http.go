@@ -147,10 +147,14 @@ const (
 	DefaultMaxPayloadSize = 1024 * 4
 )
 
-func formatResponseBody(r *Request, pretty, ugly, freeInnerJSON bool) string {
+func formatResponseBody(r *Request, pretty, ugly, freeInnerJSON, influxDB bool) string {
 	dat, err := r.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)
+	}
+
+	if influxTablePrint(ugly, influxDB, dat) {
+		return ""
 	}
 
 	if saveTempFile(dat, MaxPayloadSize, ugly) {
