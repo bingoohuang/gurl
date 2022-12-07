@@ -83,7 +83,7 @@ func getHTTP(method string, url string, args []string, timeout time.Duration) (r
 			r.Query(k, tryReadFile(val))
 		case "=": // Params
 			if val = tryReadFile(val); form || method == "GET" {
-				r.Param(k, Eval(val)) // As Query parameter,
+				r.Param(k, val) // As Query parameter,
 			} else {
 				jsonmap[k] = val // body will be eval later
 			}
@@ -115,7 +115,7 @@ func tryReadFile(s string) string {
 		log.Fatal("Read File", s, err)
 	}
 
-	return string(dat)
+	return Eval(string(dat))
 }
 
 func readFile(s string) (data []byte, fn string, e error) {
@@ -126,7 +126,6 @@ func readFile(s string) (data []byte, fn string, e error) {
 	filename := s[1:]
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return []byte(Eval(s)), "", nil
-		// return []byte(s), "", nil
 	}
 
 	f, err := os.Open(filename)

@@ -7,6 +7,7 @@ require (
 	github.com/bingoohuang/gg v0.0.0-20220523092638-71789aa827e3
 	github.com/bingoohuang/goup v0.0.0-20220406072954-87a41b91f087
 	github.com/bingoohuang/jj v0.0.0-20220513123231-e3092785c925
+	github.com/chzyer/readline v1.5.1
 	github.com/fatih/color v1.10.0
 	github.com/jedib0t/go-pretty/v6 v6.4.3
 	go.uber.org/atomic v1.9.0
@@ -33,7 +34,7 @@ require (
 	github.com/vthiery/retry v0.1.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29 // indirect
-	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
+	golang.org/x/sys v0.0.0-20220310020820-b874c991c1a5 // indirect
 	golang.org/x/term v0.0.0-20210503060354-a79de5458b56 // indirect
 	golang.org/x/text v0.3.6 // indirect
 	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect

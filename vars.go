@@ -1,12 +1,15 @@
 package main
 
 import (
-	"log"
+	"os"
 	"regexp"
+	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/bingoohuang/jj"
+	"github.com/chzyer/readline"
 )
 
 var (
@@ -34,11 +37,7 @@ func Eval(s string) string {
 
 	}
 
-	if len(lines) > 0 {
-		return lines
-	}
-
-	return vars.ToString(vars.ParseExpr(s).Eval(valuer))
+	return vars.ToString(vars.ParseExpr(lines).Eval(valuer))
 }
 
 func eatBlanks(s string) (blanks, left string) {
@@ -86,7 +85,7 @@ func (v *Valuer) Value(name, params string) interface{} {
 
 	x := jj.DefaultGen.Value(pureName, params)
 	if x == "" {
-		x = surveyValue(name)
+		x = GetVar(name)
 	}
 
 	if len(subs) > 0 {
@@ -95,21 +94,82 @@ func (v *Valuer) Value(name, params string) interface{} {
 	return x
 }
 
-func surveyValue(name string) string {
-	qs := []*survey.Question{{
-		Name:     "value",
-		Prompt:   &survey.Input{Message: "Input the value of " + name + ":"},
-		Validate: survey.Required,
-	}}
+func GetVar(name string) string {
+	return ReadLine(
+		WithPrompt(name+": "),
+		WithHistoryFile("/tmp/gurl-vars-"+name),
+		WithSuffix(";"))
+}
 
-	// the answers will be written to this struct
-	answers := struct {
-		Value string // survey will match the question and field names
-	}{}
+type LineConfig struct {
+	Prompt      string
+	HistoryFile string
+	Suffix      []string
+}
 
-	// perform the questions
-	if err := survey.Ask(qs, &answers); err != nil {
-		log.Fatal(err)
+type LineConfigFn func(config *LineConfig)
+
+func WithPrompt(prompt string) LineConfigFn {
+	return func(c *LineConfig) {
+		c.Prompt = prompt
 	}
-	return answers.Value
+}
+
+func WithHistoryFile(historyFile string) LineConfigFn {
+	return func(c *LineConfig) {
+		c.HistoryFile = historyFile
+	}
+}
+
+func WithSuffix(suffix ...string) LineConfigFn {
+	return func(c *LineConfig) {
+		c.Suffix = suffix
+	}
+}
+
+func ReadLine(fns ...LineConfigFn) string {
+	c := &LineConfig{
+		Prompt:      "> ",
+		HistoryFile: "/tmp/line",
+	}
+	for _, fn := range fns {
+		fn(c)
+	}
+
+	rl, err := readline.NewEx(&readline.Config{
+		Prompt:                 c.Prompt,
+		HistoryFile:            c.HistoryFile,
+		DisableAutoSaveHistory: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	defer iox.Close(rl)
+
+	var lines []string
+	for {
+		line, err := rl.Readline()
+		if err != nil {
+			if err == readline.ErrInterrupt {
+				os.Exit(0)
+			}
+			break
+		}
+		if line = strings.TrimSpace(line); len(line) == 0 {
+			continue
+		}
+
+		lines = append(lines, line)
+		if !ss.HasSuffix(line, c.Suffix...) {
+			rl.SetPrompt(">>> ")
+			continue
+		}
+
+		break
+	}
+
+	line := strings.Join(lines, " ")
+	_ = rl.SaveHistory(line)
+	return line
 }
