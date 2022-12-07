@@ -132,6 +132,7 @@ flags:
                        h: response headers  b: response body, c: status code
                        s: http conn session v: Verbose t: HTTP trace
                        q: keep quiet for file uploading/downloading progress
+                       f: expand inner JSON string as JSON object
   -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
   -version,v        Show Version Number
 METHOD:
