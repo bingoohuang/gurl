@@ -98,16 +98,24 @@ func GetVar(name string) string {
 	return ReadLine(
 		WithPrompt(name+": "),
 		WithHistoryFile("/tmp/gurl-vars-"+name),
-		WithSuffix(";"))
+		WithSuffix(";", `\G`),
+		WithTrimSuffix(true))
 }
 
 type LineConfig struct {
 	Prompt      string
 	HistoryFile string
 	Suffix      []string
+	TrimSuffix  bool
 }
 
 type LineConfigFn func(config *LineConfig)
+
+func WithTrimSuffix(trimSuffix bool) LineConfigFn {
+	return func(c *LineConfig) {
+		c.TrimSuffix = trimSuffix
+	}
+}
 
 func WithPrompt(prompt string) LineConfigFn {
 	return func(c *LineConfig) {
@@ -171,5 +179,11 @@ func ReadLine(fns ...LineConfigFn) string {
 
 	line := strings.Join(lines, " ")
 	_ = rl.SaveHistory(line)
+
+	if c.TrimSuffix {
+		for _, suffix := range c.Suffix {
+			line = strings.TrimSuffix(line, suffix)
+		}
+	}
 	return line
 }
