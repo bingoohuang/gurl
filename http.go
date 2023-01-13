@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -134,7 +134,7 @@ func readFile(s string) (data []byte, fn string, e error) {
 	}
 	defer iox.Close(f)
 
-	content, err := ioutil.ReadAll(f)
+	content, err := io.ReadAll(f)
 	if err != nil {
 		return nil, filename, err
 	}
