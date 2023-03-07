@@ -27,7 +27,7 @@ var defaultSetting = Settings{
 
 var keyReg = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
 
-func getHTTP(method string, url string, args []string, timeout time.Duration) (r *Request) {
+func getHTTP(method, url string, args []string, timeout time.Duration) (r *Request) {
 	if confirmNum > 0 {
 		timeout = 0
 	}

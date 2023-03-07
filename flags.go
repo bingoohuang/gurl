@@ -13,17 +13,17 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty                   bool
-	ugly, raw, freeInnerJSON, gzipOn, countingItems       bool
-	auth, proxy, printV, body, think, caFile, method, dns string
-
-	uploadFiles, urls          []string
-	printOption                uint16
-	benchN, benchC, confirmNum int
-	currentN                   atomic.Int64
-	timeout                    time.Duration
-	limitRate                  = NewRateLimitFlag()
-	download                   = &fla9.StringBool{}
+	disableKeepAlive, ver, form, pretty, enableTlcp bool
+	ugly, raw, freeInnerJSON, gzipOn, countingItems bool
+	auth, proxy, printV, body, think, method, dns   string
+	caFile, tlcpCerts                               string
+	uploadFiles, urls                               []string
+	printOption                                     uint16
+	benchN, benchC, confirmNum                      int
+	currentN                                        atomic.Int64
+	timeout                                         time.Duration
+	limitRate                                       = NewRateLimitFlag()
+	download                                        = &fla9.StringBool{}
 
 	jsonmap = map[string]interface{}{}
 )
@@ -31,8 +31,10 @@ var (
 func init() {
 	flagEnv(&urls, "url,u", "", "", "URL")
 	fla9.StringVar(&method, "method,m", "GET", "")
+	fla9.StringVar(&tlcpCerts, "tlcp-certs", "", "format: sign.cert.pem,sign.key.pem,enc.cert.pem,enc.key.pem")
 
 	fla9.BoolVar(&disableKeepAlive, "k", false, "")
+	fla9.BoolVar(&enableTlcp, "tlcp", false, "")
 	fla9.BoolVar(&ver, "version,v", false, "")
 	fla9.BoolVar(&raw, "raw,r", false, "")
 	fla9.BoolVar(&ugly, "ugly", false, "")
@@ -66,6 +68,7 @@ const (
 	printReqSession
 	printVerbose
 	printHTTPTrace
+	printDebug
 	quietFileUploadDownloadProgressing
 	freeInnerJSONTag
 )
@@ -84,6 +87,7 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 'u', printReqURL)
 	AdjustPrintOption(&s, 'q', quietFileUploadDownloadProgressing)
 	AdjustPrintOption(&s, 'f', freeInnerJSONTag)
+	AdjustPrintOption(&s, 'd', printDebug)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)
@@ -133,6 +137,7 @@ flags:
                        f: expand inner JSON string as JSON object
   -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
   -version,v        Show Version Number
+  -tlcp             使用传输层密码协议(TLCP)，TLCP协议遵循《GB/T 38636-2020 信息安全技术 传输层密码协议》。
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).
 URL:

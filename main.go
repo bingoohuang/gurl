@@ -109,7 +109,8 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 			).Data
 		}
 	}
-	req := getHTTP(method, addrGen().String(), nonFlagArgs, timeout)
+	realURL := addrGen().String()
+	req := getHTTP(method, realURL, nonFlagArgs, timeout)
 
 	if auth != "" {
 		// check if it is already set by base64 encoded
@@ -148,7 +149,7 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 		}
 	}
 
-	req.SetupTransport()
+	req.SetupTransport(strings.HasPrefix(realURL, "https://"))
 	req.BuildUrl()
 
 	if benchC > 1 { // AB bench
@@ -296,6 +297,7 @@ func createTlsConfig() (tlsConfig *tls.Config) {
 		}
 		tlsConfig.InsecureSkipVerify = true
 	}
+
 	return
 }
 

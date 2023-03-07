@@ -21,10 +21,13 @@ import (
 	"strings"
 	"time"
 
+	"gitee.com/Trisia/gotlcp/tlcp"
 	"github.com/bingoohuang/gg/pkg/filex"
 	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/goup/shapeio"
 	"github.com/bingoohuang/jj"
+	"github.com/emmansun/gmsm/smx509"
 )
 
 // NewRequest return *Request with specific method
@@ -53,10 +56,13 @@ func NewRequest(rawURL, method string) *Request {
 	}
 }
 
-func (b *Request) SetupTransport() {
+func (b *Request) SetupTransport(isHttps bool) {
 	trans := b.Setting.Transport
 	if trans == nil { // create default transport
-		trans = &http.Transport{}
+		trans = &http.Transport{
+			TLSHandshakeTimeout: 10 * time.Second,
+			IdleConnTimeout:     10 * time.Second,
+		}
 	}
 
 	// if b.transport is *http.Transport then set the settings.
@@ -67,8 +73,11 @@ func (b *Request) SetupTransport() {
 		if t.Proxy == nil {
 			t.Proxy = b.Setting.Proxy
 		}
+		if t.DialTLSContext == nil {
+			t.DialTLSContext = TimeoutDialer(t, b.Setting.ConnectTimeout)
+		}
 		if t.DialContext == nil {
-			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout)
+			t.DialContext = TimeoutDialer(t, b.Setting.ConnectTimeout)
 		}
 	}
 
@@ -632,10 +641,56 @@ func (b *Request) ToXML(v interface{}) error {
 	return xml.Unmarshal(data, v)
 }
 
+type DialContextFn func(ctx context.Context, network, address string) (net.Conn, error)
+
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
-func TimeoutDialer(cTimeout time.Duration) func(context.Context, string, string) (net.Conn, error) {
+func TimeoutDialer(t *http.Transport, cTimeout time.Duration) DialContextFn {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
-		dialer := &net.Dialer{Timeout: cTimeout}
+		dialer := &net.Dialer{
+			Timeout:   cTimeout,
+			KeepAlive: cTimeout,
+		}
+		fn := dialer.DialContext
+		if enableTlcp {
+			config := &tlcp.Config{InsecureSkipVerify: !EnvBool(`TLS_VERIFY`)}
+
+			if caFile != "" {
+				rootCert, err := smx509.ParseCertificatePEM(osx.ReadFile(caFile, osx.WithFatalOnError(true)).Data)
+				if err != nil {
+					panic(err)
+				}
+				pool := smx509.NewCertPool()
+				pool.AddCert(rootCert)
+				config.RootCAs = pool
+			}
+
+			if tlcpCerts != "" {
+				certsFiles := strings.Split(tlcpCerts, ",")
+				if len(certsFiles) != 4 {
+					panic("-tclp-certs should be sign.cert.pem,sign.key.pem,enc.cert.pem,enc.key.pem")
+				}
+				signCertKeypair, err := tlcp.X509KeyPair(osx.ReadFile(certsFiles[0], osx.WithFatalOnError(true)).Data,
+					osx.ReadFile(certsFiles[1], osx.WithFatalOnError(true)).Data)
+				if err != nil {
+					panic(err)
+				}
+				encCertKeypair, err := tlcp.X509KeyPair(osx.ReadFile(certsFiles[2], osx.WithFatalOnError(true)).Data,
+					osx.ReadFile(certsFiles[3], osx.WithFatalOnError(true)).Data)
+				if err != nil {
+					panic(err)
+				}
+
+				config.Certificates = []tlcp.Certificate{signCertKeypair, encCertKeypair}
+				config.CipherSuites = []uint16{
+					tlcp.ECDHE_SM4_CBC_SM3,
+					tlcp.ECDHE_SM4_GCM_SM3,
+				}
+				config.EnableDebug = HasPrintOption(printDebug)
+			}
+
+			d := tlcp.Dialer{NetDialer: dialer, Config: config}
+			fn = d.DialContext
+		}
 		dnsIP, dnsPort, err := net.SplitHostPort(dns)
 		if err != nil {
 			dnsIP = dns
@@ -655,14 +710,14 @@ func TimeoutDialer(cTimeout time.Duration) func(context.Context, string, string)
 					log.Fatalf("resolve %s by dns server: %s failed: %v", addrHost, dnsServer, err)
 				}
 				if len(ips) > 0 {
-					rand.Seed(time.Now().UnixNano())
-					rand.Shuffle(len(ips), func(i, j int) { ips[i], ips[j] = ips[j], ips[i] })
+					source := rand.New(rand.NewSource(time.Now().UnixNano()))
+					source.Shuffle(len(ips), func(i, j int) { ips[i], ips[j] = ips[j], ips[i] })
 					addr = net.JoinHostPort(ips[0], addrPort)
 				}
 			}
 		}
 
-		return dialer.DialContext(ctx, network, addr)
+		return fn(ctx, network, addr)
 	}
 }
 
