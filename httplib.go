@@ -258,10 +258,10 @@ func (b *Request) BodyFileLines(t string) bool {
 		t = t[1:]
 	}
 
-	if lineMode := strings.HasSuffix(t, ":line"); lineMode {
-		if fn := strings.TrimSuffix(t, ":line"); filex.Exists(fn) {
-			t = strings.TrimSuffix(t, ":line")
-			lines, err := filex.LinesChan(t, 1000)
+	const suffixLine = ":line"
+	if lineMode := strings.HasSuffix(t, suffixLine); lineMode {
+		if fn := strings.TrimSuffix(t, suffixLine); filex.Exists(fn) {
+			lines, err := filex.LinesChan(fn, 1000)
 			if err != nil {
 				log.Fatalf("E! create line chan for %s, failed: %v", t, err)
 			}
