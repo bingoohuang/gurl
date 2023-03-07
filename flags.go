@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	disableKeepAlive, ver, form, pretty                     bool
-	ugly, raw, freeInnerJSON, gzipOn, isJSON, countingItems bool
-	auth, proxy, printV, body, think, caFile, method, dns   string
+	disableKeepAlive, ver, form, pretty                   bool
+	ugly, raw, freeInnerJSON, gzipOn, countingItems       bool
+	auth, proxy, printV, body, think, caFile, method, dns string
 
 	uploadFiles, urls          []string
 	printOption                uint16
@@ -29,7 +29,6 @@ var (
 )
 
 func init() {
-	fla9.BoolVar(&isJSON, "json,j", true, "")
 	flagEnv(&urls, "url,u", "", "", "URL")
 	fla9.StringVar(&method, "method,m", "GET", "")
 
@@ -106,7 +105,6 @@ const help = `gurl is a Go implemented cURL-like cli tool for humans.
 Usage:
 	gurl [flags] [METHOD] URL [URL] [ITEM [ITEM]]
 flags:
-  -json -j          Send the data in a JSON object as application/json
   -u                HTTP request URL
   -method -m        HTTP method
   -k                Disable keepalive

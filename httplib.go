@@ -245,8 +245,11 @@ func (b *Request) BodyCh(data chan string) *Request {
 	return b
 }
 
-func evalBytes(data []byte) (io.ReadCloser, int64) {
+func (b *Request) evalBytes(data []byte) (io.ReadCloser, int64) {
 	eval := Eval(string(data))
+	if jj.Valid(eval) {
+		b.Header("Content-Type", "application/json")
+	}
 	return io.NopCloser(bytes.NewBufferString(eval)), int64(len(eval))
 }
 
@@ -286,9 +289,9 @@ func (b *Request) Body(data interface{}) *Request {
 			return b
 		}
 
-		b.BodyAndSize(evalBytes([]byte(t)))
+		b.BodyAndSize(b.evalBytes([]byte(t)))
 	case []byte:
-		b.BodyAndSize(evalBytes(t))
+		b.BodyAndSize(b.evalBytes(t))
 	}
 	return b
 }
@@ -326,7 +329,7 @@ func (b *Request) BodyString(s string) {
 	b.Req.Body = io.NopCloser(strings.NewReader(eval))
 	b.Req.ContentLength = int64(len(eval))
 	if jj.Valid(s) {
-		b.Req.Header.Set("Content-Type", "application/json")
+		b.Header("Content-Type", "application/json")
 	}
 }
 
@@ -492,14 +495,14 @@ func (b *Request) SendOut() (*http.Response, error) {
 	}
 
 	if b.Setting.UserAgent != "" && b.Req.Header.Get("User-Agent") == "" {
-		b.Req.Header.Set("User-Agent", b.Setting.UserAgent)
+		b.Header("User-Agent", b.Setting.UserAgent)
 	}
 
 	if b.Req.Body != nil && gzipOn {
 		b.Req.ContentLength = -1
 		b.Req.Header.Del("Content-Length")
-		b.Req.Header.Set("Transfer-Encoding", "chunked")
-		b.Req.Header.Set("Content-Encoding", "gzip")
+		b.Header("Transfer-Encoding", "chunked")
+		b.Header("Content-Encoding", "gzip")
 	}
 
 	// -proxy http://username:password@127.0.0.1:7777 可以干活，不需要下面的独立设置
