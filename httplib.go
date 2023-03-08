@@ -21,13 +21,10 @@ import (
 	"strings"
 	"time"
 
-	"gitee.com/Trisia/gotlcp/tlcp"
 	"github.com/bingoohuang/gg/pkg/filex"
 	"github.com/bingoohuang/gg/pkg/iox"
-	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/goup/shapeio"
 	"github.com/bingoohuang/jj"
-	"github.com/emmansun/gmsm/smx509"
 )
 
 // NewRequest return *Request with specific method
@@ -652,44 +649,7 @@ func TimeoutDialer(t *http.Transport, cTimeout time.Duration) DialContextFn {
 		}
 		fn := dialer.DialContext
 		if enableTlcp {
-			config := &tlcp.Config{InsecureSkipVerify: !EnvBool(`TLS_VERIFY`)}
-
-			if caFile != "" {
-				rootCert, err := smx509.ParseCertificatePEM(osx.ReadFile(caFile, osx.WithFatalOnError(true)).Data)
-				if err != nil {
-					panic(err)
-				}
-				pool := smx509.NewCertPool()
-				pool.AddCert(rootCert)
-				config.RootCAs = pool
-			}
-
-			if tlcpCerts != "" {
-				certsFiles := strings.Split(tlcpCerts, ",")
-				if len(certsFiles) != 4 {
-					panic("-tclp-certs should be sign.cert.pem,sign.key.pem,enc.cert.pem,enc.key.pem")
-				}
-				signCertKeypair, err := tlcp.X509KeyPair(osx.ReadFile(certsFiles[0], osx.WithFatalOnError(true)).Data,
-					osx.ReadFile(certsFiles[1], osx.WithFatalOnError(true)).Data)
-				if err != nil {
-					panic(err)
-				}
-				encCertKeypair, err := tlcp.X509KeyPair(osx.ReadFile(certsFiles[2], osx.WithFatalOnError(true)).Data,
-					osx.ReadFile(certsFiles[3], osx.WithFatalOnError(true)).Data)
-				if err != nil {
-					panic(err)
-				}
-
-				config.Certificates = []tlcp.Certificate{signCertKeypair, encCertKeypair}
-				config.CipherSuites = []uint16{
-					tlcp.ECDHE_SM4_CBC_SM3,
-					tlcp.ECDHE_SM4_GCM_SM3,
-				}
-				config.EnableDebug = HasPrintOption(printDebug)
-			}
-
-			d := tlcp.Dialer{NetDialer: dialer, Config: config}
-			fn = d.DialContext
+			fn = createTlcpDialer(dialer)
 		}
 		dnsIP, dnsPort, err := net.SplitHostPort(dns)
 		if err != nil {
