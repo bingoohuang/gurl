@@ -14,24 +14,26 @@ const (
 )
 
 type ProgressBar struct {
-	current                          int64
-	Total                            int64
-	RefreshRate                      time.Duration
-	ShowPercent, ShowCounters        bool
-	ShowSpeed, ShowTimeLeft, ShowBar bool
-	ShowFinalTime                    bool
-
-	isFinish     int32
-	startTime    time.Time
-	currentValue int64
+	startTime time.Time
 
 	BarStart string
-	BarEnd   string
-	Empty    string
-	Current  string
 	CurrentN string
 
+	Current     string
+	Empty       string
+	BarEnd      string
+	Total       int64
+	RefreshRate time.Duration
+
 	printMaxWidth int
+	current       int64
+	currentValue  int64
+
+	isFinish      int32
+	ShowFinalTime bool
+
+	ShowSpeed, ShowTimeLeft, ShowBar bool
+	ShowPercent, ShowCounters        bool
 }
 
 type ProgressBarReader struct {

@@ -70,21 +70,22 @@ const (
 )
 
 type report struct {
+	results chan *result
+
+	errorDist      map[string]int
+	statusCodeDist map[int]int
+
+	output   string
+	lats     []float64
 	avgTotal float64
 	fastest  float64
 	slowest  float64
 	average  float64
 	rps      float64
 
-	results chan *result
-	total   time.Duration
+	total time.Duration
 
-	errorDist      map[string]int
-	statusCodeDist map[int]int
-	lats           []float64
-	sizeTotal      int64
-
-	output string
+	sizeTotal int64
 }
 
 func printReport(results chan *result, output string, total time.Duration) {

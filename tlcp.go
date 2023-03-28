@@ -9,9 +9,9 @@ import (
 	"github.com/emmansun/gmsm/smx509"
 )
 
-func createTlcpDialer(dialer *net.Dialer) DialContextFn {
-	config := &tlcp.Config{InsecureSkipVerify: !EnvBool(`TLS_VERIFY`)}
-	config.EnableDebug = HasPrintOption(printDebug)
+func createTlcpDialer(dialer *net.Dialer, caFile, tlcpCerts string) DialContextFn {
+	c := &tlcp.Config{InsecureSkipVerify: !EnvBool(`TLS_VERIFY`)}
+	c.EnableDebug = HasPrintOption(printDebug)
 
 	if caFile != "" {
 		rootCert, err := smx509.ParseCertificatePEM(osx.ReadFile(caFile, osx.WithFatalOnError(true)).Data)
@@ -20,7 +20,7 @@ func createTlcpDialer(dialer *net.Dialer) DialContextFn {
 		}
 		pool := smx509.NewCertPool()
 		pool.AddCert(rootCert)
-		config.RootCAs = pool
+		c.RootCAs = pool
 	}
 
 	if tlcpCerts != "" {
@@ -50,11 +50,11 @@ func createTlcpDialer(dialer *net.Dialer) DialContextFn {
 		}
 
 		if len(certs) > 0 {
-			config.Certificates = certs
-			config.CipherSuites = []uint16{tlcp.ECDHE_SM4_CBC_SM3, tlcp.ECDHE_SM4_GCM_SM3}
+			c.Certificates = certs
+			c.CipherSuites = []uint16{tlcp.ECDHE_SM4_CBC_SM3, tlcp.ECDHE_SM4_GCM_SM3}
 		}
 	}
 
-	d := tlcp.Dialer{NetDialer: dialer, Config: config}
+	d := tlcp.Dialer{NetDialer: dialer, Config: c}
 	return d.DialContext
 }

@@ -71,10 +71,10 @@ func (b *Request) SetupTransport(isHttps bool) {
 			t.Proxy = b.Setting.Proxy
 		}
 		if t.DialTLSContext == nil {
-			t.DialTLSContext = TimeoutDialer(t, b.Setting.ConnectTimeout)
+			t.DialTLSContext = TimeoutDialer(b.Setting.ConnectTimeout)
 		}
 		if t.DialContext == nil {
-			t.DialContext = TimeoutDialer(t, b.Setting.ConnectTimeout)
+			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout)
 		}
 	}
 
@@ -88,40 +88,45 @@ func (b *Request) SetupTransport(isHttps bool) {
 
 // Settings .
 type Settings struct {
-	ShowDebug       bool
-	UserAgent       string
-	ConnectTimeout  time.Duration
+	Transport       http.RoundTripper
 	TlsClientConfig *tls.Config
 	Proxy           func(*http.Request) (*url.URL, error)
-	Transport       http.RoundTripper
+	UserAgent       string
+	ConnectTimeout  time.Duration
+	ShowDebug       bool
 	EnableCookie    bool
 	DumpBody        bool
 }
 
 // Request provides more useful methods for requesting one url than http.Request.
 type Request struct {
-	url      string
-	urlQuery []string
+	Transport http.RoundTripper
+	stat      *httpStat
 
-	Req  *http.Request
 	resp *http.Response
+
+	bodyCh chan string
 
 	queries, params, files map[string]string
 
-	Setting          Settings
-	rspBody, reqDump []byte
-
-	DisableKeepAlives bool
-
-	Transport http.RoundTripper
-	ConnInfo  httptrace.GotConnInfo
-
-	bodyCh        chan string
-	stat          *httpStat
-	DryRequest    bool
-	Timeout       time.Duration
 	cancelTimeout context.CancelFunc
 	timeResetCh   chan struct{}
+
+	Req      *http.Request
+	url      string
+	ConnInfo httptrace.GotConnInfo
+
+	rspBody, reqDump []byte
+
+	urlQuery []string
+
+	Setting Settings
+
+	Timeout time.Duration
+
+	DryRequest bool
+
+	DisableKeepAlives bool
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -641,7 +646,7 @@ func (b *Request) ToXML(v interface{}) error {
 type DialContextFn func(ctx context.Context, network, address string) (net.Conn, error)
 
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
-func TimeoutDialer(t *http.Transport, cTimeout time.Duration) DialContextFn {
+func TimeoutDialer(cTimeout time.Duration) DialContextFn {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		dialer := &net.Dialer{
 			Timeout:   cTimeout,
@@ -649,7 +654,7 @@ func TimeoutDialer(t *http.Transport, cTimeout time.Duration) DialContextFn {
 		}
 		fn := dialer.DialContext
 		if enableTlcp {
-			fn = createTlcpDialer(dialer)
+			fn = createTlcpDialer(dialer, caFile, tlcpCerts)
 		}
 		dnsIP, dnsPort, err := net.SplitHostPort(dns)
 		if err != nil {

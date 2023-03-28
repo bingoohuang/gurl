@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"regexp"
 	"strings"
@@ -159,7 +160,7 @@ func ReadLine(fns ...LineConfigFn) string {
 	for {
 		line, err := rl.Readline()
 		if err != nil {
-			if err == readline.ErrInterrupt {
+			if errors.Is(err, readline.ErrInterrupt) {
 				os.Exit(0)
 			}
 			break

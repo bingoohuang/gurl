@@ -26,8 +26,8 @@ type Series struct {
 
 type InfluxQueryResult struct {
 	Results []struct {
-		StatementID int      `json:"statement_id"`
 		Series      []Series `json:"series"`
+		StatementID int      `json:"statement_id"`
 	} `json:"results"`
 }
 
