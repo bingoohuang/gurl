@@ -116,7 +116,7 @@ flags:
   -raw -r           Print JSON Raw format other than pretty
   -ugly             Print JSON In Ugly compact Format
   -C                Print items counting in colored output
-  -ca               Ca certificate file
+  -ca               Ca root certificate file to verify TLS
   -f                Submitting the data as a form
   -gzip             Gzip request body or not
   -d                Download the url content as file, yes/n
