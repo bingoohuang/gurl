@@ -53,7 +53,7 @@ func NewRequest(rawURL, method string) *Request {
 	}
 }
 
-func (b *Request) SetupTransport(isHttps bool) {
+func (b *Request) SetupTransport() {
 	trans := b.Setting.Transport
 	if trans == nil { // create default transport
 		trans = &http.Transport{
@@ -71,10 +71,10 @@ func (b *Request) SetupTransport(isHttps bool) {
 			t.Proxy = b.Setting.Proxy
 		}
 		if t.DialTLSContext == nil {
-			t.DialTLSContext = TimeoutDialer(b.Setting.ConnectTimeout)
+			t.DialTLSContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig)
 		}
 		if t.DialContext == nil {
-			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout)
+			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout, nil)
 		}
 	}
 
@@ -646,23 +646,31 @@ func (b *Request) ToXML(v interface{}) error {
 type DialContextFn func(ctx context.Context, network, address string) (net.Conn, error)
 
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
-func TimeoutDialer(cTimeout time.Duration) DialContextFn {
+func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		dialer := &net.Dialer{
 			Timeout:   cTimeout,
 			KeepAlive: cTimeout,
 		}
+
 		fn := dialer.DialContext
 		if enableTlcp {
 			fn = createTlcpDialer(dialer, caFile, tlcpCerts)
+		} else if tlsConfig != nil {
+			tlsDialer := &tls.Dialer{
+				NetDialer: dialer,
+				Config:    tlsConfig,
+			}
+			fn = tlsDialer.DialContext
 		}
+
 		dnsIP, dnsPort, err := net.SplitHostPort(dns)
 		if err != nil {
 			dnsIP = dns
 			dnsPort = "53"
 		}
 
-		if dns != "" {
+		if dnsIP != "" {
 			addrHost, addrPort, err := net.SplitHostPort(addr)
 			if err != nil {
 				addrHost = addr

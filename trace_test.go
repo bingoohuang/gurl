@@ -1,11 +1,32 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptrace"
+	"testing"
 )
+
+func TestHttps(t *testing.T) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	client := &http.Client{Transport: tr}
+
+	seedUrl := "https://192.168.126.18:22443/"
+	resp, err := client.Get(seedUrl)
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%s\n", body)
+}
 
 // https://brantou.github.io/2017/05/24/go-http-trace/
 func ExampleTrace() {

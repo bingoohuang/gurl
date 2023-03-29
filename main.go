@@ -126,7 +126,7 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), createClientTrace(req)))
 	setTimeoutRequest(req)
 
-	req.SetTLSClientConfig(createTlsConfig())
+	req.SetTLSClientConfig(createTlsConfig(strings.HasPrefix(realURL, "https://")))
 	if proxyURL := parseProxyURL(req.Req); proxyURL != nil {
 		if HasPrintOption(printVerbose) {
 			log.Printf("Proxy URL: %s", proxyURL)
@@ -149,7 +149,7 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 		}
 	}
 
-	req.SetupTransport(strings.HasPrefix(realURL, "https://"))
+	req.SetupTransport()
 	req.BuildUrl()
 
 	if benchC > 1 { // AB bench
@@ -284,21 +284,22 @@ func parseProxyURL(req *http.Request) *url.URL {
 	return p
 }
 
-func createTlsConfig() (tlsConfig *tls.Config) {
+func createTlsConfig(isHTTPS bool) (tlsConfig *tls.Config) {
+	if !isHTTPS {
+		return nil
+	}
+
+	tlsConfig = &tls.Config{
+		InsecureSkipVerify: !EnvBool(`TLS_VERIFY`),
+	}
+
 	if caFile != "" {
 		pool := x509.NewCertPool()
 		pool.AppendCertsFromPEM(osx.ReadFile(caFile, osx.WithFatalOnError(true)).Data)
-		tlsConfig = &tls.Config{RootCAs: pool}
+		tlsConfig.RootCAs = pool
 	}
 
-	if !EnvBool(`TLS_VERIFY`) {
-		if tlsConfig == nil {
-			tlsConfig = &tls.Config{}
-		}
-		tlsConfig.InsecureSkipVerify = true
-	}
-
-	return
+	return tlsConfig
 }
 
 func doRequest(req *Request, addrGen func() *url.URL) error {
