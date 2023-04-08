@@ -62,6 +62,7 @@ const (
 	printReqHeader uint16 = 1 << iota
 	printReqURL
 	printReqBody
+	printRespOption
 	printRespHeader
 	printRespCode
 	printRespBody
@@ -78,6 +79,7 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose|printHTTPTrace)
 	AdjustPrintOption(&s, 'H', printReqHeader)
 	AdjustPrintOption(&s, 'B', printReqBody)
+	AdjustPrintOption(&s, 'o', printRespOption)
 	AdjustPrintOption(&s, 'h', printRespHeader)
 	AdjustPrintOption(&s, 'b', printRespBody)
 	AdjustPrintOption(&s, 's', printReqSession)

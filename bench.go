@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"runtime"
 	"sort"
 	"strings"
@@ -50,7 +49,7 @@ func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *Request, t
 		if err == nil {
 			size = resp.ContentLength
 			code = resp.StatusCode
-			io.Copy(ioutil.Discard, resp.Body)
+			io.Copy(io.Discard, resp.Body)
 			resp.Body.Close()
 		}
 		wg.Done()

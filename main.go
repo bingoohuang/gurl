@@ -489,6 +489,13 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 			}
 		}
 
+		if HasPrintOption(printRespOption) {
+			if res.TLS != nil {
+				fmt.Printf("option TLS.DidResume: %t\n", res.TLS.DidResume)
+				fmt.Println()
+			}
+		}
+
 		if HasPrintOption(printRespHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 			for k, val := range res.Header {
@@ -526,20 +533,29 @@ func printRequestResponseForWindows(req *Request, res *http.Response) {
 			break
 		}
 	}
+
 	if HasPrintOption(printReqHeader) {
 		fmt.Println(string(dumpHeader))
-		fmt.Println("")
+		fmt.Println()
 	}
 	if HasPrintOption(printReqBody) {
 		fmt.Println(string(dumpBody))
-		fmt.Println("")
+		fmt.Println()
 	}
+
+	if !req.DryRequest && HasPrintOption(printRespOption) {
+		if res.TLS != nil {
+			fmt.Printf("option TLS.DidResume: %t\n", res.TLS.DidResume)
+			fmt.Println()
+		}
+	}
+
 	if !req.DryRequest && HasPrintOption(printRespHeader) {
 		fmt.Println(res.Proto, res.Status)
 		for k, val := range res.Header {
 			fmt.Println(k, ":", strings.Join(val, " "))
 		}
-		fmt.Println("")
+		fmt.Println()
 	}
 	if !req.DryRequest && HasPrintOption(printRespBody) {
 		fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON, false))
