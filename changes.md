@@ -14,6 +14,46 @@
     option TLS.HandshakeComplete: true
     option TLS.DidResume: true
     ```
+   
+    ```nginx
+    worker_processes  1;
+    
+    events {
+        worker_connections  1024;
+    }
+    
+    http {
+        include       mime.types;
+        default_type  application/octet-stream;
+        keepalive_timeout  65;
+    
+        server {
+            listen       22443 ssl;
+        
+            # 一行命令生成自签名证书
+            # openssl req -x509 -newkey rsa:4096 -nodes -out server.crt -keyout server.key -days 365 -subj "/C=CN/O=krkr/OU=OU/CN=*.d5k.co"
+            ssl_certificate server.crt;        # 这里为服务器上server.crt的路径
+            ssl_certificate_key server.key;    # 这里为服务器上server.key的路径
+            ssl_session_cache shared:SSL:10m;
+    
+            #ssl_client_certificate ca.crt;    # 双向认证
+            #ssl_verify_client on;             # 双向认证
+        
+        
+            #ssl_session_cache builtin:1000 shared:SSL:10m;
+            ssl_session_timeout 5m;
+            ssl_protocols SSLv2 SSLv3 TLSv1.1 TLSv1.2;
+            ssl_ciphers  ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
+            ssl_prefer_server_ciphers   on;
+        
+            default_type            text/plain;
+            add_header  "Content-Type" "text/html;charset=utf-8";
+            location / {
+                return 200 "SSL";
+            }
+        }
+    }
+    ```
 
 2. 2022年12月06日 支持 Influx 查询返回表格展示，例如 `gurl :10014/query db==metrics q=='select * from "HB_MSSM-Product-server" where time > now() - 5m order by time desc'  -pb`
 3. 2022年04月29日 支持 变量替换，例如 `gurl :5003/@ksuid 'name=@姓名' 'sex=@random(男,女)' 'addr=@地址' 'idcard=@身份证' _hl==echo`
