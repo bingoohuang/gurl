@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"strings"
 
@@ -10,13 +11,18 @@ import (
 	"github.com/emmansun/gmsm/smx509"
 )
 
+var tlcpSessionCache tlcp.SessionCache
+
+func init() {
+	if cacheSize := env.Int(`TLS_SESSION_CACHE`, 32); cacheSize > 0 {
+		tlcpSessionCache = tlcp.NewLRUSessionCache(cacheSize)
+	}
+}
+
 func createTlcpDialer(dialer *net.Dialer, caFile, tlcpCerts string) DialContextFn {
 	c := &tlcp.Config{
 		InsecureSkipVerify: !env.Bool(`TLS_VERIFY`, false),
-	}
-
-	if cacheSize := env.Int(`TLS_SESSION_CACHE`, 32); cacheSize > 0 {
-		c.SessionCache = tlcp.NewLRUSessionCache(cacheSize)
+		SessionCache:       tlcpSessionCache,
 	}
 
 	c.EnableDebug = HasPrintOption(printDebug)
@@ -65,4 +71,23 @@ func createTlcpDialer(dialer *net.Dialer, caFile, tlcpCerts string) DialContextF
 
 	d := tlcp.Dialer{NetDialer: dialer, Config: c}
 	return d.DialContext
+}
+
+func printTLCPConnectState(state tlcp.ConnectionState) {
+	if !HasPrintOption(printRespOption) {
+		return
+	}
+
+	tlsVersion := func(version uint16) string {
+		switch version {
+		case tlcp.VersionTLCP:
+			return "TLCP"
+		default:
+			return "Unknown"
+		}
+	}(state.Version)
+	fmt.Printf("option TLCP.Version: %s\n", tlsVersion)
+	fmt.Printf("option TLCP.HandshakeComplete: %t\n", state.HandshakeComplete)
+	fmt.Printf("option TLCP.DidResume: %t\n", state.DidResume)
+	fmt.Println()
 }

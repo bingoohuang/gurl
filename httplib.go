@@ -21,6 +21,7 @@ import (
 	"strings"
 	"time"
 
+	"gitee.com/Trisia/gotlcp/tlcp"
 	"github.com/bingoohuang/gg/pkg/filex"
 	"github.com/bingoohuang/gg/pkg/iox"
 	"github.com/bingoohuang/goup/shapeio"
@@ -696,16 +697,18 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn 
 			return nil, err
 		}
 
-		/*
-			type connectionStater interface {
-				ConnectionState() tls.ConnectionState
-			}
+		type tlcpConnectionStater interface {
+			ConnectionState() tlcp.ConnectionState
+		}
+		type tlsConnectionStater interface {
+			ConnectionState() tls.ConnectionState
+		}
 
-			if cs, ok := conn.(connectionStater); ok {
-				state := cs.ConnectionState()
-				fmt.Printf("tls.DidResume: %t\n", state.DidResume)
-			}
-		*/
+		if cs, ok := conn.(tlsConnectionStater); ok {
+			printTLSConnectState(cs.ConnectionState())
+		} else if cs, ok := conn.(tlcpConnectionStater); ok {
+			printTLCPConnectState(cs.ConnectionState())
+		}
 
 		return conn, nil
 	}

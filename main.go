@@ -285,6 +285,14 @@ func parseProxyURL(req *http.Request) *url.URL {
 	return p
 }
 
+var clientSessionCache tls.ClientSessionCache
+
+func init() {
+	if cacheSize := env.Int(`TLS_SESSION_CACHE`, 32); cacheSize > 0 {
+		clientSessionCache = tls.NewLRUClientSessionCache(cacheSize)
+	}
+}
+
 func createTlsConfig(isHTTPS bool) (tlsConfig *tls.Config) {
 	if !isHTTPS {
 		return nil
@@ -292,10 +300,7 @@ func createTlsConfig(isHTTPS bool) (tlsConfig *tls.Config) {
 
 	tlsConfig = &tls.Config{
 		InsecureSkipVerify: !env.Bool(`TLS_VERIFY`, false),
-	}
-
-	if cacheSize := env.Int(`TLS_SESSION_CACHE`, 32); cacheSize > 0 {
-		tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(cacheSize)
+		ClientSessionCache: clientSessionCache,
 	}
 
 	if caFile != "" {
@@ -494,29 +499,6 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 			}
 		}
 
-		if HasPrintOption(printRespOption) {
-			if res.TLS != nil {
-				tlsVersion := func(version uint16) string {
-					switch version {
-					case tls.VersionTLS10:
-						return "TLSv10"
-					case tls.VersionTLS11:
-						return "TLSv11"
-					case tls.VersionTLS12:
-						return "TLSv12"
-					case tls.VersionTLS13:
-						return "TLSv13"
-					default:
-						return "Unknown"
-					}
-				}(res.TLS.Version)
-				fmt.Printf("option TLS.Version: %s\n", tlsVersion)
-				fmt.Printf("option TLS.HandshakeComplete: %t\n", res.TLS.HandshakeComplete)
-				fmt.Printf("option TLS.DidResume: %t\n", res.TLS.DidResume)
-				fmt.Println()
-			}
-		}
-
 		if HasPrintOption(printRespHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 			for k, val := range res.Header {
@@ -540,6 +522,31 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 			fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON, influxDB))
 		}
 	}
+}
+
+func printTLSConnectState(state tls.ConnectionState) {
+	if !HasPrintOption(printRespOption) {
+		return
+	}
+
+	tlsVersion := func(version uint16) string {
+		switch version {
+		case tls.VersionTLS10:
+			return "TLSv10"
+		case tls.VersionTLS11:
+			return "TLSv11"
+		case tls.VersionTLS12:
+			return "TLSv12"
+		case tls.VersionTLS13:
+			return "TLSv13"
+		default:
+			return "Unknown"
+		}
+	}(state.Version)
+	fmt.Printf("option TLS.Version: %s\n", tlsVersion)
+	fmt.Printf("option TLS.HandshakeComplete: %t\n", state.HandshakeComplete)
+	fmt.Printf("option TLS.DidResume: %t\n", state.DidResume)
+	fmt.Println()
 }
 
 func chunked(te []string) bool { return len(te) > 0 && te[0] == "chunked" }
