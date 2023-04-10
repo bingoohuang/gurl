@@ -3,16 +3,78 @@
 1. 2023年04月10日 支持 TLS SESSION REUSE
 
     ```shell
-    $ gurl https://192.168.126.18:22443/ -pso -n2 -k
-    Conn-Session: 2.0.1.1:53026->192.168.126.18:22443 (reused: false, wasIdle: false, idle: 0s)
+    # 1. 测试标准 SSL 连接，调用2次，打印 session 和 TLS 选项，可以看到，会话保持，只有 1 次握手
+    $ gurl https://192.168.126.18:22443/ -pso -n2
     option TLS.Version: TLSv12
     option TLS.HandshakeComplete: true
     option TLS.DidResume: false
     
-    Conn-Session: 2.0.1.1:53027->192.168.126.18:22443 (reused: false, wasIdle: false, idle: 0s)
+    Conn-Session: 2.0.1.1:61658->192.168.126.18:22443 (reused: false, wasIdle: false, idle: 0s)
+    Conn-Session: 2.0.1.1:61658->192.168.126.18:22443 (reused: true, wasIdle: true, idle: 202.262µs)
+
+    # 2. 测试标准 SSL 连接，调用2次，打印 session 和 TLS 选项，可以看到，会话不保持，有 2 次握手，但是 TLS 会话重用了
+    $ gurl https://192.168.126.18:22443/ -pso -n2 -k
+    option TLS.Version: TLSv12
+    option TLS.HandshakeComplete: true
+    option TLS.DidResume: false
+    
+    Conn-Session: 2.0.1.1:61734->192.168.126.18:22443 (reused: false, wasIdle: false, idle: 0s)
     option TLS.Version: TLSv12
     option TLS.HandshakeComplete: true
     option TLS.DidResume: true
+    
+    Conn-Session: 2.0.1.1:61735->192.168.126.18:22443 (reused: false, wasIdle: false, idle: 0s)
+   
+    # 3. 测试标准 SSL 连接，调用2次，打印 session 和 TLS 选项，可以看到，会话不保持，TLS 会话不重用（关闭重用缓存）
+    $ TLS_SESSION_CACHE=0 gurl https://192.168.126.18:22443/ -pso -n2 -k
+    option TLS.Version: TLSv12
+    option TLS.HandshakeComplete: true
+    option TLS.DidResume: false
+    
+    Conn-Session: 2.0.1.1:62056->192.168.126.18:22443 (reused: false, wasIdle: false, idle: 0s)
+    option TLS.Version: TLSv12
+    option TLS.HandshakeComplete: true
+    option TLS.DidResume: false
+    
+    Conn-Session: 2.0.1.1:62057->192.168.126.18:22443 (reused: false, wasIdle: false, idle: 0s)
+    ```
+   
+    ```sh
+    # 对应到国密 TLCP 使用情况
+    # 1
+    $ gurl https://192.168.126.18:15443/ -pso -n2 -tlcp
+    option TLCP.Version: TLCP
+    option TLCP.HandshakeComplete: true
+    option TLCP.DidResume: false
+    
+    Conn-Session: 2.0.1.1:62167->192.168.126.18:15443 (reused: false, wasIdle: false, idle: 0s)
+    Conn-Session: 2.0.1.1:62167->192.168.126.18:15443 (reused: true, wasIdle: true, idle: 143.177µs)
+
+    # 2
+    $ gurl https://192.168.126.18:15443/ -pso -n2 -tlcp -k
+    option TLCP.Version: TLCP
+    option TLCP.HandshakeComplete: true
+    option TLCP.DidResume: false
+    
+    Conn-Session: 2.0.1.1:62293->192.168.126.18:15443 (reused: false, wasIdle: false, idle: 0s)
+    option TLCP.Version: TLCP
+    option TLCP.HandshakeComplete: true
+    option TLCP.DidResume: true
+    
+    Conn-Session: 2.0.1.1:62297->192.168.126.18:15443 (reused: false, wasIdle: false, idle: 0s)
+    
+    # 3
+    $ TLS_SESSION_CACHE=0 gurl https://192.168.126.18:15443/ -pso -n2 -tlcp -k
+    option TLCP.Version: TLCP
+    option TLCP.HandshakeComplete: true
+    option TLCP.DidResume: false
+    
+    Conn-Session: 2.0.1.1:62401->192.168.126.18:15443 (reused: false, wasIdle: false, idle: 0s)
+    option TLCP.Version: TLCP
+    option TLCP.HandshakeComplete: true
+    option TLCP.DidResume: false
+    
+    Conn-Session: 2.0.1.1:62402->192.168.126.18:15443 (reused: false, wasIdle: false, idle: 0s)
     ```
    
     ```nginx
