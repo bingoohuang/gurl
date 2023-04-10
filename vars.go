@@ -56,16 +56,14 @@ func eatBlanks(s string) (blanks, left string) {
 
 type Valuer struct {
 	Map map[string]interface{}
+	*jj.GenContext
 }
 
 func NewValuer() *Valuer {
 	return &Valuer{
-		Map: make(map[string]interface{}),
+		Map:        make(map[string]interface{}),
+		GenContext: jj.NewGen(),
 	}
-}
-
-func (v *Valuer) Register(fn string, f jj.SubstitutionFn) {
-	jj.DefaultSubstituteFns.Register(fn, f)
 }
 
 var cacheSuffix = regexp.MustCompile(`^(.+)_\d+`)
@@ -74,7 +72,7 @@ func (v *Valuer) ClearCache() {
 	v.Map = make(map[string]interface{})
 }
 
-func (v *Valuer) Value(name, params string) interface{} {
+func (v *Valuer) Value(name, params, expr string) interface{} {
 	pureName := name
 	subs := cacheSuffix.FindStringSubmatch(name)
 	if len(subs) > 0 {
@@ -84,7 +82,7 @@ func (v *Valuer) Value(name, params string) interface{} {
 		}
 	}
 
-	x := jj.DefaultGen.Value(pureName, params)
+	x := jj.DefaultGen.Value(pureName, params, expr)
 	if x == "" {
 		x = GetVar(name)
 	}

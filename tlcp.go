@@ -6,11 +6,19 @@ import (
 
 	"gitee.com/Trisia/gotlcp/tlcp"
 	"github.com/bingoohuang/gg/pkg/osx"
+	"github.com/bingoohuang/gg/pkg/osx/env"
 	"github.com/emmansun/gmsm/smx509"
 )
 
 func createTlcpDialer(dialer *net.Dialer, caFile, tlcpCerts string) DialContextFn {
-	c := &tlcp.Config{InsecureSkipVerify: !EnvBool(`TLS_VERIFY`)}
+	c := &tlcp.Config{
+		InsecureSkipVerify: !env.Bool(`TLS_VERIFY`, false),
+	}
+
+	if cacheSize := env.Int(`TLS_SESSION_CACHE`, 32); cacheSize > 0 {
+		c.SessionCache = tlcp.NewLRUSessionCache(cacheSize)
+	}
+
 	c.EnableDebug = HasPrintOption(printDebug)
 
 	if caFile != "" {

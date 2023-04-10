@@ -70,11 +70,12 @@ func (b *Request) SetupTransport() {
 		if t.Proxy == nil {
 			t.Proxy = b.Setting.Proxy
 		}
-		if t.DialTLSContext == nil {
+
+		if t.TLSClientConfig != nil && t.DialTLSContext == nil {
 			t.DialTLSContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig)
 		}
-		if t.DialContext == nil {
-			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout, nil)
+		if t.TLSClientConfig == nil && t.DialContext == nil {
+			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig)
 		}
 	}
 
@@ -690,7 +691,23 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn 
 			}
 		}
 
-		return fn(ctx, network, addr)
+		conn, err := fn(ctx, network, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		/*
+			type connectionStater interface {
+				ConnectionState() tls.ConnectionState
+			}
+
+			if cs, ok := conn.(connectionStater); ok {
+				state := cs.ConnectionState()
+				fmt.Printf("tls.DidResume: %t\n", state.DidResume)
+			}
+		*/
+
+		return conn, nil
 	}
 }
 

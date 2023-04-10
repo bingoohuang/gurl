@@ -23,6 +23,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/codec/b64"
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/osx"
+	"github.com/bingoohuang/gg/pkg/osx/env"
 	"github.com/bingoohuang/gg/pkg/rest"
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/thinktime"
@@ -290,7 +291,11 @@ func createTlsConfig(isHTTPS bool) (tlsConfig *tls.Config) {
 	}
 
 	tlsConfig = &tls.Config{
-		InsecureSkipVerify: !EnvBool(`TLS_VERIFY`),
+		InsecureSkipVerify: !env.Bool(`TLS_VERIFY`, false),
+	}
+
+	if cacheSize := env.Int(`TLS_SESSION_CACHE`, 32); cacheSize > 0 {
+		tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(cacheSize)
 	}
 
 	if caFile != "" {
@@ -491,6 +496,22 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 
 		if HasPrintOption(printRespOption) {
 			if res.TLS != nil {
+				tlsVersion := func(version uint16) string {
+					switch version {
+					case tls.VersionTLS10:
+						return "TLSv10"
+					case tls.VersionTLS11:
+						return "TLSv11"
+					case tls.VersionTLS12:
+						return "TLSv12"
+					case tls.VersionTLS13:
+						return "TLSv13"
+					default:
+						return "Unknown"
+					}
+				}(res.TLS.Version)
+				fmt.Printf("option TLS.Version: %s\n", tlsVersion)
+				fmt.Printf("option TLS.HandshakeComplete: %t\n", res.TLS.HandshakeComplete)
 				fmt.Printf("option TLS.DidResume: %t\n", res.TLS.DidResume)
 				fmt.Println()
 			}

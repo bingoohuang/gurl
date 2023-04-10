@@ -3,25 +3,27 @@ module github.com/bingoohuang/gurl
 go 1.20
 
 require (
-	gitee.com/Trisia/gotlcp v1.3.1-0.20230221120820-c0e39554df29
-	github.com/AlecAivazis/survey/v2 v2.3.4
-	github.com/bingoohuang/gg v0.0.0-20220523092638-71789aa827e3
-	github.com/bingoohuang/goup v0.0.0-20220406072954-87a41b91f087
-	github.com/bingoohuang/jj v0.0.0-20220513123231-e3092785c925
+	gitee.com/Trisia/gotlcp v1.3.4-0.20230331080947-1afaac9da406
+	github.com/AlecAivazis/survey/v2 v2.3.6
+	github.com/bingoohuang/gg v0.0.0-20230327022916-8702b50cb468
+	github.com/bingoohuang/goup v0.0.0-20230309025654-23cc5a3e1eb3
+	github.com/bingoohuang/jj v0.0.0-20230315013842-760a1ff6a8c0
 	github.com/chzyer/readline v1.5.1
-	github.com/emmansun/gmsm v0.15.7
-	github.com/fatih/color v1.10.0
-	github.com/jedib0t/go-pretty/v6 v6.4.3
-	go.uber.org/atomic v1.9.0
+	github.com/emmansun/gmsm v0.17.0
+	github.com/fatih/color v1.15.0
+	github.com/jedib0t/go-pretty/v6 v6.4.6
+	go.uber.org/atomic v1.10.0
 )
 
 require (
 	github.com/Pallinder/go-randomdata v1.2.0 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/bingoohuang/jiami v0.0.0-20221122064658-cdd6a948124e // indirect
+	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/cristalhq/base64 v0.1.2 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/mattn/go-isatty v0.0.15-0.20210929170527-d423e9c6c3bf // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b // indirect
 	github.com/minio/sio v0.3.0 // indirect
@@ -33,11 +35,13 @@ require (
 	github.com/schollz/pake/v3 v3.0.4 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/tscholl2/siec v0.0.0-20210707234609-9bdfc483d499 // indirect
+	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/vthiery/retry v0.1.0 // indirect
-	go.uber.org/multierr v1.8.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
-	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/sys v0.6.0 // indirect
+	golang.org/x/term v0.6.0 // indirect
+	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 )
