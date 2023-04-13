@@ -407,10 +407,12 @@ func doRequestInternal(req *Request, u *url.URL) {
 	cl, _ := strconv.ParseInt(clh, 10, 64)
 	ct := res.Header.Get("Content-Type")
 
-	if clh != "" && cl == 0 {
-		dl = "no"
-	} else if pathFileExists {
-		dl = "yes"
+	if dl == "" {
+		if clh != "" && cl == 0 {
+			dl = "no"
+		} else if pathFileExists {
+			dl = "yes"
+		}
 	}
 
 	if dl == "no" || dl == "n" {
