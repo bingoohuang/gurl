@@ -63,7 +63,7 @@ func main() {
 
 	start := time.Now()
 	for _, urlAddr := range urls {
-		run(urlAddr, nonFlagArgs, stdin)
+		run(len(urls), urlAddr, nonFlagArgs, stdin)
 	}
 
 	if HasPrintOption(printVerbose) {
@@ -90,7 +90,7 @@ func parseStdin() io.Reader {
 
 var uploadFilePb *ProgressBar
 
-func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
+func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) {
 	if reader != nil && isMethodDefaultGet() {
 		method = http.MethodPost
 	}
@@ -174,7 +174,7 @@ func run(urlAddr string, nonFlagArgs []string, reader io.Reader) {
 
 		start := time.Now()
 		err := doRequest(req, addrGen)
-		if HasPrintOption(printVerbose) {
+		if HasPrintOption(printVerbose) && totalUrls > 1 {
 			log.Printf("current request cost: %s", time.Since(start))
 		}
 		if err != nil {

@@ -37,7 +37,7 @@ func init() {
 	fla9.BoolVar(&enableTlcp, "tlcp", false, "")
 	fla9.BoolVar(&ver, "version,v", false, "")
 	fla9.BoolVar(&raw, "raw,r", false, "")
-	fla9.BoolVar(&ugly, "ugly", false, "")
+	fla9.BoolVar(&ugly, "ugly,U", false, "")
 	fla9.BoolVar(&countingItems, "count", false, "")
 	fla9.StringVar(&printV, "print,p", "A", "")
 	fla9.StringVar(&caFile, "ca", "", "")
@@ -49,10 +49,10 @@ func init() {
 	fla9.Var(limitRate, "L", "")
 	fla9.StringVar(&think, "think", "0", "")
 
-	flagEnvVar(&auth, "auth", "", "", `AUTH`)
+	flagEnvVar(&auth, "auth,A", "", "", `AUTH`)
 	flagEnvVar(&proxy, "proxy,P", "", "", `PROXY`)
 	fla9.IntVar(&benchN, "n", 1, "")
-	fla9.IntVar(&confirmNum, "confirm", 0, "")
+	fla9.IntVar(&confirmNum, "confirm,C", 0, "")
 	fla9.IntVar(&benchC, "c", 1, "")
 	fla9.StringVar(&body, "body,b", "", "")
 	fla9.StringVar(&dns, "dns", "", "")
@@ -75,8 +75,8 @@ const (
 )
 
 func parsePrintOption(s string) {
-	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose|printHTTPTrace)
-	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose|printHTTPTrace)
+	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose)
+	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose)
 	AdjustPrintOption(&s, 'H', printReqHeader)
 	AdjustPrintOption(&s, 'B', printReqBody)
 	AdjustPrintOption(&s, 'o', printRespOption)
