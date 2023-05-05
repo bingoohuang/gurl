@@ -36,9 +36,6 @@ func init() {
 	fla9.BoolVar(&disableKeepAlive, "k", false, "")
 	fla9.BoolVar(&enableTlcp, "tlcp", false, "")
 	fla9.BoolVar(&ver, "version,v", false, "")
-	fla9.BoolVar(&raw, "raw,r", false, "")
-	fla9.BoolVar(&ugly, "ugly,U", false, "")
-	fla9.BoolVar(&countingItems, "count", false, "")
 	fla9.StringVar(&printV, "print,p", "A", "")
 	fla9.StringVar(&caFile, "ca", "", "")
 	fla9.BoolVar(&form, "f", false, "")
@@ -70,6 +67,9 @@ const (
 	printVerbose
 	printHTTPTrace
 	printDebug
+	printUgly
+	printRaw
+	printCountingItems
 	quietFileUploadDownloadProgressing
 	freeInnerJSONTag
 )
@@ -90,6 +90,9 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 'q', quietFileUploadDownloadProgressing)
 	AdjustPrintOption(&s, 'f', freeInnerJSONTag)
 	AdjustPrintOption(&s, 'd', printDebug)
+	AdjustPrintOption(&s, 'u', printUgly)
+	AdjustPrintOption(&s, 'r', printRaw)
+	AdjustPrintOption(&s, 'C', printCountingItems)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)
@@ -115,9 +118,6 @@ flags:
   -method -m        HTTP method
   -k                Disable keepalive
   -version -v       Print Version Number
-  -raw -r           Print JSON Raw format other than pretty
-  -ugly             Print JSON In Ugly compact Format
-  -C                Print items counting in colored output
   -ca               Ca root certificate file to verify TLS
   -f                Submitting the data as a form
   -gzip             Gzip request body or not
@@ -137,6 +137,10 @@ flags:
                        s: http conn session v: Verbose t: HTTP trace
                        q: keep quiet for file uploading/downloading progress
                        f: expand inner JSON string as JSON object
+                       d: print debugging info
+                       u: print JSON In Ugly compact Format
+                       r: print JSON Raw format other than pretty
+                       C: print items counting in colored output
   -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
   -version,v        Show Version Number
   -tlcp             使用传输层密码协议(TLCP)，TLCP协议遵循《GB/T 38636-2020 信息安全技术 传输层密码协议》。

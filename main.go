@@ -41,7 +41,6 @@ func main() {
 		log.Fatalf("failed to parse args, %v", err)
 	}
 
-	pretty = !raw
 	nonFlagArgs := filter(fla9.Args())
 
 	if ver {
@@ -51,6 +50,11 @@ func main() {
 
 	parsePrintOption(printV)
 	freeInnerJSON = HasPrintOption(freeInnerJSONTag)
+	ugly = HasPrintOption(printUgly)
+	raw = HasPrintOption(printRaw)
+	countingItems = HasPrintOption(printCountingItems)
+	pretty = !raw
+
 	if !HasPrintOption(printReqBody) {
 		defaultSetting.DumpBody = false
 	}
