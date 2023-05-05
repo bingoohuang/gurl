@@ -53,6 +53,8 @@ func main() {
 	ugly = HasPrintOption(printUgly)
 	raw = HasPrintOption(printRaw)
 	countingItems = HasPrintOption(printCountingItems)
+	disableProxy = HasPrintOption(optionDisableProxy)
+
 	pretty = !raw
 
 	if !HasPrintOption(printReqBody) {
@@ -280,6 +282,10 @@ func readStdin(stdin io.Reader, stdinCh chan string) {
 func parseProxyURL(req *http.Request) *url.URL {
 	if proxy != "" {
 		return rest.FixURI(proxy, rest.WithFatalErr(true)).Data
+	}
+
+	if disableProxy {
+		return nil
 	}
 
 	p, err := http.ProxyFromEnvironment(req)

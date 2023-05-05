@@ -14,11 +14,12 @@ import (
 
 var (
 	disableKeepAlive, ver, form, pretty, enableTlcp bool
-	ugly, raw, freeInnerJSON, gzipOn, countingItems bool
+	ugly, raw, freeInnerJSON, gzipOn                bool
+	countingItems, disableProxy                     bool
 	auth, proxy, printV, body, think, method, dns   string
 	caFile, tlcpCerts                               string
 	uploadFiles, urls                               []string
-	printOption                                     uint16
+	printOption                                     uint32
 	benchN, benchC, confirmNum                      int
 	currentN                                        atomic.Int64
 	timeout                                         time.Duration
@@ -56,7 +57,7 @@ func init() {
 }
 
 const (
-	printReqHeader uint16 = 1 << iota
+	printReqHeader uint32 = 1 << iota
 	printReqURL
 	printReqBody
 	printRespOption
@@ -72,6 +73,7 @@ const (
 	printCountingItems
 	quietFileUploadDownloadProgressing
 	freeInnerJSONTag
+	optionDisableProxy
 )
 
 func parsePrintOption(s string) {
@@ -93,20 +95,21 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 'U', printUgly)
 	AdjustPrintOption(&s, 'r', printRaw)
 	AdjustPrintOption(&s, 'C', printCountingItems)
+	AdjustPrintOption(&s, 'N', optionDisableProxy)
 
 	if s != "" {
 		log.Fatalf("unknown print option: %s", s)
 	}
 }
 
-func AdjustPrintOption(s *string, r rune, flags uint16) {
+func AdjustPrintOption(s *string, r rune, flags uint32) {
 	if strings.ContainsRune(*s, r) {
 		printOption |= flags
 		*s = strings.ReplaceAll(*s, string(r), "")
 	}
 }
 
-func HasPrintOption(flags uint16) bool {
+func HasPrintOption(flags uint32) bool {
 	return printOption&flags == flags
 }
 
@@ -141,6 +144,7 @@ flags:
                        U: print JSON In Ugly compact Format
                        r: print JSON Raw format other than pretty
                        C: print items counting in colored output
+                       N: disable proxy
   -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
   -version,v        Show Version Number
   -tlcp             使用传输层密码协议(TLCP)，TLCP协议遵循《GB/T 38636-2020 信息安全技术 传输层密码协议》。
