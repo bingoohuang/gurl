@@ -66,7 +66,7 @@ func (b *Request) SetupTransport() {
 	// if b.transport is *http.Transport then set the settings.
 	if t, ok := trans.(*http.Transport); ok {
 		if t.TLSClientConfig == nil {
-			t.TLSClientConfig = b.Setting.TlsClientConfig
+			t.TLSClientConfig = b.Setting.TLSConfig
 		}
 		if t.Proxy == nil {
 			t.Proxy = b.Setting.Proxy
@@ -90,14 +90,14 @@ func (b *Request) SetupTransport() {
 
 // Settings .
 type Settings struct {
-	Transport       http.RoundTripper
-	TlsClientConfig *tls.Config
-	Proxy           func(*http.Request) (*url.URL, error)
-	UserAgent       string
-	ConnectTimeout  time.Duration
-	ShowDebug       bool
-	EnableCookie    bool
-	DumpBody        bool
+	Transport      http.RoundTripper
+	TLSConfig      *tls.Config
+	Proxy          func(*http.Request) (*url.URL, error)
+	UserAgent      string
+	ConnectTimeout time.Duration
+	ShowDebug      bool
+	EnableCookie   bool
+	DumpBody       bool
 }
 
 // Request provides more useful methods for requesting one url than http.Request.
@@ -169,7 +169,7 @@ func (b *Request) SetTimeout(connectTimeout time.Duration) *Request {
 
 // SetTLSClientConfig sets tls connection configurations if visiting https url.
 func (b *Request) SetTLSClientConfig(config *tls.Config) *Request {
-	b.Setting.TlsClientConfig = config
+	b.Setting.TLSConfig = config
 	return b
 }
 
@@ -323,8 +323,8 @@ func (b *Request) NextBody() (err error) {
 	return io.EOF
 }
 
-// JsonBody adds request raw body encoding by JSON.
-func (b *Request) JsonBody(obj interface{}) (*Request, error) {
+// JSONBody adds request raw body encoding by JSON.
+func (b *Request) JSONBody(obj interface{}) (*Request, error) {
 	if obj != nil {
 		buf := bytes.NewBuffer(nil)
 		enc := json.NewEncoder(buf)
@@ -346,7 +346,7 @@ func (b *Request) BodyString(s string) {
 	}
 }
 
-func appendUrl(url, append string) string {
+func appendURL(url, append string) string {
 	if append == "" {
 		return url
 	}
@@ -358,7 +358,7 @@ func appendUrl(url, append string) string {
 	return url + "?" + append
 }
 
-func (b *Request) BuildUrl() {
+func (b *Request) BuildURL() {
 	if queryBody := createParamBody(b.queries); queryBody != "" {
 		b.urlQuery = append(b.urlQuery, queryBody)
 	}
@@ -487,7 +487,7 @@ func (l LogRedirects) RoundTrip(req *http.Request) (resp *http.Response, err err
 func (b *Request) SendOut() (*http.Response, error) {
 	full := b.url
 	for _, q := range b.urlQuery {
-		full = appendUrl(full, q)
+		full = appendURL(full, q)
 	}
 
 	u, err := url.Parse(full)

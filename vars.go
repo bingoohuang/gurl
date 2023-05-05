@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -94,11 +95,15 @@ func (v *Valuer) Value(name, params, expr string) interface{} {
 }
 
 func GetVar(name string) string {
-	return ReadLine(
+	line, err := ReadLine(
 		WithPrompt(name+": "),
 		WithHistoryFile("/tmp/gurl-vars-"+name),
 		WithSuffix(";", `\G`),
 		WithTrimSuffix(true))
+	if errors.Is(err, io.EOF) {
+		os.Exit(0)
+	}
+	return line
 }
 
 type LineConfig struct {
@@ -134,7 +139,7 @@ func WithSuffix(suffix ...string) LineConfigFn {
 	}
 }
 
-func ReadLine(fns ...LineConfigFn) string {
+func ReadLine(fns ...LineConfigFn) (string, error) {
 	c := &LineConfig{
 		Prompt:      "> ",
 		HistoryFile: "/tmp/line",
@@ -159,7 +164,7 @@ func ReadLine(fns ...LineConfigFn) string {
 		line, err := rl.Readline()
 		if err != nil {
 			if errors.Is(err, readline.ErrInterrupt) {
-				os.Exit(0)
+				return "", io.EOF
 			}
 			break
 		}
@@ -184,5 +189,5 @@ func ReadLine(fns ...LineConfigFn) string {
 			line = strings.TrimSuffix(line, suffix)
 		}
 	}
-	return line
+	return line, nil
 }

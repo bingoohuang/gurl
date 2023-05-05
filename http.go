@@ -99,7 +99,7 @@ func getHTTP(method, url string, args []string, timeout time.Duration) (r *Reque
 		}
 	}
 	if !form && len(jsonmap) > 0 {
-		if _, err := r.JsonBody(jsonmap); err != nil {
+		if _, err := r.JSONBody(jsonmap); err != nil {
 			log.Fatal("fail to marshal JSON: ", err)
 		}
 	}

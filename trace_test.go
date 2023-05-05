@@ -17,8 +17,8 @@ func TestHttps(t *testing.T) {
 
 	client := &http.Client{Transport: tr}
 
-	seedUrl := "https://192.168.126.18:22443/"
-	resp, err := client.Get(seedUrl)
+	seedURL := "https://192.168.126.18:22443/"
+	resp, err := client.Get(seedURL)
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

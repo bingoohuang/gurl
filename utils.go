@@ -36,8 +36,7 @@ func surveyConfirm() {
 		log.Fatal(err)
 	}
 
-	switch answers.Confirm {
-	case "exit":
+	if answers.Confirm == "exit" {
 		os.Exit(0)
 	}
 }

@@ -127,7 +127,7 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 	req.Req = req.Req.WithContext(httptrace.WithClientTrace(req.Req.Context(), createClientTrace(req)))
 	setTimeoutRequest(req)
 
-	req.SetTLSClientConfig(createTlsConfig(strings.HasPrefix(realURL, "https://")))
+	req.SetTLSClientConfig(createTLSConfig(strings.HasPrefix(realURL, "https://")))
 	if proxyURL := parseProxyURL(req.Req); proxyURL != nil {
 		if HasPrintOption(printVerbose) {
 			log.Printf("Proxy URL: %s", proxyURL)
@@ -151,7 +151,7 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 	}
 
 	req.SetupTransport()
-	req.BuildUrl()
+	req.BuildURL()
 
 	if benchC > 1 { // AB bench
 		req.Debug(false)
@@ -293,7 +293,7 @@ func init() {
 	}
 }
 
-func createTlsConfig(isHTTPS bool) (tlsConfig *tls.Config) {
+func createTLSConfig(isHTTPS bool) (tlsConfig *tls.Config) {
 	if !isHTTPS {
 		return nil
 	}
@@ -415,9 +415,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 		}
 	}
 
-	if dl == "no" || dl == "n" {
-		// do not goto downloading
-	} else if (dl == "yes" || dl == "y") ||
+	if (dl == "yes" || dl == "y") ||
 		(cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml")) {
 		if method != "HEAD" {
 			if fn == "" {
@@ -425,11 +423,12 @@ func doRequestInternal(req *Request, u *url.URL) {
 			}
 
 			if !fnFromContentDisposition {
-				if ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json") {
+				switch {
+				case ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json"):
 					fn = ss.If(ugly, "", fn+".json")
-				} else if ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt") {
+				case ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt"):
 					fn = ss.If(ugly, "", fn+".txt")
-				} else if ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml") {
+				case ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml"):
 					fn = ss.If(ugly, "", fn+".xml")
 				}
 			}
