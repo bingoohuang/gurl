@@ -438,3 +438,4 @@ User-Agent: gurl/1.0.0
 ## resources
 
 1. [rs/curlie](https://github.com/rs/curlie) The power of curl, the ease of use of httpie.
+2. [Hurl](https://github.com/Orange-OpenSource/hurl) is a command line tool that runs HTTP requests defined in a simple plain text format.
