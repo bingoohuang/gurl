@@ -90,7 +90,7 @@ func parsePrintOption(s string) {
 	AdjustPrintOption(&s, 'q', quietFileUploadDownloadProgressing)
 	AdjustPrintOption(&s, 'f', freeInnerJSONTag)
 	AdjustPrintOption(&s, 'd', printDebug)
-	AdjustPrintOption(&s, 'u', printUgly)
+	AdjustPrintOption(&s, 'U', printUgly)
 	AdjustPrintOption(&s, 'r', printRaw)
 	AdjustPrintOption(&s, 'C', printCountingItems)
 
@@ -138,7 +138,7 @@ flags:
                        q: keep quiet for file uploading/downloading progress
                        f: expand inner JSON string as JSON object
                        d: print debugging info
-                       u: print JSON In Ugly compact Format
+                       U: print JSON In Ugly compact Format
                        r: print JSON Raw format other than pretty
                        C: print items counting in colored output
   -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
