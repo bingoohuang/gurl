@@ -25,7 +25,7 @@ var defaultSetting = Settings{
 	DumpBody:       true,
 }
 
-var keyReg = regexp.MustCompile(`^([\d\w_.\-]*)(==|:=|=|:|@)(.*)`)
+var keyReg = regexp.MustCompile(`^([\w_.\-]*)(==|:=|=|:|@)(.*)`)
 
 func getHTTP(method, url string, args []string, timeout time.Duration) (r *Request) {
 	if confirmNum > 0 {
@@ -49,7 +49,7 @@ func getHTTP(method, url string, args []string, timeout time.Duration) (r *Reque
 	// HTTP Headers Name:Value	Arbitrary HTTP header, e.g. X-API-Token:123
 	// URL parameters name==value	Appends the given name/value pair as a querystring parameter to the URL. The == separator is used.
 	// Data Fields field=value, field=@file.txt	Request data fields to be serialized as a JSON object (default), to be form-encoded (with --form, -f), or to be serialized as multipart/form-data (with --multipart)
-	// Raw JSON fields field:=json	Useful when sending JSON and one or more fields need to be a Boolean, Number, nested Object, or an Array, e.g., meals:='["ham","spam"]' or pies:=[1,2,3] (note the quotes)
+	// Raw JSON field:=json	Useful when sending JSON and one or more fields need to be a Boolean, Number, nested Object, or an Array, e.g., meals:='["ham","spam"]' or pies:=[1,2,3] (note the quotes)
 	// File upload fields field@/dir/file, field@file;type=mime	Only available with --form, -f and --multipart. For example screenshot@~/Pictures/img.png, or 'cv@cv.txt;type=text/markdown'. With --form, the presence of a file field results in a --multipart request
 	for i := range args {
 		arg := args[i]
