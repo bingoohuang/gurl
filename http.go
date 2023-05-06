@@ -88,7 +88,11 @@ func getHTTP(method, url string, args []string, timeout time.Duration) (r *Reque
 			if k == "Host" {
 				r.SetHost(val)
 			} else {
-				r.Header(k, val)
+				if strings.EqualFold(k, "Accept") && strings.EqualFold(val, "JSON") {
+					r.Header("Accept", "application/json")
+				} else {
+					r.Header(k, val)
+				}
 			}
 		case "@": // files
 			if k != "" {
