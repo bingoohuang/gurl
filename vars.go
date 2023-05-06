@@ -5,10 +5,8 @@ import (
 	"io"
 	"os"
 	"regexp"
-	"strings"
 
 	"github.com/bingoohuang/gg/pkg/iox"
-	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/bingoohuang/jj"
 	"github.com/chzyer/readline"
@@ -84,7 +82,7 @@ func (v *Valuer) Value(name, params, expr string) interface{} {
 	}
 
 	x := jj.DefaultGen.Value(pureName, params, expr)
-	if x == "" {
+	if x == expr {
 		x = GetVar(name)
 	}
 
@@ -98,7 +96,6 @@ func GetVar(name string) string {
 	line, err := ReadLine(
 		WithPrompt(name+": "),
 		WithHistoryFile("/tmp/gurl-vars-"+name),
-		WithSuffix(";", `\G`),
 		WithTrimSuffix(true))
 	if errors.Is(err, io.EOF) {
 		os.Exit(0)
@@ -133,12 +130,6 @@ func WithHistoryFile(historyFile string) LineConfigFn {
 	}
 }
 
-func WithSuffix(suffix ...string) LineConfigFn {
-	return func(c *LineConfig) {
-		c.Suffix = suffix
-	}
-}
-
 func ReadLine(fns ...LineConfigFn) (string, error) {
 	c := &LineConfig{
 		Prompt:      "> ",
@@ -159,35 +150,14 @@ func ReadLine(fns ...LineConfigFn) (string, error) {
 
 	defer iox.Close(rl)
 
-	var lines []string
-	for {
-		line, err := rl.Readline()
-		if err != nil {
-			if errors.Is(err, readline.ErrInterrupt) {
-				return "", io.EOF
-			}
-			break
+	line, err := rl.Readline()
+	if err != nil {
+		if errors.Is(err, readline.ErrInterrupt) {
+			return "", io.EOF
 		}
-		if line = strings.TrimSpace(line); len(line) == 0 {
-			continue
-		}
-
-		lines = append(lines, line)
-		if !ss.HasSuffix(line, c.Suffix...) {
-			rl.SetPrompt(">>> ")
-			continue
-		}
-
-		break
+		return "", err
 	}
+	return line, nil
 
-	line := strings.Join(lines, " ")
-	_ = rl.SaveHistory(line)
-
-	if c.TrimSuffix {
-		for _, suffix := range c.Suffix {
-			line = strings.TrimSuffix(line, suffix)
-		}
-	}
 	return line, nil
 }
