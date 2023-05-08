@@ -98,11 +98,15 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 
 	printRequestResponseForNonWindows(req, res, true)
 
+	total, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
+	if total == 0 && res.Header.Get("Transfer-Encoding") != "chunked" {
+		return
+	}
+
 	if !HasPrintOption(quietFileUploadDownloadProgressing) {
 		fmt.Printf("Downloading to %q\n", filename)
 	}
 
-	total, _ := strconv.ParseInt(res.Header.Get("Content-Length"), 10, 64)
 	pb := NewProgressBar(total).Start()
 	br := newProgressBarReader(res.Body, pb)
 

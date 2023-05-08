@@ -408,45 +408,8 @@ func doRequestInternal(req *Request, u *url.URL) {
 		log.Fatalf("execute error: %+v", err)
 	}
 
-	if fn == "" {
-		fn = parseFileNameFromContentDisposition(res.Header)
-	}
-	fnFromContentDisposition := fn != ""
-
-	clh := res.Header.Get("Content-Length")
-	cl, _ := strconv.ParseInt(clh, 10, 64)
-	ct := res.Header.Get("Content-Type")
-
-	if dl == "" {
-		if clh != "" && cl == 0 {
-			dl = "no"
-		} else if pathFileExists {
-			dl = "yes"
-		}
-	}
-
-	if (dl == "yes" || dl == "y") ||
-		(cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml")) {
-		if method != "HEAD" {
-			if fn == "" {
-				fn = pathFile
-			}
-
-			if !fnFromContentDisposition {
-				switch {
-				case ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json"):
-					fn = ss.If(ugly, "", fn+".json")
-				case ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt"):
-					fn = ss.If(ugly, "", fn+".txt")
-				case ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml"):
-					fn = ss.If(ugly, "", fn+".xml")
-				}
-			}
-			if fn != "" {
-				downloadFile(req, res, fn)
-				return
-			}
-		}
+	if processDownload(req, res, pathFileExists, dl, fn, pathFile) {
+		return
 	}
 
 	// 保证 response body 被 读取并且关闭
@@ -461,6 +424,55 @@ func doRequestInternal(req *Request, u *url.URL) {
 	if HasPrintOption(printHTTPTrace) {
 		req.stat.print(u.Scheme)
 	}
+}
+
+func processDownload(req *Request, res *http.Response, pathFileExists bool, dl string, fn string, pathFile string) bool {
+	if method == "HEAD" || dl == "no" || dl == "n" {
+		return false
+	}
+
+	if fn == "" {
+		fn = parseFileNameFromContentDisposition(res.Header)
+	}
+
+	fnFromContentDisposition := fn != ""
+
+	clh := res.Header.Get("Content-Length")
+	cl, _ := strconv.ParseInt(clh, 10, 64)
+
+	if clh != "" && cl == 0 {
+		return false
+	}
+
+	ct := res.Header.Get("Content-Type")
+
+	if dl == "" && pathFileExists {
+		dl = "yes"
+	}
+
+	if (dl == "yes" || dl == "y") ||
+		(cl > 2048 || fn != "" || !ss.ContainsFold(ct, "json", "text", "xml")) {
+		if fn == "" {
+			fn = pathFile
+		}
+
+		if !fnFromContentDisposition {
+			switch {
+			case ss.ContainsFold(ct, "json") && !ss.HasSuffix(fn, ".json"):
+				fn = ss.If(ugly, "", fn+".json")
+			case ss.ContainsFold(ct, "text") && !ss.HasSuffix(fn, ".txt"):
+				fn = ss.If(ugly, "", fn+".txt")
+			case ss.ContainsFold(ct, "xml") && !ss.HasSuffix(fn, ".xml"):
+				fn = ss.If(ugly, "", fn+".xml")
+			}
+		}
+		if fn != "" {
+			downloadFile(req, res, fn)
+			return true
+		}
+	}
+
+	return false
 }
 
 var hasStdoutDevice = func() bool {
