@@ -157,7 +157,6 @@ func ReadLine(fns ...LineConfigFn) (string, error) {
 		}
 		return "", err
 	}
-	return line, nil
 
 	return line, nil
 }

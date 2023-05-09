@@ -426,7 +426,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 	}
 }
 
-func processDownload(req *Request, res *http.Response, pathFileExists bool, dl string, fn string, pathFile string) bool {
+func processDownload(req *Request, res *http.Response, pathFileExists bool, dl, fn, pathFile string) bool {
 	if method == "HEAD" || dl == "no" || dl == "n" {
 		return false
 	}

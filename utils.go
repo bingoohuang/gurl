@@ -8,13 +8,7 @@ import (
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/bingoohuang/gg/pkg/fla9"
-	"github.com/bingoohuang/gg/pkg/ss"
 )
-
-func EnvBool(name string) bool {
-	value := os.Getenv(name)
-	return ss.AnyOfFold(value, "y", "yes", "1", "on", "true", "t")
-}
 
 func surveyConfirm() {
 	qs := []*survey.Question{{
