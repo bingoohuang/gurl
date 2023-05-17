@@ -647,12 +647,28 @@ func (b *Request) ToXML(v interface{}) error {
 
 type DialContextFn func(ctx context.Context, network, address string) (net.Conn, error)
 
+func getLocalAddr() *net.TCPAddr {
+	localIP := os.Getenv("LOCAL_IP")
+	if localIP == "" {
+		return nil
+	}
+
+	ipAddr, err := net.ResolveIPAddr("ip", localIP)
+	if err != nil {
+		log.Printf("resolving local IP %s: %v", localIP, err)
+		return nil
+	}
+
+	return &net.TCPAddr{IP: ipAddr.IP}
+}
+
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
 func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		dialer := &net.Dialer{
 			Timeout:   cTimeout,
 			KeepAlive: cTimeout,
+			LocalAddr: getLocalAddr(),
 		}
 
 		fn := dialer.DialContext

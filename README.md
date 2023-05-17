@@ -11,11 +11,13 @@ Inspired by [Httpie](https://github.com/jakubroztocil/httpie). Thanks to the aut
 
 Features:
 
-1. 2022年11月21日 支持深度美化 JSON 字符串（包括内嵌JSON字符串），例如  `gurl -b '{"xx":"{\"age\":100}"}' -pBf`
-2. 2022年09月14日 支持指定 DNS 解析服务器，例如  `gurl http://a.cn:5003/echo -dns 127.0.0.1`
-3. 2022年08月31日 文件下载时，支持断点续传
-4. 2022年05月24日 支持 从文件按行读取请求体，发送多次请求，例如 `gurl :9200/person1/_doc/@ksuid -b persons.txt:line -auth ZWxhc3RpYzoxcWF6WkFRIQ -n0 -pucb -ugly`
-5. 2022年03月09日 支持 ca
+1. 2023年05月17日 多网卡时，指定通过指定 IP，连接服务端， export LOCAL_IP=ip
+2. 2022年11月21日 支持深度美化 JSON 字符串（包括内嵌JSON字符串），例如  `gurl -b '{"xx":"{\"age\":100}"}' -pBf`
+3. 2022年09月14日 支持指定 DNS 解析服务器，例如  `gurl http://a.cn:5003/echo -dns 127.0.0.1`
+4. 2022年08月31日 文件下载时，支持断点续传
+5. 2022年05月24日 支持
+   从文件按行读取请求体，发送多次请求，例如 `gurl :9200/person1/_doc/@ksuid -b persons.txt:line -auth ZWxhc3RpYzoxcWF6WkFRIQ -n0 -pucb -ugly`
+6. 2022年03月09日 支持 ca
 
    ```sh
    $ httplive &
@@ -28,10 +30,10 @@ Features:
    }
    ```
 
-6. 2022年02月21日 支持 timeout 参数，e.g.  `-timeout=0`
-7. 2022年02月09日 支持多
+7. 2022年02月21日 支持 timeout 参数，e.g.  `-timeout=0`
+8. 2022年02月09日 支持多
    URL. `gurl 192.168.126.{16,18,182}:15002/kv -pb` `gurl 192.168.126.{16,18,182}:15002/kv -pb POST v==12345`
-8. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
+9. 2022年01月06日 支持查询值从文件中读取 `gurl -raw b.n:10014/query q==@query.sql`
 
 ```sh
 $ gurl PUT httpbin.org/put hello=world
@@ -189,7 +191,8 @@ which looks similar to the actual Request-Line that is sent:
 
 DELETE /todos/7 HTTP/1.1
 
-When the METHOD argument is omitted from the command, gurl defaults to either GET (if there is no request data) or POST (
+When the METHOD argument is omitted from the command, gurl defaults to either GET (if there is no request data) or
+POST (
 with request data).
 
 ## Request URL
@@ -232,13 +235,13 @@ They are key/value pairs specified after the URL. All have in common that they b
 sent and that their type is distinguished only by the separator used: `:`, `=`, `:=`, `@`, `=@`, and `:=@`. The ones
 with an `@` expect a file path as value.
 
-|       Item Type         |              Description           |
-| ------------------------| ------------------------------ |
-|HTTP Headers `Name:Value`|Arbitrary HTTP header, e.g. `X-API-Token:123`.|
-|Data Fields `field=value`|Request data fields to be serialized as a JSON object (default), or to be form-encoded (--form, -f).|
-|Form File Fields `field@/dir/file`|Only available with `-form`, `-f`. For example `screenshot@~/Pictures/img.png`. The presence of a file field results in a `multipart/form-data` request.|
-|Form Fields from file `field=@file.txt`|read content from file as value|
-|Raw JSON fields `field:=json`, `field:=@file.json`|Useful when sending JSON and one or more fields need to be a Boolean, Number, nested Object, or an Array, e.g., meals:='["ham","spam"]' or pies:=[1,2,3] (note the quotes).|
+| Item Type                                          | Description                                                                                                                                                                 |
+|----------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| HTTP Headers `Name:Value`                          | Arbitrary HTTP header, e.g. `X-API-Token:123`.                                                                                                                              |
+| Data Fields `field=value`                          | Request data fields to be serialized as a JSON object (default), or to be form-encoded (--form, -f).                                                                        |
+| Form File Fields `field@/dir/file`                 | Only available with `-form`, `-f`. For example `screenshot@~/Pictures/img.png`. The presence of a file field results in a `multipart/form-data` request.                    |
+| Form Fields from file `field=@file.txt`            | read content from file as value                                                                                                                                             |
+| Raw JSON fields `field:=json`, `field:=@file.json` | Useful when sending JSON and one or more fields need to be a Boolean, Number, nested Object, or an Array, e.g., meals:='["ham","spam"]' or pies:=[1,2,3] (note the quotes). |
 
 You can use `\` to escape characters that shouldn't be used as separators (or parts thereof). For instance, foo\==bar
 will become a data key/value pair (foo= and bar) instead of a URL parameter.
@@ -438,4 +441,5 @@ User-Agent: gurl/1.0.0
 ## resources
 
 1. [rs/curlie](https://github.com/rs/curlie) The power of curl, the ease of use of httpie.
-2. [Hurl](https://github.com/Orange-OpenSource/hurl) is a command line tool that runs HTTP requests defined in a simple plain text format.
+2. [Hurl](https://github.com/Orange-OpenSource/hurl) is a command line tool that runs HTTP requests defined in a simple
+   plain text format.
