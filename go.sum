@@ -7,8 +7,8 @@ github.com/Netflix/go-expect v0.0.0-20220104043353-73e0943537d2/go.mod h1:HBCaDe
 github.com/Pallinder/go-randomdata v1.2.0 h1:DZ41wBchNRb/0GfsePLiSwb0PHZmT67XY00lCDlaYPg=
 github.com/Pallinder/go-randomdata v1.2.0/go.mod h1:yHmJgulpD2Nfrm0cR9tI/+oAgRqCQQixsA8HyRZfV9Y=
 github.com/bingoohuang/easyjson v0.0.0-20211118132814-5606aa48c508 h1:Ew6KVZFgaX/C93v95gc1spL8H+4pis70mLSXFlvyk0E=
-github.com/bingoohuang/gg v0.0.0-20230327022916-8702b50cb468 h1:DtPFwkHQ8n3mffGuiwn5Fl1l2pcDIwZqAZjeX2uABYk=
-github.com/bingoohuang/gg v0.0.0-20230327022916-8702b50cb468/go.mod h1:FlxNmqdey1AN7uhk11CbMU6RYnppyidLqF8u5KL5IEk=
+github.com/bingoohuang/gg v0.0.0-20230518070203-2706bd3318a0 h1:PLTEVoplJUp7Ays88j4hI30+h/sv6c95n/Vl5Rhk3jc=
+github.com/bingoohuang/gg v0.0.0-20230518070203-2706bd3318a0/go.mod h1:FlxNmqdey1AN7uhk11CbMU6RYnppyidLqF8u5KL5IEk=
 github.com/bingoohuang/goup v0.0.0-20230309025654-23cc5a3e1eb3 h1:XzpV+VAKKYydLyv7xzS+dbttPpz6tGsDIm2fvqtdhls=
 github.com/bingoohuang/goup v0.0.0-20230309025654-23cc5a3e1eb3/go.mod h1:OUSNrecJEgmNR+/asBlf00L0zFnGhSPQ/WoyIdp/Q2k=
 github.com/bingoohuang/jiami v0.0.0-20221122064658-cdd6a948124e h1:XGRag6rDTJpp0GtdXTxZNkbiqGtvmE9XNQoa1KA6M3o=

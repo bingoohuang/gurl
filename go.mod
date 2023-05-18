@@ -5,7 +5,7 @@ go 1.20
 require (
 	gitee.com/Trisia/gotlcp v1.3.4-0.20230331080947-1afaac9da406
 	github.com/AlecAivazis/survey/v2 v2.3.6
-	github.com/bingoohuang/gg v0.0.0-20230327022916-8702b50cb468
+	github.com/bingoohuang/gg v0.0.0-20230518070203-2706bd3318a0
 	github.com/bingoohuang/goup v0.0.0-20230309025654-23cc5a3e1eb3
 	github.com/bingoohuang/jj v0.0.0-20230315013842-760a1ff6a8c0
 	github.com/chzyer/readline v1.5.1
