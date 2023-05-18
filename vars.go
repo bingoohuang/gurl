@@ -7,13 +7,14 @@ import (
 	"regexp"
 
 	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/gg/pkg/osx/env"
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/bingoohuang/jj"
 	"github.com/chzyer/readline"
 )
 
 var (
-	valuer = NewValuer()
+	valuer = NewValuer(env.Bool("INTERACTIVE", true))
 	gen    = jj.NewGenContext(valuer)
 )
 
@@ -56,12 +57,14 @@ func eatBlanks(s string) (blanks, left string) {
 type Valuer struct {
 	Map map[string]interface{}
 	*jj.GenContext
+	InteractiveMode bool
 }
 
-func NewValuer() *Valuer {
+func NewValuer(interactiveMode bool) *Valuer {
 	return &Valuer{
-		Map:        make(map[string]interface{}),
-		GenContext: jj.NewGen(),
+		Map:             make(map[string]interface{}),
+		GenContext:      jj.NewGen(),
+		InteractiveMode: interactiveMode,
 	}
 }
 
@@ -82,7 +85,7 @@ func (v *Valuer) Value(name, params, expr string) interface{} {
 	}
 
 	x := jj.DefaultGen.Value(pureName, params, expr)
-	if x == expr {
+	if x == expr && v.InteractiveMode { // 没有解析成功，进入命令行输入模式
 		x = GetVar(name)
 	}
 
