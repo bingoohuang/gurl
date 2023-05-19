@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"crypto/md5"
+	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"log"
 	"mime"
@@ -29,6 +34,8 @@ import (
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/gg/pkg/v"
 	"github.com/bingoohuang/goup"
+	"github.com/emmansun/gmsm/sm3"
+	"github.com/zeebo/blake3"
 )
 
 const DryRequestURL = `http://dry.run.url`
@@ -219,6 +226,32 @@ func setTimeoutRequest(req *Request) {
 
 func setBody(req *Request) {
 	if len(uploadFiles) > 0 {
+		var hasher hash.Hash
+		hashAlgo := strings.ToLower(os.Getenv("BEEFS_HASH"))
+		switch hashAlgo {
+		case "blake3":
+			hasher = blake3.New()
+		case "sm3":
+			hasher = sm3.New()
+		case "sha256":
+			hasher = sha256.New()
+		case "sha512":
+			hasher = sha512.New()
+		case "md5":
+			hasher = md5.New()
+		case "":
+		default:
+			fmt.Printf("unsupported hash algo %s\n", hashAlgo)
+		}
+
+		if hasher != nil {
+			hashValue, err := HashFile(uploadFiles[0], hasher)
+			if err != nil {
+				log.Fatal(err)
+			}
+			req.Header("Beefs-Hash", hashAlgo+":"+base64.RawURLEncoding.EncodeToString(hashValue))
+
+		}
 		var fileReaders []io.ReadCloser
 		for _, uploadFile := range uploadFiles {
 			fileReader, err := goup.CreateChunkReader(uploadFile, 0, 0, 0)
@@ -230,6 +263,7 @@ func setBody(req *Request) {
 
 		uploadFilePb = NewProgressBar(0)
 		fields := map[string]interface{}{}
+
 		if len(fileReaders) == 1 {
 			fields["file"] = fileReaders[0]
 		} else {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"hash"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -9,6 +11,49 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/bingoohuang/gg/pkg/fla9"
 )
+
+func HashFile(f string, h hash.Hash) ([]byte, error) {
+	// 打开文件
+	file, err := os.Open(f)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	if _, err := io.Copy(h, file); err != nil {
+		return nil, err
+	}
+
+	return h.Sum(nil), nil
+}
+
+// TeeReadeCloser returns a ReadCloser that writes to w what it reads from r.
+// All reads from r performed through it are matched with
+// corresponding writes to w. There is no internal buffering -
+// the write must complete before the read completes.
+// Any error encountered while writing is reported as a read error.
+func TeeReadeCloser(r io.ReadCloser, w io.Writer) io.ReadCloser {
+	return &teeReadeCloser{r: r, w: w}
+}
+
+type teeReadeCloser struct {
+	r io.ReadCloser
+	w io.Writer
+}
+
+func (t *teeReadeCloser) Read(p []byte) (n int, err error) {
+	n, err = t.r.Read(p)
+	if n > 0 {
+		if n, err := t.w.Write(p[:n]); err != nil {
+			return n, err
+		}
+	}
+	return
+}
+
+func (t *teeReadeCloser) Close() error {
+	return t.r.Close()
+}
 
 func surveyConfirm() {
 	qs := []*survey.Question{{

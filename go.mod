@@ -12,6 +12,7 @@ require (
 	github.com/emmansun/gmsm v0.17.0
 	github.com/fatih/color v1.15.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
+	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/atomic v1.10.0
 )
 
@@ -22,6 +23,7 @@ require (
 	github.com/cristalhq/base64 v0.1.2 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.17 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
