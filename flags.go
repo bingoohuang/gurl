@@ -166,6 +166,7 @@ Envs:
   2. PROXY:       Proxy host and port， like: http://proxy.cn, https://user:pass@proxy.cn
   3. AUTH:        HTTP authentication username:password, USER[:PASS]
   4. TLS_VERIFY:  Enable client verifies the server's certificate chain and host name.
+  5. LOCAL_IP:    Specify the local IP address to connect to server.
 more help information please refer to https://github.com/bingoohuang/gurl
 `
 
