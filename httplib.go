@@ -663,7 +663,7 @@ func getLocalAddr() *net.TCPAddr {
 	return &net.TCPAddr{IP: ipAddr.IP}
 }
 
-var enableTLCP = env.Bool("TLCP", true)
+var enableTLCP = env.Bool("TLCP", false)
 
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
 func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn {
