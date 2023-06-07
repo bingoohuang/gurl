@@ -24,6 +24,7 @@ import (
 	"gitee.com/Trisia/gotlcp/tlcp"
 	"github.com/bingoohuang/gg/pkg/filex"
 	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/gg/pkg/osx/env"
 	"github.com/bingoohuang/goup/shapeio"
 	"github.com/bingoohuang/jj"
 )
@@ -662,6 +663,8 @@ func getLocalAddr() *net.TCPAddr {
 	return &net.TCPAddr{IP: ipAddr.IP}
 }
 
+var enableTLCP = env.Bool("TLCP", true)
+
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
 func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
@@ -672,7 +675,7 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn 
 		}
 
 		fn := dialer.DialContext
-		if enableTlcp {
+		if enableTLCP {
 			fn = createTlcpDialer(dialer, caFile, tlcpCerts)
 		} else if tlsConfig != nil {
 			tlsDialer := &tls.Dialer{

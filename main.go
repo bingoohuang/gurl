@@ -35,6 +35,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/v"
 	"github.com/bingoohuang/goup"
 	"github.com/emmansun/gmsm/sm3"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/zeebo/blake3"
 )
 
@@ -53,6 +54,14 @@ func main() {
 	if ver {
 		fmt.Println(v.Version())
 		os.Exit(2)
+	}
+
+	if err := createDemoEnvFile(); err != nil {
+		if errors.Is(err, io.EOF) {
+			return
+		}
+
+		log.Fatalf("create demo env file: %v", err)
 	}
 
 	parsePrintOption(printV)

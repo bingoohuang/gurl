@@ -1,32 +1,37 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/filex"
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/man"
 	"go.uber.org/atomic"
 )
 
 var (
-	disableKeepAlive, ver, form, pretty, enableTlcp bool
-	ugly, raw, freeInnerJSON, gzipOn                bool
-	countingItems, disableProxy                     bool
-	auth, proxy, printV, body, think, method, dns   string
-	caFile, tlcpCerts                               string
-	uploadFiles, urls                               []string
-	printOption                                     uint32
-	benchN, benchC, confirmNum                      int
-	currentN                                        atomic.Int64
-	timeout                                         time.Duration
-	limitRate                                       = NewRateLimitFlag()
-	download                                        = &fla9.StringBool{}
+	disableKeepAlive, ver, form, pretty           bool
+	ugly, raw, freeInnerJSON, gzipOn              bool
+	countingItems, disableProxy                   bool
+	auth, proxy, printV, body, think, method, dns string
+	caFile, tlcpCerts                             string
+	uploadFiles, urls                             []string
+	printOption                                   uint32
+	benchN, benchC, confirmNum                    int
+	currentN                                      atomic.Int64
+	timeout                                       time.Duration
+	limitRate                                     = NewRateLimitFlag()
+	download                                      = &fla9.StringBool{}
 
 	jsonmap = map[string]interface{}{}
+
+	createDemoEnv bool
 )
 
 func init() {
@@ -34,8 +39,8 @@ func init() {
 	fla9.StringVar(&method, "method,m", "GET", "")
 	fla9.StringVar(&tlcpCerts, "tlcp-certs", "", "format: sign.cert.pem,sign.key.pem,enc.cert.pem,enc.key.pem")
 
+	fla9.BoolVar(&createDemoEnv, "demo.env", false, "")
 	fla9.BoolVar(&disableKeepAlive, "k", false, "")
-	fla9.BoolVar(&enableTlcp, "tlcp", false, "")
 	fla9.BoolVar(&ver, "version,v", false, "")
 	fla9.StringVar(&printV, "print,p", "A", "")
 	fla9.StringVar(&caFile, "ca", "", "")
@@ -147,7 +152,7 @@ flags:
                        N: disable proxy
   -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
   -version,v        Show Version Number
-  -tlcp             使用传输层密码协议(TLCP)，TLCP协议遵循《GB/T 38636-2020 信息安全技术 传输层密码协议》。
+  -demo.env         Create a demo .env file
 METHOD:
   gurl defaults to either GET (if there is no request data) or POST (with request data).
 URL:
@@ -167,8 +172,30 @@ Envs:
   3. AUTH:        HTTP authentication username:password, USER[:PASS]
   4. TLS_VERIFY:  Enable client verifies the server's certificate chain and host name.
   5. LOCAL_IP:    Specify the local IP address to connect to server.
+  6. TLCP:        使用传输层密码协议(TLCP)，TLCP协议遵循《GB/T 38636-2020 信息安全技术 传输层密码协议》。
 more help information please refer to https://github.com/bingoohuang/gurl
 `
+
+//go:embed demo.env
+var demoEnv []byte
+
+func createDemoEnvFile() error {
+	if !createDemoEnv {
+		return nil
+	}
+
+	if filex.Exists(".env") {
+		return fmt.Errorf(".env file already exists")
+	}
+
+	if err := os.WriteFile(".env", demoEnv, 0o644); err != nil {
+		return fmt.Errorf("write .env file: %w", err)
+	}
+
+	log.Printf("a demo .env file has been created!")
+
+	return io.EOF
+}
 
 func usage() {
 	fmt.Print(help)
