@@ -176,10 +176,12 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 	req.BuildURL()
 
 	if benchC > 1 { // AB bench
-		req.Debug(false)
+		req.DumpRequest(false)
 		RunBench(req, thinkerFn)
 		return
 	}
+
+	req.DumpRequest(HasAnyPrintOptions(printReqHeader, printReqBody))
 
 	for i := 0; benchN == 0 || i < benchN; i++ {
 		if i > 0 {
@@ -565,7 +567,7 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 			}
 		}
 
-		if HasPrintOption(printRespHeader) {
+		if HasPrintOption(printRspHeader) {
 			fmt.Println(Color(res.Proto, Magenta), Color(res.Status, Green))
 			for k, val := range res.Header {
 				fmt.Printf("%s: %s\n", Color(k, Gray), Color(strings.Join(val, " "), Cyan))
@@ -580,18 +582,18 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 			}
 
 			fmt.Println()
-		} else if HasPrintOption(printRespCode) {
+		} else if HasPrintOption(printRspCode) {
 			fmt.Println(Color(res.Status, Green))
 		}
 
-		if !download && HasPrintOption(printRespBody) {
+		if !download && HasPrintOption(printRspBody) {
 			fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON, influxDB))
 		}
 	}
 }
 
 func printTLSConnectState(state tls.ConnectionState) {
-	if !HasPrintOption(printRespOption) {
+	if !HasPrintOption(printRspOption) {
 		return
 	}
 
@@ -637,21 +639,21 @@ func printRequestResponseForWindows(req *Request, res *http.Response) {
 		fmt.Println()
 	}
 
-	if !req.DryRequest && HasPrintOption(printRespOption) {
+	if !req.DryRequest && HasPrintOption(printRspOption) {
 		if res.TLS != nil {
 			fmt.Printf("option TLS.DidResume: %t\n", res.TLS.DidResume)
 			fmt.Println()
 		}
 	}
 
-	if !req.DryRequest && HasPrintOption(printRespHeader) {
+	if !req.DryRequest && HasPrintOption(printRspHeader) {
 		fmt.Println(res.Proto, res.Status)
 		for k, val := range res.Header {
 			fmt.Println(k, ":", strings.Join(val, " "))
 		}
 		fmt.Println()
 	}
-	if !req.DryRequest && HasPrintOption(printRespBody) {
+	if !req.DryRequest && HasPrintOption(printRspBody) {
 		fmt.Println(formatResponseBody(req, pretty, ugly, freeInnerJSON, false))
 	}
 }

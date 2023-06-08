@@ -19,7 +19,7 @@ import (
 )
 
 var defaultSetting = Settings{
-	ShowDebug:      true,
+	DumpRequest:    true,
 	UserAgent:      "gurl/" + v.AppVersion,
 	ConnectTimeout: 60 * time.Second,
 	DumpBody:       true,

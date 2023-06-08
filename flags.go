@@ -12,6 +12,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/filex"
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/man"
+	"github.com/samber/lo"
 	"go.uber.org/atomic"
 )
 
@@ -42,7 +43,7 @@ func init() {
 	fla9.BoolVar(&createDemoEnv, "demo.env", false, "")
 	fla9.BoolVar(&disableKeepAlive, "k", false, "")
 	fla9.BoolVar(&ver, "version,v", false, "")
-	fla9.StringVar(&printV, "print,p", "A", "")
+	fla9.StringVar(&printV, "print,p", "b", "")
 	fla9.StringVar(&caFile, "ca", "", "")
 	fla9.BoolVar(&form, "f", false, "")
 	fla9.BoolVar(&gzipOn, "gzip", false, "")
@@ -65,10 +66,10 @@ const (
 	printReqHeader uint32 = 1 << iota
 	printReqURL
 	printReqBody
-	printRespOption
-	printRespHeader
-	printRespCode
-	printRespBody
+	printRspOption
+	printRspHeader
+	printRspCode
+	printRspBody
 	printReqSession
 	printVerbose
 	printHTTPTrace
@@ -82,17 +83,17 @@ const (
 )
 
 func parsePrintOption(s string) {
-	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose)
-	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRespHeader|printRespBody|printReqSession|printVerbose)
+	AdjustPrintOption(&s, 'A', printReqHeader|printReqBody|printRspHeader|printRspBody|printReqSession|printVerbose)
+	AdjustPrintOption(&s, 'a', printReqHeader|printReqBody|printRspHeader|printRspBody|printReqSession|printVerbose)
 	AdjustPrintOption(&s, 'H', printReqHeader)
 	AdjustPrintOption(&s, 'B', printReqBody)
-	AdjustPrintOption(&s, 'o', printRespOption)
-	AdjustPrintOption(&s, 'h', printRespHeader)
-	AdjustPrintOption(&s, 'b', printRespBody)
+	AdjustPrintOption(&s, 'o', printRspOption)
+	AdjustPrintOption(&s, 'h', printRspHeader)
+	AdjustPrintOption(&s, 'b', printRspBody)
 	AdjustPrintOption(&s, 's', printReqSession)
 	AdjustPrintOption(&s, 'v', printVerbose)
 	AdjustPrintOption(&s, 't', printHTTPTrace)
-	AdjustPrintOption(&s, 'c', printRespCode)
+	AdjustPrintOption(&s, 'c', printRspCode)
 	AdjustPrintOption(&s, 'u', printReqURL)
 	AdjustPrintOption(&s, 'q', quietFileUploadDownloadProgressing)
 	AdjustPrintOption(&s, 'f', freeInnerJSONTag)
@@ -112,6 +113,11 @@ func AdjustPrintOption(s *string, r rune, flags uint32) {
 		printOption |= flags
 		*s = strings.ReplaceAll(*s, string(r), "")
 	}
+}
+
+func HasAnyPrintOptions(flags ...uint32) bool {
+	_, found := lo.Find(flags, HasPrintOption)
+	return found
 }
 
 func HasPrintOption(flags uint32) bool {

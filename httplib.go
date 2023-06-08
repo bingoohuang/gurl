@@ -96,7 +96,7 @@ type Settings struct {
 	Proxy          func(*http.Request) (*url.URL, error)
 	UserAgent      string
 	ConnectTimeout time.Duration
-	ShowDebug      bool
+	DumpRequest    bool
 	EnableCookie   bool
 	DumpBody       bool
 }
@@ -150,9 +150,9 @@ func (b *Request) SetUserAgent(useragent string) *Request {
 	return b
 }
 
-// Debug sets show debug or not when executing request.
-func (b *Request) Debug(isdebug bool) *Request {
-	b.Setting.ShowDebug = isdebug
+// DumpRequest sets show debug or not when executing request.
+func (b *Request) DumpRequest(dumpRequest bool) *Request {
+	b.Setting.DumpRequest = dumpRequest
 	return b
 }
 
@@ -523,11 +523,15 @@ func (b *Request) SendOut() (*http.Response, error) {
 	if b.Req.Body != nil && gzipOn {
 		b.Req.ContentLength = -1
 		b.Req.Header.Del("Content-Length")
-		b.Header("Transfer-Encoding", "chunked")
+		b.Req.TransferEncoding = []string{"chunked"}
 		b.Header("Content-Encoding", "gzip")
 	}
 
-	if b.Setting.ShowDebug {
+	if b.Setting.DumpRequest {
+		if useChunkedInRequest {
+			b.Req.TransferEncoding = []string{"chunked"}
+			b.Req.ContentLength = -1
+		}
 		dump, err := httputil.DumpRequest(b.Req, b.Setting.DumpBody)
 		if err != nil {
 			println(err.Error())

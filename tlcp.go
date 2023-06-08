@@ -74,7 +74,7 @@ func createTlcpDialer(dialer *net.Dialer, caFile, tlcpCerts string) DialContextF
 }
 
 func printTLCPConnectState(state tlcp.ConnectionState) {
-	if !HasPrintOption(printRespOption) {
+	if !HasPrintOption(printRspOption) {
 		return
 	}
 

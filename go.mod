@@ -13,6 +13,7 @@ require (
 	github.com/fatih/color v1.15.0
 	github.com/jedib0t/go-pretty/v6 v6.4.6
 	github.com/joho/godotenv v1.5.1
+	github.com/samber/lo v1.38.1
 	github.com/zeebo/blake3 v0.2.3
 	go.uber.org/atomic v1.10.0
 )
@@ -43,6 +44,7 @@ require (
 	github.com/vthiery/retry v0.1.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
