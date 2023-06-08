@@ -290,6 +290,12 @@ func (b *Request) BodyFileLines(t string) bool {
 func (b *Request) Body(data interface{}) *Request {
 	switch t := data.(type) {
 	case string:
+		if t == ":rand.json" {
+			randJSON := jj.Rand()
+			b.BodyAndSize(io.NopCloser(bytes.NewBuffer(randJSON)), int64(len(randJSON)))
+			return b
+		}
+
 		filename := t
 		if at := strings.HasPrefix(t, "@"); at {
 			filename = t[1:]
@@ -485,6 +491,8 @@ func (l LogRedirects) RoundTrip(req *http.Request) (resp *http.Response, err err
 	return
 }
 
+var useChunkedInRequest = env.Bool("CHUNKED", false)
+
 func (b *Request) SendOut() (*http.Response, error) {
 	full := b.url
 	for _, q := range b.urlQuery {
@@ -519,14 +527,6 @@ func (b *Request) SendOut() (*http.Response, error) {
 		b.Header("Content-Encoding", "gzip")
 	}
 
-	// -proxy http://username:password@127.0.0.1:7777 可以干活，不需要下面的独立设置
-	/*
-		if b.Setting.Proxy != nil { // adding proxy authentication
-			basicAuth := "Basic " + base64.StdEncoding.EncodeToString([]byte(("username:password")))
-			b.Req.Header.Add("Proxy-Authorization", basicAuth)
-		}
-	*/
-
 	if b.Setting.ShowDebug {
 		dump, err := httputil.DumpRequest(b.Req, b.Setting.DumpBody)
 		if err != nil {
@@ -547,9 +547,11 @@ func (b *Request) SendOut() (*http.Response, error) {
 		return &http.Response{}, nil
 	}
 
-	req := b.Req
+	if useChunkedInRequest {
+		b.Req.ContentLength = -1
+	}
 
-	return client.Do(req)
+	return client.Do(b.Req)
 }
 
 func NewGzipReader(source io.Reader) *io.PipeReader {

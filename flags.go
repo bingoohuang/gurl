@@ -138,7 +138,10 @@ flags:
   -proxy=PROXY_URL  Proxy host and port, PROXY_URL
   -n=1 -c=1         Number of requests and concurrency to run
   -confirm=0        Should confirm after number of requests 
-  -body,b           Send RAW data as body, or @filename to load body from the file's content
+  -body,b           Send RAW data as body 
+				    @persons.tx to load body from the file's content
+					@persons.txt:line 从文件按行读取请求体，发送多次请求
+				    :rand.json to create rand JSON as body
   -print -p         String specifying what the output should contain, default will print all information
                        H: request headers  B: request body,  u: request URL
                        h: response headers  b: response body, c: status code
@@ -173,6 +176,7 @@ Envs:
   4. TLS_VERIFY:  Enable client verifies the server's certificate chain and host name.
   5. LOCAL_IP:    Specify the local IP address to connect to server.
   6. TLCP:        使用传输层密码协议(TLCP)，TLCP协议遵循《GB/T 38636-2020 信息安全技术 传输层密码协议》。
+  7. CHUNKED:     开启请求中的块传输
 more help information please refer to https://github.com/bingoohuang/gurl
 `
 
