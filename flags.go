@@ -21,7 +21,6 @@ var (
 	ugly, raw, freeInnerJSON, gzipOn              bool
 	countingItems, disableProxy                   bool
 	auth, proxy, printV, body, think, method, dns string
-	caFile, tlcpCerts                             string
 	uploadFiles, urls                             []string
 	printOption                                   uint32
 	benchN, benchC, confirmNum                    int
@@ -38,28 +37,26 @@ var (
 func init() {
 	flagEnv(&urls, "url,u", "", "", "URL")
 	fla9.StringVar(&method, "method,m", "GET", "")
-	fla9.StringVar(&tlcpCerts, "tlcp-certs", "", "format: sign.cert.pem,sign.key.pem,enc.cert.pem,enc.key.pem")
 
 	fla9.BoolVar(&createDemoEnv, "demo.env", false, "")
 	fla9.BoolVar(&disableKeepAlive, "k", false, "")
 	fla9.BoolVar(&ver, "version,v", false, "")
 	fla9.StringVar(&printV, "print,p", "b", "")
-	fla9.StringVar(&caFile, "ca", "", "")
 	fla9.BoolVar(&form, "f", false, "")
 	fla9.BoolVar(&gzipOn, "gzip", false, "")
 	fla9.Var(download, "d", "")
 	fla9.DurationVar(&timeout, "t", time.Minute, "")
 	fla9.StringsVar(&uploadFiles, "F", nil, "")
 	fla9.Var(limitRate, "L", "")
-	fla9.StringVar(&think, "think", "0", "")
+	flagEnvVar(&think, "think", "0", "", "THINK")
 
 	flagEnvVar(&auth, "auth,A", "", "", `AUTH`)
 	flagEnvVar(&proxy, "proxy,P", "", "", `PROXY`)
 	fla9.IntVar(&benchN, "n", 1, "")
 	fla9.IntVar(&confirmNum, "confirm,C", 0, "")
 	fla9.IntVar(&benchC, "c", 1, "")
-	fla9.StringVar(&body, "body,b", "", "")
-	fla9.StringVar(&dns, "dns", "", "")
+	flagEnvVar(&body, "body,b", "", "", "BODY")
+	flagEnvVar(&dns, "dns", "", "", "DNS")
 }
 
 const (
@@ -132,7 +129,6 @@ flags:
   -method -m        HTTP method
   -k                Disable keepalive
   -version -v       Print Version Number
-  -ca               Ca root certificate file to verify TLS
   -f                Submitting the data as a form
   -gzip             Gzip request body or not
   -d                Download the url content as file, yes/n

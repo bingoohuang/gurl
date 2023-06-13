@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"os"
 	"strings"
 
 	"gitee.com/Trisia/gotlcp/tlcp"
@@ -19,7 +20,9 @@ func init() {
 	}
 }
 
-func createTlcpDialer(dialer *net.Dialer, caFile, tlcpCerts string) DialContextFn {
+var tlcpCerts = os.Getenv("TLCP_CERTS")
+
+func createTlcpDialer(dialer *net.Dialer, caFile string) DialContextFn {
 	c := &tlcp.Config{
 		InsecureSkipVerify: !env.Bool(`TLS_VERIFY`, false),
 		SessionCache:       tlcpSessionCache,

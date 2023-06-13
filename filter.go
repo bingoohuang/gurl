@@ -2,6 +2,7 @@ package main
 
 import (
 	"net"
+	"os"
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/rest"
@@ -12,6 +13,8 @@ var (
 	methodList            = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 	methodSpecifiedInArgs bool
 )
+
+var caFile = os.Getenv("CERT")
 
 func filter(args []string) []string {
 	var filteredArgs []string
