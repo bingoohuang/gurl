@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"time"
@@ -76,6 +78,13 @@ func parseContentRange(contentRangeHead string) (*contentRange, error) {
 }
 
 func downloadFile(req *Request, res *http.Response, filename string) {
+	if ext := filepath.Ext(filename); ext == "" {
+		contentType := res.Header.Get("Content-Type")
+		if exts, _ := mime.ExtensionsByType(contentType); len(exts) > 0 {
+			filename += exts[0]
+		}
+	}
+
 	fd, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE, 0o666)
 	if err != nil {
 		log.Fatalf("create download file %q failed: %v", filename, err)
