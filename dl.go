@@ -23,7 +23,7 @@ var (
 	// Content-Range: <unit> <range-start>-<range-end>/*
 	contentRangeRegexp1 = regexp.MustCompile(`bytes ([0-9]+)-([0-9]+)/([0-9]+|\\*)`)
 	// Content-Range: <unit> */<size>
-	contentRangeRegexp2 = regexp.MustCompile(`bytes \\*|([0-9]+)`)
+	contentRangeRegexp2 = regexp.MustCompile(`bytes \\*/([0-9]+)`)
 
 	// ErrWrongCodeForByteRange is returned if the client sends a request
 	// with a Range header but the server returns a 2xx or 3xx code other
@@ -38,7 +38,6 @@ type contentRange struct {
 }
 
 func parseContentRange(contentRangeHead string) (*contentRange, error) {
-	// contentRangeHead := resp.Header.Get("Content-Range")
 	if contentRangeHead == "" {
 		return nil, errors.New("no Content-Range header found in HTTP response")
 	}
