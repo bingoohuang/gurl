@@ -18,7 +18,12 @@ import (
 )
 
 var (
-	contentRangeRegexp = regexp.MustCompile(`bytes ([0-9]+)-([0-9]+)/([0-9]+|\\*)`)
+	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range
+	// Content-Range: <unit> <range-start>-<range-end>/<size>
+	// Content-Range: <unit> <range-start>-<range-end>/*
+	contentRangeRegexp1 = regexp.MustCompile(`bytes ([0-9]+)-([0-9]+)/([0-9]+|\\*)`)
+	// Content-Range: <unit> */<size>
+	contentRangeRegexp2 = regexp.MustCompile(`bytes \\*|([0-9]+)`)
 
 	// ErrWrongCodeForByteRange is returned if the client sends a request
 	// with a Range header but the server returns a 2xx or 3xx code other
@@ -38,9 +43,20 @@ func parseContentRange(contentRangeHead string) (*contentRange, error) {
 		return nil, errors.New("no Content-Range header found in HTTP response")
 	}
 
-	subs := contentRangeRegexp.FindStringSubmatch(contentRangeHead)
+	subs := contentRangeRegexp1.FindStringSubmatch(contentRangeHead)
 	if len(subs) < 4 {
-		return nil, fmt.Errorf("parse Content-Range: %s", contentRangeHead)
+		subs = contentRangeRegexp2.FindStringSubmatch(contentRangeHead)
+		if len(subs) < 2 {
+			return nil, fmt.Errorf("parse Content-Range: %s", contentRangeHead)
+		}
+
+		totalSize, err := strconv.ParseUint(subs[1], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse Content-Range: %s", contentRangeHead)
+		}
+		return &contentRange{
+			contentSize: int64(totalSize),
+		}, nil
 	}
 
 	startByte, err := strconv.ParseUint(subs[1], 10, 64)
@@ -99,7 +115,7 @@ func downloadFile(req *Request, res *http.Response, filename string) {
 		}
 	}
 
-	if cr != nil {
+	if cr != nil && cr.startByte > 0 {
 		if _, err := fd.Seek(int64(cr.startByte), io.SeekStart); err != nil {
 			log.Fatalf("seek failed: %v", err)
 		}
