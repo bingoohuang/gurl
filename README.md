@@ -444,3 +444,4 @@ User-Agent: gurl/1.0.0
 1. [rs/curlie](https://github.com/rs/curlie) The power of curl, the ease of use of httpie.
 2. [Hurl](https://github.com/Orange-OpenSource/hurl) is a command line tool that runs HTTP requests defined in a simple
    plain text format.
+3. [httpretty](https://github.com/henvic/httpretty) prints the HTTP requests you make with Go pretty on your terminal.
