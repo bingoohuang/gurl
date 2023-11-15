@@ -260,7 +260,7 @@ func (b *Request) BodyCh(data chan string) *Request {
 }
 
 func (b *Request) evalBytes(data []byte) (io.ReadCloser, int64) {
-	eval := Eval(string(data))
+	eval, _ := Eval(string(data))
 	if jj.Valid(eval) {
 		b.Header("Content-Type", "application/json")
 	}
@@ -345,7 +345,10 @@ func (b *Request) JSONBody(obj interface{}) (*Request, error) {
 }
 
 func (b *Request) BodyString(s string) {
-	eval := Eval(s)
+	eval, err := Eval(s)
+	if err == nil {
+		log.Fatalf("eval: %v", err)
+	}
 	b.Req.Body = io.NopCloser(strings.NewReader(eval))
 	b.Req.ContentLength = int64(len(eval))
 	if jj.Valid(s) {

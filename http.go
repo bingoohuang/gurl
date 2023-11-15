@@ -116,7 +116,12 @@ func tryReadFile(s string) string {
 		log.Fatal("Read File", s, err)
 	}
 
-	return Eval(string(dat))
+	eval, err := Eval(string(dat))
+	if err != nil {
+		log.Fatalf("Eval: %v", err)
+	}
+
+	return eval
 }
 
 func readFile(s string) (data []byte, fn string, e error) {
@@ -126,7 +131,11 @@ func readFile(s string) (data []byte, fn string, e error) {
 
 	filename := s[1:]
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return []byte(Eval(s)), "", nil
+		eval, err := Eval(s)
+		if err != nil {
+			return []byte(s), "", nil
+		}
+		return []byte(eval), "", nil
 	}
 
 	f, err := os.Open(filename)

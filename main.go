@@ -117,7 +117,7 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 		method = http.MethodPost
 	}
 
-	urlAddr2 := Eval(urlAddr)
+	urlAddr2, _ := Eval(urlAddr)
 	u := rest.FixURI(urlAddr2,
 		rest.WithFatalErr(true),
 		rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
@@ -126,7 +126,12 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 	addrGen := func() *url.URL { return u }
 	if urlAddr2 != urlAddr {
 		addrGen = func() *url.URL {
-			return rest.FixURI(Eval(urlAddr),
+			eval, err := Eval(urlAddr)
+			if err != nil {
+				log.Fatalf("eval %v", err)
+			}
+
+			return rest.FixURI(eval,
 				rest.WithFatalErr(true),
 				rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
 			).Data

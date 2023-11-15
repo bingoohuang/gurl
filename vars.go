@@ -18,14 +18,17 @@ var (
 	gen    = jj.NewGenContext(valuer)
 )
 
-func Eval(s string) string {
+func Eval(s string) (string, error) {
 	var lines string
 	for {
 		blanks, left := eatBlanks(s)
 		if len(blanks) > 0 {
 			lines += blanks
 		}
-		genResult, i := gen.Process(left)
+		genResult, i, err := gen.Process(left)
+		if err != nil {
+			return "", err
+		}
 		if i <= 0 {
 			if s != "" {
 				lines += s
@@ -38,7 +41,11 @@ func Eval(s string) string {
 
 	}
 
-	return vars.ToString(vars.ParseExpr(lines).Eval(valuer))
+	eval, err := vars.ParseExpr(lines).Eval(valuer)
+	if err != nil {
+		return "", err
+	}
+	return vars.ToString(eval), nil
 }
 
 func eatBlanks(s string) (blanks, left string) {
@@ -74,17 +81,21 @@ func (v *Valuer) ClearCache() {
 	v.Map = make(map[string]interface{})
 }
 
-func (v *Valuer) Value(name, params, expr string) interface{} {
+func (v *Valuer) Value(name, params, expr string) (any, error) {
 	pureName := name
 	subs := cacheSuffix.FindStringSubmatch(name)
 	if len(subs) > 0 {
 		pureName = subs[1]
 		if x, ok := v.Map[name]; ok {
-			return x
+			return x, nil
 		}
 	}
 
-	x := jj.DefaultGen.Value(pureName, params, expr)
+	x, err := jj.DefaultGen.Value(pureName, params, expr)
+	if err != nil {
+		return nil, err
+	}
+
 	if x == expr && v.InteractiveMode { // 没有解析成功，进入命令行输入模式
 		x = GetVar(name)
 	}
@@ -92,7 +103,8 @@ func (v *Valuer) Value(name, params, expr string) interface{} {
 	if len(subs) > 0 {
 		v.Map[name] = x
 	}
-	return x
+
+	return x, nil
 }
 
 func GetVar(name string) string {
