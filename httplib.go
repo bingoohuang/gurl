@@ -727,6 +727,9 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config, debug bool, r,
 		if err != nil {
 			return nil, err
 		}
+		if debug {
+			fmt.Printf("conn: %s->%s", conn.LocalAddr(), conn.RemoteAddr())
+		}
 
 		type tlcpConnectionStater interface {
 			ConnectionState() tlcp.ConnectionState
