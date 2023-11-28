@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -19,6 +20,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"gitee.com/Trisia/gotlcp/tlcp"
@@ -52,6 +54,7 @@ func NewRequest(rawURL, method string) *Request {
 		files:   map[string]string{},
 		Setting: defaultSetting,
 		resp:    &resp,
+		debug:   env.Bool("DEBUG", false),
 	}
 }
 
@@ -73,11 +76,9 @@ func (b *Request) SetupTransport() {
 			t.Proxy = b.Setting.Proxy
 		}
 
-		if t.TLSClientConfig != nil && t.DialTLSContext == nil {
-			t.DialTLSContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig)
-		}
-		if t.TLSClientConfig == nil && t.DialContext == nil {
-			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig)
+		if t.TLSClientConfig != nil && t.DialTLSContext == nil ||
+			t.TLSClientConfig == nil && t.DialContext == nil {
+			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig, b.debug, &b.readSum, &b.writeSum)
 		}
 	}
 
@@ -130,6 +131,10 @@ type Request struct {
 	DryRequest bool
 
 	DisableKeepAlives bool
+
+	readSum  int64
+	writeSum int64
+	debug    bool
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -675,7 +680,7 @@ func getLocalAddr() *net.TCPAddr {
 var enableTLCP = env.Bool("TLCP", false)
 
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
-func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn {
+func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config, debug bool, r, w *int64) DialContextFn {
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
 		dialer := &net.Dialer{
 			Timeout:   cTimeout,
@@ -696,15 +701,13 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn 
 
 		dnsIP, dnsPort, err := net.SplitHostPort(dns)
 		if err != nil {
-			dnsIP = dns
-			dnsPort = "53"
+			dnsIP, dnsPort = dns, "53"
 		}
 
 		if dnsIP != "" {
 			addrHost, addrPort, err := net.SplitHostPort(addr)
 			if err != nil {
-				addrHost = addr
-				addrPort = "80"
+				addrHost, addrPort = addr, "80"
 			}
 			if net.ParseIP(addrHost) == nil { // not an IP
 				dnsServer := net.JoinHostPort(dnsIP, dnsPort)
@@ -738,8 +741,38 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config) DialContextFn 
 			printTLCPConnectState(cs.ConnectionState())
 		}
 
-		return conn, nil
+		return NewMyConn(conn, debug, r, w), nil
 	}
+}
+
+type MyConn struct {
+	net.Conn
+	debug bool
+	r, w  *int64
+}
+
+func NewMyConn(conn net.Conn, debug bool, r, w *int64) *MyConn {
+	return &MyConn{Conn: conn, debug: debug, r: r, w: w}
+}
+
+func (c *MyConn) Read(b []byte) (n int, err error) {
+	if n, err = c.Conn.Read(b); n > 0 {
+		atomic.AddInt64(c.r, int64(n))
+		if c.debug {
+			fmt.Printf("%s", b)
+		}
+	}
+	return
+}
+
+func (c *MyConn) Write(b []byte) (n int, err error) {
+	if c.debug {
+		fmt.Printf("%s", b)
+	}
+	if n, err = c.Conn.Write(b); n > 0 {
+		atomic.AddInt64(c.w, int64(n))
+	}
+	return
 }
 
 // Resolve resolves host www.google.co by dnsServer like 8.8.8.8:5
