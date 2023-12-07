@@ -351,7 +351,7 @@ func (b *Request) JSONBody(obj interface{}) (*Request, error) {
 
 func (b *Request) BodyString(s string) {
 	eval, err := Eval(s)
-	if err == nil {
+	if err != nil {
 		log.Fatalf("eval: %v", err)
 	}
 	b.Req.Body = io.NopCloser(strings.NewReader(eval))
