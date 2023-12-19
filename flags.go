@@ -32,9 +32,11 @@ var (
 	jsonmap = map[string]interface{}{}
 
 	createDemoEnv bool
+	unixSocket    string
 )
 
 func init() {
+	fla9.StringVar(&unixSocket, "unix-socket,s", "", "")
 	flagEnv(&urls, "url,u", "", "", "URL")
 	fla9.StringVar(&method, "method,m", "GET", "")
 
@@ -125,6 +127,7 @@ const help = `gurl is a Go implemented cURL-like cli tool for humans.
 Usage:
 	gurl [flags] [METHOD] URL [URL] [ITEM [ITEM]]
 flags:
+  -unix-socket,s    Using unix socket file
   -u                HTTP request URL
   -method -m        HTTP method
   -k                Disable keepalive
@@ -139,7 +142,7 @@ flags:
   -auth=USER[:PASS] HTTP authentication username:password, USER[:PASS]
   -proxy=PROXY_URL  Proxy host and port, PROXY_URL
   -n=1 -c=1         Number of requests and concurrency to run
-  -confirm=0        Should confirm after number of requests 
+  -confirm=0        Should confirm after number of requests \
   -body,b           Send RAW data as body 
 				    @persons.tx to load body from the file's content
 					@persons.txt:line 从文件按行读取请求体，发送多次请求

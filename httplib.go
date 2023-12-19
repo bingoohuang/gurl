@@ -19,6 +19,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -677,6 +678,16 @@ func getLocalAddr() *net.TCPAddr {
 	return &net.TCPAddr{IP: ipAddr.IP}
 }
 
+type unixDialer struct {
+	net.Dialer
+	UnixSocket string
+}
+
+// DialContext overrids net.Dialer.Dial to force unix socket connection
+func (d *unixDialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return d.Dialer.Dial("unix", d.UnixSocket)
+}
+
 var enableTLCP = env.Bool("TLCP", false)
 
 // TimeoutDialer returns functions of connection dialer with timeout settings for http.Transport Dial field.
@@ -689,6 +700,11 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config, debug bool, r,
 		}
 
 		fn := dialer.DialContext
+		if unixSocket != "" {
+			ud := &unixDialer{UnixSocket: filepath.Clean(unixSocket)}
+			fn = ud.DialContext
+		}
+
 		if enableTLCP {
 			fn = createTlcpDialer(dialer, caFile)
 		} else if tlsConfig != nil {
