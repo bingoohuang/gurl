@@ -7,11 +7,11 @@ toolchain go1.21.4
 require (
 	gitee.com/Trisia/gotlcp v1.3.13
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/bingoohuang/gg v0.0.0-20231130030601-72ab0f5ec3c8
+	github.com/bingoohuang/gg v0.0.0-20231211081724-54dddffe9175
 	github.com/bingoohuang/goup v0.0.0-20231205021806-3d76ee343e0d
 	github.com/bingoohuang/jj v0.0.0-20231201013430-d2abb381b275
 	github.com/chzyer/readline v1.5.1
-	github.com/emmansun/gmsm v0.23.0
+	github.com/emmansun/gmsm v0.24.1
 	github.com/fatih/color v1.16.0
 	github.com/jedib0t/go-pretty/v6 v6.4.9
 	github.com/joho/godotenv v1.5.1
@@ -23,7 +23,7 @@ require (
 require (
 	github.com/Pallinder/go-randomdata v1.2.0 // indirect
 	github.com/bingoohuang/jiami v0.0.0-20221123002830-d9d1f5f029b4 // indirect
-	github.com/brianvoe/gofakeit/v6 v6.26.0 // indirect
+	github.com/brianvoe/gofakeit/v6 v6.26.3 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cristalhq/base64 v0.1.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -46,8 +46,8 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/vthiery/retry v0.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.16.0 // indirect
-	golang.org/x/exp v0.0.0-20231206192017-f3f8817b8deb // indirect
+	golang.org/x/crypto v0.17.0 // indirect
+	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
