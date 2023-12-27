@@ -20,7 +20,7 @@ import (
 
 var defaultSetting = Settings{
 	DumpRequest:    true,
-	UserAgent:      "gurl/" + v.AppVersion,
+	UserAgent:      "curl/" + v.AppVersion,
 	ConnectTimeout: 60 * time.Second,
 	DumpBody:       true,
 }

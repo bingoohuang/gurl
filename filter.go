@@ -57,17 +57,20 @@ func filter(args []string) []string {
 
 		if addr := rest.FixURI(arg, defaultSchema); addr.OK() && strings.ContainsAny(arg, ":/") {
 			urls = append(urls, addr.Data.String())
+		} else if subs := keyReg.FindStringSubmatch(arg); len(subs) == 0 {
+			urls = append(urls, arg)
 		} else {
 			filteredArgs = append(filteredArgs, arg)
 		}
 	}
+
 	args = filteredArgs
 
 	if isMethodDefaultGet() {
 		if len(uploadFiles) > 0 {
 			method = "POST"
-		} else if len(args) > 0 {
-			for _, v := range args[1:] {
+		} else {
+			for _, v := range args {
 				subs := keyReg.FindStringSubmatch(v)
 				if len(subs) == 0 {
 					continue
