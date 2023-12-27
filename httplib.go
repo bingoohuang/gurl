@@ -77,10 +77,8 @@ func (b *Request) SetupTransport() {
 			t.Proxy = b.Setting.Proxy
 		}
 
-		if t.TLSClientConfig != nil && t.DialTLSContext == nil ||
-			t.TLSClientConfig == nil && t.DialContext == nil {
-			t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig, b.debug, &b.readSum, &b.writeSum)
-		}
+		t.DialContext = TimeoutDialer(b.Setting.ConnectTimeout, t.TLSClientConfig, b.debug, &b.readSum, &b.writeSum)
+		t.DialTLSContext = t.DialContext
 	}
 
 	// https://blog.witd.in/2019/02/25/golang-http-client-关闭重用连接两种方法/
