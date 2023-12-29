@@ -12,6 +12,18 @@ import (
 	"github.com/bingoohuang/gg/pkg/fla9"
 )
 
+func RemoveChars(input, cutset string) string {
+	removeMap := func(r rune) rune {
+		if strings.ContainsRune(cutset, r) {
+			return -1 // 将 cutset 中的字符映射为 -1，表示移除
+		}
+		return r
+	}
+
+	// 使用 Map 函数应用映射函数到字符串中的每个字符
+	return strings.Map(removeMap, input)
+}
+
 func HashFile(f string, h hash.Hash) ([]byte, error) {
 	// 打开文件
 	file, err := os.Open(f)

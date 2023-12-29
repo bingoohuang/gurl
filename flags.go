@@ -147,9 +147,10 @@ flags:
 				    @persons.tx to load body from the file's content
 					@persons.txt:line 从文件按行读取请求体，发送多次请求
 				    :rand.json to create rand JSON as body
-  -print -p         String specifying what the output should contain, default will print all information
+  -print -p         String specifying what the output should contain, default will print only response body
                        H: request headers  B: request body,  u: request URL
                        h: response headers  b: response body, c: status code
+
                        s: http conn session v: Verbose t: HTTP trace
                        q: keep quiet for file uploading/downloading progress
                        f: expand inner JSON string as JSON object

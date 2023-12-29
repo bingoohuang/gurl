@@ -64,6 +64,10 @@ func main() {
 		log.Fatalf("create demo env file: %v", err)
 	}
 
+	if RemoveChars(printV, "svtqfdUrCN") == "" {
+		printV += "b"
+	}
+
 	parsePrintOption(printV)
 	freeInnerJSON = HasPrintOption(freeInnerJSONTag)
 	ugly = HasPrintOption(printUgly)
