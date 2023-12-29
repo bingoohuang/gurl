@@ -5,11 +5,11 @@ go 1.21.0
 toolchain go1.21.4
 
 require (
-	gitee.com/Trisia/gotlcp v1.3.13
+	gitee.com/Trisia/gotlcp v1.3.16
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/bingoohuang/gg v0.0.0-20231211081724-54dddffe9175
+	github.com/bingoohuang/gg v0.0.0-20231220005642-cc3afaff0454
 	github.com/bingoohuang/goup v0.0.0-20231205021806-3d76ee343e0d
-	github.com/bingoohuang/jj v0.0.0-20231201013430-d2abb381b275
+	github.com/bingoohuang/jj v0.0.0-20231223130052-8880c7020d67
 	github.com/chzyer/readline v1.5.1
 	github.com/emmansun/gmsm v0.24.1
 	github.com/fatih/color v1.16.0
@@ -47,7 +47,7 @@ require (
 	github.com/vthiery/retry v0.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.17.0 // indirect
-	golang.org/x/exp v0.0.0-20231214170342-aacd6d4b4611 // indirect
+	golang.org/x/exp v0.0.0-20231226003508-02704c960a9b // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
