@@ -745,20 +745,24 @@ func TimeoutDialer(cTimeout time.Duration, tlsConfig *tls.Config, debug bool, r,
 			fmt.Printf("conn: %s->%s\n", conn.LocalAddr(), conn.RemoteAddr())
 		}
 
-		type tlcpConnectionStater interface {
-			ConnectionState() tlcp.ConnectionState
-		}
-		type tlsConnectionStater interface {
-			ConnectionState() tls.ConnectionState
-		}
-
-		if cs, ok := conn.(tlsConnectionStater); ok {
-			printTLSConnectState(cs.ConnectionState())
-		} else if cs, ok := conn.(tlcpConnectionStater); ok {
-			printTLCPConnectState(cs.ConnectionState())
-		}
+		printConnectState(conn)
 
 		return NewMyConn(conn, debug, r, w), nil
+	}
+}
+
+type tlcpConnectionStater interface {
+	ConnectionState() tlcp.ConnectionState
+}
+type tlsConnectionStater interface {
+	ConnectionState() tls.ConnectionState
+}
+
+func printConnectState(conn net.Conn) {
+	if cs, ok := conn.(tlsConnectionStater); ok {
+		printTLSConnectState(conn, cs.ConnectionState())
+	} else if cs, ok := conn.(tlcpConnectionStater); ok {
+		printTLCPConnectState(conn, cs.ConnectionState())
 	}
 }
 

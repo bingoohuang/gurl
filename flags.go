@@ -182,8 +182,9 @@ Envs:
   4. TLS_VERIFY:  Enable client verifies the server's certificate chain and host name.
   5. LOCAL_IP:    Specify the local IP address to connect to server.
   6. TLCP:        使用传输层密码协议(TLCP)，TLCP协议遵循《GB/T 38636-2020 信息安全技术 传输层密码协议》。
-  7. CHUNKED:     开启请求中的块传输
-  8. INTERACTIVE=0  禁止交互模式，否则 请求参数值/地址中的注入 @age 将被解析成插值模式，会要求从命令行输入
+  7. TLCP_CERTS   sign.cert,sign.key,enc.cert,enc.key
+  8. CHUNKED:     开启请求中的块传输
+  9. INTERACTIVE=0  禁止交互模式，否则 请求参数值/地址中的注入 @age 将被解析成插值模式，会要求从命令行输入
 more help information please refer to https://github.com/bingoohuang/gurl
 `
 

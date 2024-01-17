@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
@@ -47,9 +48,9 @@ func createTlcpDialer(dialer *net.Dialer, caFile string) DialContextFn {
 		switch len(certsFiles) {
 		case 0, 2, 4:
 		default:
-			panic("-tclp-certs should be sign.cert.pem,sign.key.pem,enc.cert.pem,enc.key.pem")
+			panic("$TLCP_CERTS should be sign.cert.pem,sign.key.pem,enc.cert.pem,enc.key.pem")
 		}
-		if len(certs) >= 2 {
+		if len(certsFiles) >= 2 {
 			signCertKeypair, err := tlcp.X509KeyPair(osx.ReadFile(certsFiles[0], osx.WithFatalOnError(true)).Data,
 				osx.ReadFile(certsFiles[1], osx.WithFatalOnError(true)).Data)
 			if err != nil {
@@ -57,7 +58,7 @@ func createTlcpDialer(dialer *net.Dialer, caFile string) DialContextFn {
 			}
 			certs = append(certs, signCertKeypair)
 		}
-		if len(certs) >= 4 {
+		if len(certsFiles) >= 4 {
 			encCertKeypair, err := tlcp.X509KeyPair(osx.ReadFile(certsFiles[2], osx.WithFatalOnError(true)).Data,
 				osx.ReadFile(certsFiles[3], osx.WithFatalOnError(true)).Data)
 			if err != nil {
@@ -72,11 +73,15 @@ func createTlcpDialer(dialer *net.Dialer, caFile string) DialContextFn {
 		}
 	}
 
+	if c.EnableDebug {
+		fmt.Printf("load %d client certs\n", len(c.Certificates))
+	}
+
 	d := tlcp.Dialer{NetDialer: dialer, Config: c}
 	return d.DialContext
 }
 
-func printTLCPConnectState(state tlcp.ConnectionState) {
+func printTLCPConnectState(conn net.Conn, state tlcp.ConnectionState) {
 	if !HasPrintOption(printRspOption) {
 		return
 	}
@@ -89,8 +94,55 @@ func printTLCPConnectState(state tlcp.ConnectionState) {
 			return "Unknown"
 		}
 	}(state.Version)
+
+	fmt.Printf("option Conn type: %T\n", conn)
 	fmt.Printf("option TLCP.Version: %s\n", tlsVersion)
+	for _, v := range state.PeerCertificates {
+		fmt.Println("option TLCP.Subject:", v.Subject)
+		fmt.Println("option TLCP.KeyUsage:", KeyUsageString(v.KeyUsage))
+	}
 	fmt.Printf("option TLCP.HandshakeComplete: %t\n", state.HandshakeComplete)
 	fmt.Printf("option TLCP.DidResume: %t\n", state.DidResume)
+	for _, suit := range tlcp.CipherSuites() {
+		if suit.ID == state.CipherSuite {
+			fmt.Printf("option TLCP.CipherSuite: %+v", suit)
+			break
+		}
+	}
 	fmt.Println()
+}
+
+// KeyUsageString convert x509.KeyUsage to string.
+func KeyUsageString(k x509.KeyUsage) []string {
+	var usages []string
+
+	if k&x509.KeyUsageDigitalSignature != 0 {
+		usages = append(usages, "DigitalSignature")
+	}
+	if k&x509.KeyUsageContentCommitment != 0 {
+		usages = append(usages, "ContentCommitment")
+	}
+	if k&x509.KeyUsageKeyEncipherment != 0 {
+		usages = append(usages, "KeyEncipherment")
+	}
+	if k&x509.KeyUsageDataEncipherment != 0 {
+		usages = append(usages, "DataEncipherment")
+	}
+	if k&x509.KeyUsageKeyAgreement != 0 {
+		usages = append(usages, "KeyAgreement")
+	}
+	if k&x509.KeyUsageCertSign != 0 {
+		usages = append(usages, "CertSign")
+	}
+	if k&x509.KeyUsageCRLSign != 0 {
+		usages = append(usages, "CRLSign")
+	}
+	if k&x509.KeyUsageEncipherOnly != 0 {
+		usages = append(usages, "EncipherOnly")
+	}
+	if k&x509.KeyUsageDecipherOnly != 0 {
+		usages = append(usages, "DecipherOnly")
+	}
+
+	return usages
 }

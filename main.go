@@ -15,6 +15,7 @@ import (
 	"io"
 	"log"
 	"mime"
+	"net"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
@@ -601,7 +602,7 @@ func printRequestResponseForNonWindows(req *Request, res *http.Response, downloa
 	}
 }
 
-func printTLSConnectState(state tls.ConnectionState) {
+func printTLSConnectState(conn net.Conn, state tls.ConnectionState) {
 	if !HasPrintOption(printRspOption) {
 		return
 	}
@@ -620,9 +621,21 @@ func printTLSConnectState(state tls.ConnectionState) {
 			return "Unknown"
 		}
 	}(state.Version)
+
+	fmt.Printf("option Conn Type: %T\n", conn)
 	fmt.Printf("option TLS.Version: %s\n", tlsVersion)
+	for _, v := range state.PeerCertificates {
+		fmt.Println("option TLS.Subject:", v.Subject)
+		fmt.Println("option TLS.KeyUsage:", KeyUsageString(v.KeyUsage))
+	}
 	fmt.Printf("option TLS.HandshakeComplete: %t\n", state.HandshakeComplete)
 	fmt.Printf("option TLS.DidResume: %t\n", state.DidResume)
+	for _, suit := range tls.CipherSuites() {
+		if suit.ID == state.CipherSuite {
+			fmt.Printf("option TLS.CipherSuite: %+v", suit)
+			break
+		}
+	}
 	fmt.Println()
 }
 
