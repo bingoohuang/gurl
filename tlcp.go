@@ -110,38 +110,3 @@ func printTLCPConnectState(conn net.Conn, state tlcp.ConnectionState) {
 	}
 	fmt.Println()
 }
-
-// KeyUsageString convert x509.KeyUsage to string.
-func KeyUsageString(k x509.KeyUsage) []string {
-	var usages []string
-
-	if k&x509.KeyUsageDigitalSignature != 0 {
-		usages = append(usages, "DigitalSignature")
-	}
-	if k&x509.KeyUsageContentCommitment != 0 {
-		usages = append(usages, "ContentCommitment")
-	}
-	if k&x509.KeyUsageKeyEncipherment != 0 {
-		usages = append(usages, "KeyEncipherment")
-	}
-	if k&x509.KeyUsageDataEncipherment != 0 {
-		usages = append(usages, "DataEncipherment")
-	}
-	if k&x509.KeyUsageKeyAgreement != 0 {
-		usages = append(usages, "KeyAgreement")
-	}
-	if k&x509.KeyUsageCertSign != 0 {
-		usages = append(usages, "CertSign")
-	}
-	if k&x509.KeyUsageCRLSign != 0 {
-		usages = append(usages, "CRLSign")
-	}
-	if k&x509.KeyUsageEncipherOnly != 0 {
-		usages = append(usages, "EncipherOnly")
-	}
-	if k&x509.KeyUsageDecipherOnly != 0 {
-		usages = append(usages, "DecipherOnly")
-	}
-
-	return usages
-}
