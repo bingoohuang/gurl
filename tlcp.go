@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/x509"
 	"fmt"
-	"github.com/grantae/certinfo"
 	"net"
 	"os"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"gitee.com/Trisia/gotlcp/tlcp"
 	"github.com/bingoohuang/gg/pkg/osx"
 	"github.com/bingoohuang/gg/pkg/osx/env"
+	"github.com/bingoohuang/gurl/certinfo"
 	"github.com/emmansun/gmsm/smx509"
 )
 
