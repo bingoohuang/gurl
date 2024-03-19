@@ -131,7 +131,13 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 
 	addrGen := func() *url.URL { return u }
 	if urlAddr2 != urlAddr {
+		cnt := 0
 		addrGen = func() *url.URL {
+			cnt++
+			if cnt == 1 {
+				return u
+			}
+
 			eval, err := Eval(urlAddr)
 			if err != nil {
 				log.Fatalf("eval %v", err)
@@ -143,7 +149,7 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 			).Data
 		}
 	}
-	realURL := addrGen().String()
+	realURL := u.String()
 	req := getHTTP(method, realURL, nonFlagArgs, timeout)
 
 	if auth != "" {
