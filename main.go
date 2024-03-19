@@ -35,6 +35,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/gg/pkg/v"
 	"github.com/bingoohuang/goup"
+	"github.com/bingoohuang/gurl/certinfo"
 	"github.com/emmansun/gmsm/sm3"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/zeebo/blake3"
@@ -607,7 +608,8 @@ func printTLSConnectState(conn net.Conn, state tls.ConnectionState) {
 		return
 	}
 
-	tlsVersion := func(version uint16) string {
+	fmt.Printf("option Conn Type: %T\n", conn)
+	fmt.Printf("option TLS.Version: %s\n", func(version uint16) string {
 		switch version {
 		case tls.VersionTLS10:
 			return "TLSv10"
@@ -620,13 +622,10 @@ func printTLSConnectState(conn net.Conn, state tls.ConnectionState) {
 		default:
 			return "Unknown"
 		}
-	}(state.Version)
-
-	fmt.Printf("option Conn Type: %T\n", conn)
-	fmt.Printf("option TLS.Version: %s\n", tlsVersion)
-	for _, v := range state.PeerCertificates {
-		fmt.Println("option TLS.Subject:", v.Subject)
-		fmt.Println("option TLS.KeyUsage:", KeyUsageString(v.KeyUsage))
+	}(state.Version))
+	for i, cert := range state.PeerCertificates {
+		text, _ := certinfo.CertificateText(cert)
+		fmt.Printf("option Cert[%d]: %s\n", i, text)
 	}
 	fmt.Printf("option TLS.HandshakeComplete: %t\n", state.HandshakeComplete)
 	fmt.Printf("option TLS.DidResume: %t\n", state.DidResume)

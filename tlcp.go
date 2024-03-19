@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/x509"
 	"fmt"
+	"github.com/grantae/certinfo"
 	"net"
 	"os"
 	"strings"
@@ -86,20 +87,18 @@ func printTLCPConnectState(conn net.Conn, state tlcp.ConnectionState) {
 		return
 	}
 
-	tlsVersion := func(version uint16) string {
+	fmt.Printf("option Conn type: %T\n", conn)
+	fmt.Printf("option TLCP.Version: %s\n", func(version uint16) string {
 		switch version {
 		case tlcp.VersionTLCP:
 			return "TLCP"
 		default:
 			return "Unknown"
 		}
-	}(state.Version)
-
-	fmt.Printf("option Conn type: %T\n", conn)
-	fmt.Printf("option TLCP.Version: %s\n", tlsVersion)
-	for _, v := range state.PeerCertificates {
-		fmt.Println("option TLCP.Subject:", v.Subject)
-		fmt.Println("option TLCP.KeyUsage:", KeyUsageString(v.KeyUsage))
+	}(state.Version))
+	for i, cert := range state.PeerCertificates {
+		text, _ := certinfo.CertificateText((*x509.Certificate)(cert))
+		fmt.Printf("option Cert[%d]: %s\n", i, text)
 	}
 	fmt.Printf("option TLCP.HandshakeComplete: %t\n", state.HandshakeComplete)
 	fmt.Printf("option TLCP.DidResume: %t\n", state.DidResume)

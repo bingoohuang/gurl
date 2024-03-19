@@ -13,6 +13,7 @@ require (
 	github.com/chzyer/readline v1.5.1
 	github.com/emmansun/gmsm v0.24.2
 	github.com/fatih/color v1.16.0
+	github.com/grantae/certinfo v0.0.0-20170412194111-59d56a35515b
 	github.com/jedib0t/go-pretty/v6 v6.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/samber/lo v1.39.0
