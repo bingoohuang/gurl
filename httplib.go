@@ -104,6 +104,7 @@ type Settings struct {
 // Request provides more useful methods for requesting one url than http.Request.
 type Request struct {
 	Transport http.RoundTripper
+	bodyData  any
 	stat      *httpStat
 
 	resp *http.Response
@@ -127,14 +128,14 @@ type Request struct {
 
 	Timeout time.Duration
 
+	readSum  int64
+	writeSum int64
+
 	DryRequest bool
 
 	DisableKeepAlives bool
 
-	readSum  int64
-	writeSum int64
-	debug    bool
-	bodyData any
+	debug bool
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -768,8 +769,8 @@ func printConnectState(conn net.Conn) {
 
 type MyConn struct {
 	net.Conn
-	debug bool
 	r, w  *int64
+	debug bool
 }
 
 func NewMyConn(conn net.Conn, debug bool, r, w *int64) *MyConn {

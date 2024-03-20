@@ -253,7 +253,8 @@ func setTimeoutRequest(req *Request) {
 }
 
 func setBody(req *Request) {
-	if len(uploadFiles) > 0 {
+	switch {
+	case len(uploadFiles) > 0:
 		var hasher hash.Hash
 		hashAlgo := strings.ToLower(os.Getenv("BEEFS_HASH"))
 		switch hashAlgo {
@@ -316,9 +317,9 @@ func setBody(req *Request) {
 		for hk, hv := range up.Headers {
 			req.Header(hk, hv)
 		}
-	} else if body != "" {
+	case body != "":
 		req.Body(body)
-	} else {
+	default:
 		req.RefreshBody()
 	}
 }
