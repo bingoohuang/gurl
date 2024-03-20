@@ -134,6 +134,7 @@ type Request struct {
 	readSum  int64
 	writeSum int64
 	debug    bool
+	bodyData any
 }
 
 // SetBasicAuth sets the request's Authorization header to use HTTP Basic Authentication with the provided username and password.
@@ -291,7 +292,14 @@ func (b *Request) BodyFileLines(t string) bool {
 	return false
 }
 
-func (b *Request) Body(data interface{}) *Request {
+// RefreshBody 刷新 body 值，在 -n2 以上时使用
+func (b *Request) RefreshBody() *Request {
+	return b.Body(b.bodyData)
+}
+
+func (b *Request) Body(data any) *Request {
+	b.bodyData = data
+
 	switch t := data.(type) {
 	case string:
 		if t == ":rand.json" {
@@ -316,6 +324,12 @@ func (b *Request) Body(data interface{}) *Request {
 		b.BodyAndSize(b.evalBytes([]byte(t)))
 	case []byte:
 		b.BodyAndSize(b.evalBytes(t))
+	default:
+		if data != nil {
+			buf := bytes.NewBuffer(nil)
+			_ = json.NewEncoder(buf).Encode(data)
+			b.BodyAndSize(b.evalBytes(buf.Bytes()))
+		}
 	}
 	return b
 }
@@ -332,20 +346,6 @@ func (b *Request) NextBody() (err error) {
 	}
 
 	return io.EOF
-}
-
-// JSONBody adds request raw body encoding by JSON.
-func (b *Request) JSONBody(obj interface{}) (*Request, error) {
-	if obj != nil {
-		buf := bytes.NewBuffer(nil)
-		enc := json.NewEncoder(buf)
-		if err := enc.Encode(obj); err != nil {
-			return b, err
-		}
-
-		b.BodyString(buf.String())
-	}
-	return b, nil
 }
 
 func (b *Request) BodyString(s string) {

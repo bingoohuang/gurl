@@ -103,9 +103,7 @@ func getHTTP(method, url string, args []string, timeout time.Duration) (r *Reque
 		}
 	}
 	if !form && len(jsonmap) > 0 {
-		if _, err := r.JSONBody(jsonmap); err != nil {
-			log.Fatal("fail to marshal JSON: ", err)
-		}
+		r.Body(jsonmap)
 	}
 	return
 }
@@ -116,12 +114,7 @@ func tryReadFile(s string) string {
 		log.Fatal("Read File", s, err)
 	}
 
-	eval, err := Eval(string(dat))
-	if err != nil {
-		log.Fatalf("Eval: %v", err)
-	}
-
-	return eval
+	return string(dat)
 }
 
 func readFile(s string) (data []byte, fn string, e error) {

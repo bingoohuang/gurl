@@ -318,6 +318,8 @@ func setBody(req *Request) {
 		}
 	} else if body != "" {
 		req.Body(body)
+	} else {
+		req.RefreshBody()
 	}
 }
 
