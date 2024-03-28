@@ -127,6 +127,7 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 	u := rest.FixURI(urlAddr2,
 		rest.WithFatalErr(true),
 		rest.WithDefaultScheme(ss.If(caFile != "", "https", "http")),
+		rest.WithDefaultPort(8080),
 	).Data
 
 	addrGen := func() *url.URL { return u }

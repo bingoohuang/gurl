@@ -282,4 +282,9 @@ func (i *RateLimitFlag) IsForRsp() bool {
 	return i.Enabled() && (i.Direction == RateLimitResponse || i.Direction == RateLimitBoth)
 }
 
-func (i *RateLimitFlag) Float64() float64 { return float64(*i.Val) }
+func (i *RateLimitFlag) Float64() float64 {
+	if i.Val == nil {
+		return 0
+	}
+	return float64(*i.Val)
+}
