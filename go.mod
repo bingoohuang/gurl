@@ -7,13 +7,13 @@ toolchain go1.21.4
 require (
 	gitee.com/Trisia/gotlcp v1.3.19
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/bingoohuang/gg v0.0.0-20240325092523-45da7dee9335
+	github.com/bingoohuang/gg v0.0.0-20240411023808-e8daaa707b8b
 	github.com/bingoohuang/goup v0.0.0-20231205021806-3d76ee343e0d
-	github.com/bingoohuang/jj v0.0.0-20231223130052-8880c7020d67
+	github.com/bingoohuang/jj v0.0.0-20240510072217-935482323048
 	github.com/chzyer/readline v1.5.1
 	github.com/emmansun/gmsm v0.26.1
-	github.com/fatih/color v1.16.0
-	github.com/jedib0t/go-pretty/v6 v6.5.7
+	github.com/fatih/color v1.17.0
+	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/joho/godotenv v1.5.1
 	github.com/samber/lo v1.39.0
 	github.com/zeebo/blake3 v0.2.3
@@ -33,7 +33,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/minio/sio v0.3.1 // indirect
+	github.com/minio/sio v0.4.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pbnjay/pixfont v0.0.0-20200714042608-33b744692567 // indirect
@@ -46,10 +46,10 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/vthiery/retry v0.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
-	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
-	golang.org/x/sys v0.19.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
+	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
+	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/term v0.20.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
