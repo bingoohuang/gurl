@@ -329,13 +329,13 @@ func readStdin(stdin io.Reader, stdinCh chan string) {
 	d := json.NewDecoder(stdin)
 	d.UseNumber()
 
-	for {
+	for i := 1; ; i++ {
 		var j interface{}
 		if err := d.Decode(&j); err != nil {
 			if errors.Is(err, io.EOF) {
 				close(stdinCh)
 			} else {
-				log.Println(err)
+				log.Printf("line: %d, error: %v", i, err)
 			}
 			return
 		}
