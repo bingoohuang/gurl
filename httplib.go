@@ -642,7 +642,7 @@ func (b *Request) ToFile(filename string) error {
 
 // ToJSON returns the map that marshals from the body bytes as json in response .
 // it calls Response inner.
-func (b *Request) ToJSON(v interface{}) error {
+func (b *Request) ToJSON(v any) error {
 	data, err := b.Bytes()
 	if err != nil {
 		return err
@@ -652,7 +652,7 @@ func (b *Request) ToJSON(v interface{}) error {
 
 // ToXML returns the map that marshals from the body bytes as xml in response .
 // it calls Response inner.
-func (b *Request) ToXML(v interface{}) error {
+func (b *Request) ToXML(v any) error {
 	data, err := b.Bytes()
 	if err != nil {
 		return err

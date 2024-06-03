@@ -14,11 +14,11 @@ import (
 
 // some code is copy from https://github.com/davecheney/httpstat.
 
-func printf(format string, a ...interface{}) {
+func printf(format string, a ...any) {
 	_, _ = fmt.Fprintf(color.Output, format, a...)
 }
 
-func grayscale(code color.Attribute) func(string, ...interface{}) string {
+func grayscale(code color.Attribute) func(string, ...any) string {
 	return color.New(code + 232).SprintfFunc()
 }
 

@@ -292,7 +292,7 @@ func setBody(req *Request) {
 		}
 
 		uploadFilePb = NewProgressBar(0)
-		fields := map[string]interface{}{}
+		fields := map[string]any{}
 
 		if len(fileReaders) == 1 {
 			fields["file"] = fileReaders[0]
@@ -330,7 +330,7 @@ func readStdin(stdin io.Reader, stdinCh chan string) {
 	d.UseNumber()
 
 	for i := 1; ; i++ {
-		var j interface{}
+		var j any
 		if err := d.Decode(&j); err != nil {
 			if errors.Is(err, io.EOF) {
 				close(stdinCh)

@@ -125,7 +125,7 @@ func printVersion(version int, buf *bytes.Buffer) {
 	buf.WriteString(fmt.Sprintf("%8sVersion: %d (%#x)\n", "", version, hexVersion))
 }
 
-func printSubjectInformation(subj *pkix.Name, pkAlgo x509.PublicKeyAlgorithm, pk interface{}, buf *bytes.Buffer) error {
+func printSubjectInformation(subj *pkix.Name, pkAlgo x509.PublicKeyAlgorithm, pk any, buf *bytes.Buffer) error {
 	buf.WriteString(fmt.Sprintf("%8sSubject: ", ""))
 	printName(subj.Names, buf)
 	buf.WriteString(fmt.Sprintf("%8sSubject Public Key Info:\n%12sPublic Key Algorithm: ", "", ""))

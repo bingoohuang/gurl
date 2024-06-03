@@ -68,7 +68,7 @@ func getHTTP(method, url string, args []string, timeout time.Duration) (r *Reque
 			if dat, fn, err := readFile(val); err != nil {
 				log.Fatal("Read File", fn, err)
 			} else if fn != "" {
-				var j interface{}
+				var j any
 				if err := json.Unmarshal(dat, &j); err != nil {
 					log.Fatal("Read from File", fn, "Unmarshal", err)
 				}

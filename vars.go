@@ -62,14 +62,14 @@ func eatBlanks(s string) (blanks, left string) {
 }
 
 type Valuer struct {
-	Map map[string]interface{}
+	Map map[string]any
 	*jj.GenContext
 	InteractiveMode bool
 }
 
 func NewValuer(interactiveMode bool) *Valuer {
 	return &Valuer{
-		Map:             make(map[string]interface{}),
+		Map:             make(map[string]any),
 		GenContext:      jj.NewGen(),
 		InteractiveMode: interactiveMode,
 	}
@@ -78,7 +78,7 @@ func NewValuer(interactiveMode bool) *Valuer {
 var cacheSuffix = regexp.MustCompile(`^(.+)_\d+`)
 
 func (v *Valuer) ClearCache() {
-	v.Map = make(map[string]interface{})
+	v.Map = make(map[string]any)
 }
 
 func (v *Valuer) Value(name, params, expr string) (any, error) {

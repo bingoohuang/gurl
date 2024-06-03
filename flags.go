@@ -29,7 +29,7 @@ var (
 	limitRate                                     = NewRateLimitFlag()
 	download                                      = &fla9.StringBool{}
 
-	jsonmap = map[string]interface{}{}
+	jsonmap = map[string]any{}
 
 	createDemoEnv bool
 	unixSocket    string

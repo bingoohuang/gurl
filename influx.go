@@ -19,9 +19,9 @@ func createTableWriter() table.Writer {
 }
 
 type Series struct {
-	Name    string          `json:"name"`
-	Columns []string        `json:"columns"`
-	Values  [][]interface{} `json:"values"`
+	Name    string   `json:"name"`
+	Columns []string `json:"columns"`
+	Values  [][]any  `json:"values"`
 }
 
 type InfluxQueryResult struct {
