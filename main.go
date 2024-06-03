@@ -108,7 +108,6 @@ func parseStdin() io.Reader {
 	if err != nil {
 		panic(err)
 	}
-
 	if (stat.Mode() & os.ModeCharDevice) == 0 {
 		return os.Stdin
 	}
@@ -176,9 +175,7 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 	}
 
 	if reader != nil {
-		ch := make(chan string)
-		go readStdin(reader, ch)
-		req.BodyCh(ch)
+		req.BodyCh(readStdin(reader))
 	}
 
 	req.BodyFileLines(body)
@@ -215,6 +212,9 @@ func run(totalUrls int, urlAddr string, nonFlagArgs []string, reader io.Reader) 
 		}
 
 		start := time.Now()
+		if HasPrintOption(printVerbose) && benchN == 0 {
+			log.Printf("N: %d", i+1)
+		}
 		err := doRequest(req, addrGen)
 		if HasPrintOption(printVerbose) && totalUrls > 1 {
 			log.Printf("current request cost: %s", time.Since(start))
@@ -325,22 +325,17 @@ func setBody(req *Request) {
 	}
 }
 
-func readStdin(stdin io.Reader, stdinCh chan string) {
+func readStdin(stdin io.Reader) func() (string, error) {
 	d := json.NewDecoder(stdin)
 	d.UseNumber()
 
-	for i := 1; ; i++ {
-		var j any
+	return func() (string, error) {
+		var j json.RawMessage
 		if err := d.Decode(&j); err != nil {
-			if errors.Is(err, io.EOF) {
-				close(stdinCh)
-			} else {
-				log.Printf("line: %d, error: %v", i, err)
-			}
-			return
+			return "", err
 		}
-		js, _ := json.Marshal(j)
-		stdinCh <- string(js)
+
+		return string(j), nil
 	}
 }
 
@@ -460,7 +455,7 @@ func doRequestInternal(req *Request, u *url.URL) {
 	}
 
 	if uploadFilePb != nil {
-		fmt.Printf("Uploading \"%s\"\n", strings.Join(uploadFiles, "; "))
+		fmt.Printf("Uploading %q\n", strings.Join(uploadFiles, "; "))
 		uploadFilePb.Set(0)
 		uploadFilePb.Start()
 	}

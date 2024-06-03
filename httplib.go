@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -109,7 +110,7 @@ type Request struct {
 
 	resp *http.Response
 
-	bodyCh chan string
+	bodyCh func() (string, error)
 
 	queries, params, files map[string]string
 
@@ -260,7 +261,7 @@ func (b *Request) BodyAndSize(body io.ReadCloser, size int64) *Request {
 }
 
 // BodyCh set body channel..
-func (b *Request) BodyCh(data chan string) *Request {
+func (b *Request) BodyCh(data func() (string, error)) *Request {
 	b.bodyCh = data
 	return b
 }
@@ -281,7 +282,7 @@ func (b *Request) BodyFileLines(t string) bool {
 	const suffixLine = ":line"
 	if lineMode := strings.HasSuffix(t, suffixLine); lineMode {
 		if fn := strings.TrimSuffix(t, suffixLine); filex.Exists(fn) {
-			lines, err := filex.LinesChan(fn, 1000)
+			lines, err := LinesChan(fn)
 			if err != nil {
 				log.Fatalf("E! create line chan for %s, failed: %v", t, err)
 			}
@@ -291,6 +292,54 @@ func (b *Request) BodyFileLines(t string) bool {
 	}
 
 	return false
+}
+
+// LinesChan read file into lines.
+func LinesChan(filePath string) (func() (string, error), error) {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	s := bufio.NewScanner(f)
+	s.Split(ScanLines)
+	return func() (string, error) {
+		for s.Scan() {
+			t := s.Text()
+			t = strings.TrimSpace(t)
+			if len(t) > 0 {
+				return t, nil
+			}
+		}
+
+		if err := s.Err(); err != nil {
+			log.Printf("E! scan file %s lines  error: %v", filePath, err)
+		}
+		f.Close()
+		return "", io.EOF
+	}, nil
+}
+
+// ScanLines is a split function for a Scanner that returns each line of
+// text, with end-of-line marker. The returned line may
+// be empty. The end-of-line marker is one optional carriage return followed
+// by one mandatory newline. In regular expression notation, it is `\r?\n`.
+// The last non-empty line of input will be returned even if it has no
+// newline.
+func ScanLines(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+	if i := bytes.IndexByte(data, '\n'); i >= 0 {
+		// We have a full newline-terminated line.
+		return i + 1, data[0 : i+1], nil
+	}
+	// If we're at EOF, we have a final, non-terminated line. Return it.
+	if atEOF {
+		return len(data), data, nil
+	}
+	// Request more data.
+	return 0, nil, nil
 }
 
 // RefreshBody 刷新 body 值，在 -n2 以上时使用
@@ -335,18 +384,19 @@ func (b *Request) Body(data any) *Request {
 	return b
 }
 
-func (b *Request) NextBody() (err error) {
-	if b.bodyCh != nil {
-		d, ok := <-b.bodyCh
-		if !ok {
-			b.bodyCh = nil
-			return io.EOF
-		}
-		b.BodyString(d)
-		return
+func (b *Request) NextBody() error {
+	if b.bodyCh == nil {
+		return io.EOF
 	}
 
-	return io.EOF
+	d, err := b.bodyCh()
+	if err != nil {
+		b.bodyCh = nil
+		return err
+	}
+
+	b.BodyString(d)
+	return nil
 }
 
 func (b *Request) BodyString(s string) {
@@ -356,7 +406,7 @@ func (b *Request) BodyString(s string) {
 	}
 	b.Req.Body = io.NopCloser(strings.NewReader(eval))
 	b.Req.ContentLength = int64(len(eval))
-	if jj.Valid(s) {
+	if jj.Valid(eval) {
 		b.Header("Content-Type", "application/json")
 	}
 }
