@@ -5,13 +5,13 @@ go 1.21.0
 toolchain go1.21.4
 
 require (
-	gitee.com/Trisia/gotlcp v1.3.19
+	gitee.com/Trisia/gotlcp v1.3.21
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/bingoohuang/gg v0.0.0-20240411023808-e8daaa707b8b
+	github.com/bingoohuang/gg v0.0.0-20240531020828-1fc72d0e46f0
 	github.com/bingoohuang/goup v0.0.0-20231205021806-3d76ee343e0d
-	github.com/bingoohuang/jj v0.0.0-20240510072217-935482323048
+	github.com/bingoohuang/jj v0.0.0-20240613092511-cb133c2e745a
 	github.com/chzyer/readline v1.5.1
-	github.com/emmansun/gmsm v0.26.1
+	github.com/emmansun/gmsm v0.27.2
 	github.com/fatih/color v1.17.0
 	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/joho/godotenv v1.5.1
@@ -25,10 +25,9 @@ require (
 	github.com/bingoohuang/jiami v0.0.0-20221123002830-d9d1f5f029b4 // indirect
 	github.com/brianvoe/gofakeit/v6 v6.28.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cristalhq/base64 v0.1.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
@@ -46,10 +45,10 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/vthiery/retry v0.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/term v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
+	golang.org/x/crypto v0.24.0 // indirect
+	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8 // indirect
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/term v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 )
