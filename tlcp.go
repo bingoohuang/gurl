@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
@@ -97,7 +96,7 @@ func printTLCPConnectState(conn net.Conn, state tlcp.ConnectionState) {
 		}
 	}(state.Version))
 	for i, cert := range state.PeerCertificates {
-		text, _ := certinfo.CertificateText((*x509.Certificate)(cert))
+		text, _ := certinfo.CertificateText(cert.ToX509())
 		fmt.Printf("option Cert[%d]: %s\n", i, text)
 	}
 	fmt.Printf("option TLCP.HandshakeComplete: %t\n", state.HandshakeComplete)

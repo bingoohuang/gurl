@@ -11,7 +11,7 @@ require (
 	github.com/bingoohuang/goup v0.0.0-20231205021806-3d76ee343e0d
 	github.com/bingoohuang/jj v0.0.0-20240613092511-cb133c2e745a
 	github.com/chzyer/readline v1.5.1
-	github.com/emmansun/gmsm v0.27.2
+	github.com/emmansun/gmsm v0.27.3
 	github.com/fatih/color v1.17.0
 	github.com/jedib0t/go-pretty/v6 v6.5.9
 	github.com/joho/godotenv v1.5.1
@@ -46,7 +46,7 @@ require (
 	github.com/vthiery/retry v0.1.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.24.0 // indirect
-	golang.org/x/exp v0.0.0-20240604190554-fc45aab8b7f8 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect

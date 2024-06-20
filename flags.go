@@ -160,6 +160,7 @@ flags:
                        C: print items counting in colored output
                        N: disable proxy
                        o: print response option(like TLS)
+                       a/A: HBhbsv
   -dns              Specified custom DNS resolver address, format: [DNS_SERVER]:[PORT]
   -version,v        Show Version Number
   -demo.env         Create a demo .env file
