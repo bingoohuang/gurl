@@ -146,7 +146,7 @@ func readFile(s string) (data []byte, fn string, e error) {
 
 const (
 	MaxPayloadSize        = "MAX_PAYLOAD_SIZE"
-	DefaultMaxPayloadSize = 1024 * 4
+	DefaultMaxPayloadSize = 1024 * 1024
 )
 
 func formatResponseBody(r *Request, pretty, ugly, freeInnerJSON, influxDB bool) string {
